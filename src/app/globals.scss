@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "//at.alicdn.com/t/c/font_4191244_qqll2j9wyy.css";
+
+body,
+html {
+  height: 100%;
+}
+
+.max-main {
+  max-height: calc(100vh - 64px);
+}
+
+
+
+.ant-message-custom-content {
+  display: flex;
+  align-items: center;
+}
+
+.desing_data {
+  .tags_box:hover {
+    .tags_item {
+      display: flex !important;
+    }
+  }
+}
+
+.page_main {
+  height: calc(100% - 2.5rem - 2.75rem);
+}
+
+.bg-transparent {
+  .ant-select-selector {
+    background-color: transparent !important;
+  }
+}
+
