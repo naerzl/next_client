@@ -31,7 +31,7 @@ build-job:       # This job runs in the build stage, which runs first.
     - cp -rf /projects/web-conf/client.env.local ./.env.local
     - npm run build
     - echo "编译完成"
-    - cd ./.next && tar cf client.tar ./*
+    - cd ./out && tar cf client.tar ./*
     - scp client.tar root@121.37.83.16:/www
     - echo "上传完毕"
 
