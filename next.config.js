@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'export',
     webpack: (config) => {
         config.resolve.extensionAlias = {
             ".js": [".ts", ".tsx", ".js", ".jsx", '.d.ts'],
