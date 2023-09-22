@@ -6,6 +6,8 @@ import React from "react"
 import { getV1BaseURL } from "@/libs/fetch"
 import { OAUTH2_ACCESS_TOKEN, OAUTH2_PATH_FROM } from "@/libs/const"
 
+// 加点注释重新推
+
 function Auth2() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -22,6 +24,7 @@ function Auth2() {
         //   router.push(`${process.env.NEXT_PUBLIC_AUTH_PATH}/firstchangepassword`)
         // } else {
         // }
+
         router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
       })
     // @ts-ignore
