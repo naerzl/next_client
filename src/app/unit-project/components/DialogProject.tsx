@@ -7,6 +7,7 @@ import useSWRMutation from "swr/mutation"
 import { reqGetSubSection, reqPostProjectSubSection } from "@/app/unit-project/api"
 import { TypePostProjectSubSectionParams, TypeSubSectionData } from "@/app/unit-project/types"
 import { PROJECT_ID } from "@/libs/const"
+import { Drawer } from "@mui/material"
 
 interface Props {
   open: boolean
@@ -81,39 +82,46 @@ export default function DialogProject(props: Props) {
 
   return (
     <>
-      <Modal title="添加" open={open} footer={null} onCancel={handleCancel}>
-        <Form onFinish={onFinish} form={form}>
-          <Form.Item name="name" rules={[{ required: true, message: "请输入单位工程名称" }]}>
-            <Input placeholder="请输入单位工程名称" />
-          </Form.Item>
-          <Form.Item name="subpart" rules={[{ required: true, message: "请选择一个专业" }]}>
-            <Select placeholder="请选择一个专业" options={options} onSelect={handleSelectChange} />
-          </Form.Item>
-          <Form.Item name="start_mileage">
-            <Input placeholder="请输入开始里程" />
-          </Form.Item>
-          <Form.Item name="start_tally" rules={[{ required: true, message: "请输入开始" }]}>
-            <Input placeholder="请输入开始" />
-          </Form.Item>
-          <Form.Item name="end_mileage">
-            <Input placeholder="请输入结束里程" />
-          </Form.Item>
-          <Form.Item name="end_tally" rules={[{ required: true, message: "请输入结束" }]}>
-            <Input placeholder="请输入结束" />
-          </Form.Item>
-          <Form.Item name="calculate_value">
-            <Input placeholder="请输入长度m" />
-          </Form.Item>
-          <Form.Item>
-            <div className="flex justify-end gap-2.5">
-              <Button onClick={handleCancel}>取消</Button>
-              <Button type="primary" className="bg-railway_blue" htmlType="submit">
-                确定
-              </Button>
-            </div>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Drawer open={open} onClose={handleCancel} anchor="right">
+        <div className="w-[500px] p-10">
+          <header className="text-3xl text-[#44566C] mb-8">添加单位工程</header>
+          <Form onFinish={onFinish} form={form}>
+            <Form.Item name="name" rules={[{ required: true, message: "请输入单位工程名称" }]}>
+              <Input placeholder="请输入单位工程名称" />
+            </Form.Item>
+            <Form.Item name="subpart" rules={[{ required: true, message: "请选择一个专业" }]}>
+              <Select
+                placeholder="请选择一个专业"
+                options={options}
+                onSelect={handleSelectChange}
+              />
+            </Form.Item>
+            <Form.Item name="start_mileage">
+              <Input placeholder="请输入开始里程" />
+            </Form.Item>
+            <Form.Item name="start_tally" rules={[{ required: true, message: "请输入开始" }]}>
+              <Input placeholder="请输入开始" />
+            </Form.Item>
+            <Form.Item name="end_mileage">
+              <Input placeholder="请输入结束里程" />
+            </Form.Item>
+            <Form.Item name="end_tally" rules={[{ required: true, message: "请输入结束" }]}>
+              <Input placeholder="请输入结束" />
+            </Form.Item>
+            <Form.Item name="calculate_value">
+              <Input placeholder="请输入长度m" />
+            </Form.Item>
+            <Form.Item>
+              <div className="flex justify-end gap-2.5">
+                <Button onClick={handleCancel}>取消</Button>
+                <Button type="primary" className="bg-railway_blue" htmlType="submit">
+                  确定
+                </Button>
+              </div>
+            </Form.Item>
+          </Form>
+        </div>
+      </Drawer>
     </>
   )
 }
