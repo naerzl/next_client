@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, Form, Input, Select } from "antd"
+import { Button, Cascader, Form, Input, Modal, Select } from "antd"
 import useDebounce from "@/hooks/useDebounce"
 import WorkingPointContext from "@/app/working-point/context/workingPointContext"
 import useSWRMutation from "swr/mutation"
@@ -7,7 +7,6 @@ import { reqGetProjectSubSection, reqPostProjectSubSection } from "@/app/working
 import { TypePostProjectSubSectionParams } from "@/app/working-point/types"
 import { reqGetEBS } from "@/app/ebs-data/api"
 import { PROJECT_ID } from "@/libs/const"
-import { Drawer } from "@mui/material"
 
 interface Props {
   open: boolean
@@ -125,44 +124,40 @@ export default function DialogProject(props: Props) {
 
   return (
     <>
-      <Drawer open={open} onClose={handleCancel} anchor="right">
-        <div className="w-[500px] p-10">
-          <header className="text-3xl text-[#44566C] mb-8">添加单位工程</header>
+      <Modal title="添加" open={open} footer={null} onCancel={handleCancel}>
+        <Form onFinish={onFinish} form={form}>
+          <Form.Item name="name" rules={[{ required: true, message: "请输入工点名称" }]}>
+            <Input placeholder="请输入工点名称" />
+          </Form.Item>
+          <Form.Item name="unit" rules={[{ required: true, message: "请输入单位工程名称" }]}>
+            <Select
+              placeholder="请选择一个单位工程"
+              options={unitOptions}
+              onSelect={handleUnitSelect}
+            />
+          </Form.Item>
+          <Form.Item name="subpart" rules={[{ required: true, message: "请选择一个专业" }]}>
+            <Select placeholder="请选择一个专业" options={ebsOptions} onSelect={handleSelect} />
+          </Form.Item>
 
-          <Form onFinish={onFinish} form={form}>
-            <Form.Item name="name" rules={[{ required: true, message: "请输入工点名称" }]}>
-              <Input placeholder="请输入工点名称" />
-            </Form.Item>
-            <Form.Item name="unit" rules={[{ required: true, message: "请输入单位工程名称" }]}>
-              <Select
-                placeholder="请选择一个单位工程"
-                options={unitOptions}
-                onSelect={handleUnitSelect}
-              />
-            </Form.Item>
-            <Form.Item name="subpart" rules={[{ required: true, message: "请选择一个专业" }]}>
-              <Select placeholder="请选择一个专业" options={ebsOptions} onSelect={handleSelect} />
-            </Form.Item>
+          <Form.Item name="start_tally" rules={[{ required: true, message: "请输入开始" }]}>
+            <Input placeholder="请输入开始" />
+          </Form.Item>
 
-            <Form.Item name="start_tally" rules={[{ required: true, message: "请输入开始" }]}>
-              <Input placeholder="请输入开始" />
-            </Form.Item>
+          <Form.Item name="end_tally" rules={[{ required: true, message: "请输入结束" }]}>
+            <Input placeholder="请输入结束" />
+          </Form.Item>
 
-            <Form.Item name="end_tally" rules={[{ required: true, message: "请输入结束" }]}>
-              <Input placeholder="请输入结束" />
-            </Form.Item>
-
-            <Form.Item>
-              <div className="flex justify-end gap-2.5">
-                <Button onClick={handleCancel}>取消</Button>
-                <Button type="primary" className="bg-railway_blue" htmlType="submit">
-                  确定
-                </Button>
-              </div>
-            </Form.Item>
-          </Form>
-        </div>
-      </Drawer>
+          <Form.Item>
+            <div className="flex justify-end gap-2.5">
+              <Button onClick={handleCancel}>取消</Button>
+              <Button type="primary" className="bg-railway_blue" htmlType="submit">
+                确定
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   )
 }
