@@ -8,6 +8,11 @@ import { Spin } from "antd"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import DialogEBS from "@/app/ebs-data/components/DialogEBS"
 import useEBSDataDialog from "@/hooks/useEBSDataDialog"
+import { useSearchParams } from "next/navigation"
+import { PROJECT_ID } from "@/libs/const"
+import { Breadcrumbs } from "@mui/material"
+import Link from "@mui/material/Link"
+import Typography from "@mui/material/Typography"
 
 // 表格每一列的字段
 const columns = [
@@ -16,11 +21,7 @@ const columns = [
     dataIndex: "name",
     key: "id",
   },
-  {
-    title: "部位",
-    dataIndex: "age",
-    key: "id",
-  },
+
   {
     title: "EBS编码",
     dataIndex: "code",
@@ -32,24 +33,14 @@ const columns = [
     key: "id",
   },
   {
-    title: "单位工程编号",
-    dataIndex: "单位工程编号",
-    key: "单位工程编号",
+    title: "节点类型",
+    dataIndex: "节点类型",
+    key: "节点类型",
   },
   {
-    title: "分布编号",
-    dataIndex: "分布编号",
-    key: "分布编号",
-  },
-  {
-    title: "分项编号",
-    dataIndex: "分项编号",
-    key: "分项编号",
-  },
-  {
-    title: "检验批编号",
-    dataIndex: "检验批编号",
-    key: "检验批编号",
+    title: "分部分项编码",
+    dataIndex: "分部分项编码",
+    key: "分部分项编码",
   },
 ]
 
@@ -66,6 +57,7 @@ function EBSDataPage(props: any) {
   // 获取EBS结构数据
   const { trigger: getEBSApi, isMutating } = useSWRMutation("/ebs", reqGetEBS)
   const [tableData, setTableData] = React.useState<TypeEBSDataList[]>([])
+  const searchParams = useSearchParams()
 
   const {
     dialogOpen,
@@ -82,9 +74,13 @@ function EBSDataPage(props: any) {
 
   // 页面加载获取数据
   React.useEffect(() => {
-    getEBSApi({ project_id: 1, level: 1, is_hidde: 0 }).then((res) => {
+    getEBSApi({ project_id: PROJECT_ID, level: 1, is_hidde: 0 }).then((res) => {
       if (res) {
-        const newArr = changeTreeArr(res)
+        console.log(res)
+        const filterRes = searchParams.get("code")
+          ? res.filter((item) => item.code == searchParams.get("code"))
+          : res
+        const newArr = changeTreeArr(filterRes)
         setTableData(newArr)
       }
     })
@@ -122,7 +118,7 @@ function EBSDataPage(props: any) {
     if (expanded) {
       const res = await getEBSApi({
         code: record.code,
-        project_id: 1,
+        project_id: PROJECT_ID,
         level: record.level + 1,
         is_hidde: 0,
       })
@@ -133,9 +129,10 @@ function EBSDataPage(props: any) {
         // 获取子节点
         const resCount = await getCodeCountApi({
           code: JSON.stringify(codeArr),
+          // code: JSON.stringify(["0102", "0101"]),
           level: record.level + 2,
           is_hidden: 0,
-          project_id: 1,
+          project_id: PROJECT_ID,
         })
         if (Object.keys(resCount).length > 0) {
           const childrenArr = res.map((item) => ({
@@ -165,7 +162,7 @@ function EBSDataPage(props: any) {
   // 获取父级的子集节点
   const handleGetParentChildren = async (parentIndexArr: string[]) => {
     if (parentIndexArr[0] == "") {
-      getEBSApi({ project_id: 1, level: 1, is_hidde: 0 }).then((res) => {
+      getEBSApi({ project_id: PROJECT_ID, level: 1, is_hidde: 0 }).then((res) => {
         if (res) {
           const newArr = changeTreeArr(res)
           setTableData(newArr)
@@ -177,7 +174,7 @@ function EBSDataPage(props: any) {
       // 获取父级的数据
       const res = await getEBSApi({
         code: parentItem.code,
-        project_id: 1,
+        project_id: PROJECT_ID,
         level: parentItem.level + 1,
         is_hidde: 0,
       })
@@ -206,32 +203,48 @@ function EBSDataPage(props: any) {
 
   return (
     <EBSDataContext.Provider value={{ handleExpandChange, tableData }}>
-      <div className="h-full overflow-auto">
-        <Spin spinning={tableLoading}>
-          <table className="w-full h-full border-spacing-0 border-separate">
-            <thead className="bg-[#fafafa] h-12 text-sm">
-              <tr className="grid grid-cols-10 h-full">
-                {columns.map((col, index) => (
-                  <th
-                    className={`border p-4 ${index == 0 ? "col-span-3" : ""}`}
-                    key={col.dataIndex}>
-                    {col.title}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>{renderTableTr(tableData)}</tbody>
-          </table>
-        </Spin>
-        <DialogEBS
-          open={dialogOpen}
-          item={item}
-          changeDialogOpen={changeDialogOpen}
-          deletedDataList={deletedDataList}
-          addType={addType}
-          isEdit={isEdit}
-          handleGetParentChildren={handleGetParentChildren}
-          changeIsEdit={changeIsEdit}></DialogEBS>
+      <h3 className="font-bold text-[1.875rem]">EBS模板</h3>
+      <div className="mb-9 mt-7">
+        <Breadcrumbs aria-label="breadcrumb" separator=">">
+          <Link underline="hover" color="inherit" href="/dashboard">
+            <i className="iconfont icon-homefill" style={{ fontSize: "14px" }}></i>
+          </Link>
+          <Link underline="hover" color="inherit" href="/working-point" sx={{ fontSize: "14px" }}>
+            工点数据
+          </Link>
+          <Typography color="text.primary" sx={{ fontSize: "14px" }}>
+            EBS模板
+          </Typography>
+        </Breadcrumbs>
+      </div>
+      <div className="bg-white border ">
+        <div className="h-full overflow-auto">
+          <Spin spinning={tableLoading}>
+            <table className="w-full h-full border-spacing-0 border-separate">
+              <thead className="bg-[#fafafa] h-12 text-sm">
+                <tr className="grid grid-cols-7 h-full">
+                  {columns.map((col, index) => (
+                    <th
+                      className={`border p-4 ${index == 0 ? "col-span-3" : ""}`}
+                      key={col.dataIndex}>
+                      {col.title}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>{renderTableTr(tableData)}</tbody>
+            </table>
+          </Spin>
+          <DialogEBS
+            open={dialogOpen}
+            item={item}
+            changeDialogOpen={changeDialogOpen}
+            deletedDataList={deletedDataList}
+            addType={addType}
+            isEdit={isEdit}
+            handleGetParentChildren={handleGetParentChildren}
+            changeIsEdit={changeIsEdit}></DialogEBS>
+        </div>
       </div>
     </EBSDataContext.Provider>
   )

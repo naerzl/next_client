@@ -4,6 +4,7 @@
     "@next/next/no-img-element": "off",
     "react-hooks/exhaustive-deps": "off",
     "vars-on-top": "warn",
-    "no-unused-vars": "warn"
+    "no-unused-vars": "warn",
+    "react-hooks/rules-of-hooks":"off"
   }
 }

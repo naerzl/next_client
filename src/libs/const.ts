@@ -12,3 +12,5 @@ export const STATUS_SUCCESS = 2000
 export const OAUTH2_ACCESS_TOKEN = "oauth2_access_token"
 
 export const OAUTH2_PATH_FROM = "oauth2_path_from"
+
+export const PROJECT_ID = 1

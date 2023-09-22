@@ -6,6 +6,7 @@ import useSWRMutation from "swr/mutation"
 import { reqPostEBS, reqPutEBS } from "@/app/ebs-data/api"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { Type_Is_system } from "@/app/ebs-data/components/TableTr"
+import { PROJECT_ID } from "@/libs/const"
 
 interface Props {
   open: boolean
@@ -47,13 +48,13 @@ function DialogEBS(props: Props) {
         is_copy: 0,
         ebs_id: item.id,
         next_ebs_id: value!.next_ebs_id,
-        project_id: 1,
+        project_id: PROJECT_ID,
         is_system: "system",
       })
       ctx.handleExpandChange(true, item)
     } else if (addType == "userdefined") {
       if (isEdit) {
-        await putEBSApi({ name: value.name, id: item.id })
+        await putEBSApi({ name: value.name, id: item.id, project_id: PROJECT_ID })
         const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
         handleGetParentChildren(parentIndexArr as string[])
       } else {
@@ -61,7 +62,7 @@ function DialogEBS(props: Props) {
           is_copy: 0,
           ebs_id: item.id,
           name: value.name,
-          project_id: 1,
+          project_id: PROJECT_ID,
           is_system: "userdefined",
         })
         ctx.handleExpandChange(true, item)

@@ -72,3 +72,43 @@ export function convertModelToFormData(model: any, form?: FormData, namespace = 
   }
   return formData
 }
+
+export const parseQueryString = (str: string) => {
+  const search = new URLSearchParams(str)
+  let obj: { [k: string]: any } = {}
+  // @ts-ignore
+  for (const key of search.entries()) {
+    obj[key[0]] = key[1]
+  }
+  return obj
+}
+
+export function getHexColor(color: string) {
+  let values = color
+    .replace(/rgba?\(/, "")
+    .replace(/\)/, "")
+    .replace(/[\s+]/g, "")
+    .split(",")
+  let a = parseFloat(values[3] || "1"),
+    r = Math.floor(a * parseInt(values[0]) + (1 - a) * 255),
+    g = Math.floor(a * parseInt(values[1]) + (1 - a) * 255),
+    b = Math.floor(a * parseInt(values[2]) + (1 - a) * 255)
+  return (
+    "#" +
+    ("0" + r.toString(16)).slice(-2) +
+    ("0" + g.toString(16)).slice(-2) +
+    ("0" + b.toString(16)).slice(-2)
+  )
+}
+
+// 过滤字符串左右两边指定字符
+export function trim(str: string, ch: string) {
+  let start = 0,
+    end = str.length
+
+  while (start < end && str[start] === ch) ++start
+
+  while (end > start && str[end - 1] === ch) --end
+
+  return start > 0 || end < str.length ? str.substring(start, end) : str
+}

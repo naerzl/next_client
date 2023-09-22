@@ -1,0 +1,39 @@
+.red .gantt_cell, .odd.red .gantt_cell,
+.red .gantt_task_cell, .odd.red .gantt_task_cell {
+  background-color: #FDE0E0;
+}
+
+.green .gantt_cell, .odd.green .gantt_cell,
+.green .gantt_task_cell, .odd.green .gantt_task_cell {
+  background-color: #BEE4BE;
+}
+
+  html， body， #root，#root div：only-child， .gantt-container {
+    height: 100%;
+
+  }
+
+.highlighted-column {
+  background-color: #fff3a1;
+}
+
+.gantt_task_scale .gantt_scale_cell {
+  cursor: default;
+}
+
+.gantt_task_scale .gantt_scale_cell.highlighted-column {
+  color: #454545;
+  font-weight: bold;
+}
+
+#gantt_here {
+  height: calc(100% - 52px);
+}
+
+.gantt_task_cell.week_end {
+  background-color: #EFF5FD;
+}
+
+.gantt_selected .gantt_task_cell.week_end {
+  background-color: #f0e493;
+}

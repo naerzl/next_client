@@ -1,9 +1,11 @@
 import React, { ReactNode } from "react"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
-import { Dropdown, MenuProps, Spin } from "antd"
+import { Dropdown, MenuProps, Popconfirm, Spin } from "antd"
 import useSWRMutation from "swr/mutation"
 import { reqDeleteEBS, reqGetCodeCount, reqGetEBS, reqPostEBS } from "@/app/ebs-data/api"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
+import { PROJECT_ID } from "@/libs/const"
+import { useSearchParams } from "next/navigation"
 
 interface Props {
   item: TypeEBSDataList
@@ -19,6 +21,12 @@ interface Props {
   handleEditCustomEBS: (item: TypeEBSDataList) => void
 }
 
+const EnumSubpartClass: { [key: string]: string } = {
+  field: "专业",
+  subpart: "分部",
+  subitem: "分项",
+}
+
 export type Type_Is_system = "platform" | "system" | "userdefined"
 
 function TableTr(props: Props) {
@@ -26,6 +34,7 @@ function TableTr(props: Props) {
   const { item, handleGetParentChildren, handleAddEBS, handleAddCustomEBS, handleEditCustomEBS } =
     props
 
+  const searchParams = useSearchParams()
   // 删除EBS结构api
   const { trigger: deleteEBSApi } = useSWRMutation("/ebs", reqDeleteEBS)
 
@@ -44,7 +53,7 @@ function TableTr(props: Props) {
     const res = await postEBSApi({
       is_copy: 1,
       ebs_id: item.id,
-      project_id: 1,
+      project_id: PROJECT_ID,
       is_system: item.is_system,
       next_ebs_id: parentItem.id,
     })
@@ -54,7 +63,7 @@ function TableTr(props: Props) {
   // 处理单元格添加按钮
   const handleTdCellAdd = async () => {
     const res = await getEBSApi({
-      project_id: 1,
+      project_id: PROJECT_ID,
       code: item.code,
       is_hidde: 1,
       level: item.level + 1,
@@ -69,7 +78,7 @@ function TableTr(props: Props) {
 
   // 处理单元格删除按钮
   const handleTdCellDelete = async () => {
-    await deleteEBSApi({ id: item.id, project_id: 1 })
+    await deleteEBSApi({ id: item.id, project_id: PROJECT_ID })
     //   删除成功需要刷新父级节点下面的children
     const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
     //   获取父级节点的层级 拿到当前的层级删除最后一个 即是父级层级
@@ -94,7 +103,7 @@ function TableTr(props: Props) {
         const res = await postEBSApi({
           is_copy: 1,
           ebs_id: item.id,
-          project_id: 1,
+          project_id: PROJECT_ID,
           is_system: item.is_system,
           next_ebs_id: parentItem.id,
         })
@@ -106,7 +115,7 @@ function TableTr(props: Props) {
       key: "2",
       async onClick() {
         const res = await getEBSApi({
-          project_id: 1,
+          project_id: PROJECT_ID,
           code: item.code,
           is_hidde: 1,
           level: item.level + 1,
@@ -126,7 +135,7 @@ function TableTr(props: Props) {
       key: "4",
       async onClick({ key }) {
         // 调佣删除接口
-        await deleteEBSApi({ id: item.id, project_id: 1 })
+        await deleteEBSApi({ id: item.id, project_id: PROJECT_ID })
         //   删除成功需要刷新父级节点下面的children
         const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
         //   获取父级节点的层级 拿到当前的层级删除最后一个 即是父级层级
@@ -156,7 +165,7 @@ function TableTr(props: Props) {
 
     // 获取当前节点下面是否有子节点
     const res = await getEBSApi({
-      project_id: 1,
+      project_id: PROJECT_ID,
       level: item.level + 1,
       code: item.code,
     })
@@ -260,7 +269,7 @@ function TableTr(props: Props) {
   }
   return (
     <>
-      <tr className="h-14 grid grid-cols-10">
+      <tr className="h-14 grid grid-cols-7">
         <td
           className="border p-4 overflow-hidden cursor-pointer col-span-3 flex justify-between"
           title={item.name}
@@ -315,12 +324,17 @@ function TableTr(props: Props) {
                       handleTdCellEdit()
                     }}></i>
                 )}
-                <i
-                  className="iconfont icon-shanchu w-4 aspect-square"
-                  title="删除"
-                  onClick={() => {
+                <Popconfirm
+                  title="Delete the task"
+                  description="Are you sure to delete this task?"
+                  onConfirm={() => {
                     handleTdCellDelete()
-                  }}></i>
+                  }}
+                  okText="Yes"
+                  cancelText="No">
+                  <i className="iconfont icon-shanchu w-4 aspect-square" title="删除"></i>
+                </Popconfirm>
+
                 {have5 && (
                   <i
                     className="iconfont icon-appstoreadd w-4 aspect-square"
@@ -333,17 +347,24 @@ function TableTr(props: Props) {
             )}
           </Spin>
         </td>
-        <td className="border p-4"></td>
         <td
           className="border p-4 whitespace-nowrap text-ellipsis overflow-hidden"
           title={item.code}>
           {item.code}
         </td>
         <td className="border p-4">{item.unit}</td>
-        <td className="border p-4"></td>
-        <td className="border p-4"></td>
-        <td className="border p-4"></td>
-        <td className="border p-4"></td>
+        <td className="border p-4">
+          {
+            EnumSubpartClass[
+              searchParams.get("type") == "1"
+                ? item.h_subpart_code_class
+                : item.n_subpart_code_class
+            ]
+          }
+        </td>
+        <td className="border p-4">
+          {searchParams.get("type") == "1" ? item.h_subpart_code : item.n_subpart_code}
+        </td>
       </tr>
       {props.children}
     </>

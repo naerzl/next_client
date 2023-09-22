@@ -1,16 +1,16 @@
 import { fetcher } from "@/libs/fetch"
 import { FetchParams } from "@/types/api"
 import {
-  TypePostProjectSubSectionParams,
+  TypeGetProjectSubSectionParams,
   TypeProjectSubSectionData,
   TypeSubSectionData,
-} from "@/app/unit-project/types"
-import { TypeGetProjectSubSectionParams } from "@/app/working-point/types"
+  TypePostProjectSubSectionParams,
+} from "@/app/working-point/types"
 
 /*获取分部分项列表*/
 export const reqGetSubSection = (
   url: string,
-  { arg }: FetchParams<{ parent_id?: string }>,
+  { arg }: FetchParams<{ parent_id?: string; project_id: number }>,
 ): Promise<TypeSubSectionData[]> => fetcher({ url, arg })
 
 // 获取单位工程/工点数据列表

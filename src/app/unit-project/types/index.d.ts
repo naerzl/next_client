@@ -5,6 +5,14 @@ export interface TypeSubSectionData {
   code: string
   name: string
   expect: string
+  class_name: string
+  key?: string
+  subpart_type: "basic" | "sync"
+  subpart_class: EnumNodeType
+  is_prefix: 0 | 1
+  children?: TypeSubSectionData[]
+  isCloseChildren?: boolean
+  noChildren?: boolean
 }
 
 // 获取单位工程/工点数据列表 接口响应数据
@@ -31,6 +39,7 @@ export interface TypePostProjectSubSectionParams {
   ebs_code: string
   start_tally: string
   end_tally: string
+  project_id: number
 }
 
 // 获取工程数据请求参数
@@ -38,4 +47,7 @@ export interface TypeGetProjectSubSectionParams {
   parent_id?: number
   name?: string
   is_subset?: 0 | 1
+  project_id: number
 }
+
+// 节点归属

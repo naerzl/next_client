@@ -9,5 +9,5 @@ function Page() {
 export default Page
 
 export const metadata: Metadata = {
-  title: "工点数据",
+  title: "工点数据--客户端",
 }

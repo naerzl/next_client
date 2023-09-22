@@ -25,14 +25,14 @@ function Side() {
           <div>客户端</div>
         </ListSubheader>
       }>
-      {/*<Link href={"/ebs-data"}>*/}
-      {/*  <ListItemButton sx={pathName == "/ebs-data" ? { bgcolor: "#eef0f1" } : {}}>*/}
-      {/*    <ListItemIcon>*/}
-      {/*      <SendIcon fontSize="small" />*/}
-      {/*    </ListItemIcon>*/}
-      {/*    <ListItemText>EBS数据</ListItemText>*/}
-      {/*  </ListItemButton>*/}
-      {/*</Link>*/}
+      <Link href={"/ebs-data"}>
+        <ListItemButton sx={pathName == "/ebs-data" ? { bgcolor: "#eef0f1" } : {}}>
+          <ListItemIcon>
+            <SendIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>EBS数据</ListItemText>
+        </ListItemButton>
+      </Link>
 
       <Link href={"/unit-project"}>
         <ListItemButton sx={pathName == "/unit-project" ? { bgcolor: "#eef0f1" } : {}}>

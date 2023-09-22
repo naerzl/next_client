@@ -3,7 +3,7 @@ import { TypeProjectSubSectionData, TypeSubSectionData } from "@/app/unit-projec
 import { TypeGetProjectSubSectionParams } from "@/app/working-point/types"
 
 const WorkingPointContext = React.createContext<{
-  tableList: TypeProjectSubSectionData[]
+  tableList: TypeProjectSubSectionData[] & any
   getProjectSubSection: (option?: TypeGetProjectSubSectionParams) => void
   professionList: TypeSubSectionData[]
 }>({

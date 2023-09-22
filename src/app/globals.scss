@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "//at.alicdn.com/t/c/font_4191244_qqll2j9wyy.css";
+@import "//at.alicdn.com/t/c/font_4191244_ktiptd6vs7d.css";
 
 body,
 html {
@@ -40,5 +40,11 @@ html {
 .unit_project{
   .ant-switch-checked{
     background-color: #0162B1 !important;
+  }
+}
+
+.custom{
+  .css-1t1j96h-MuiPaper-root-MuiDialog-paper{
+    max-width: none;
   }
 }
