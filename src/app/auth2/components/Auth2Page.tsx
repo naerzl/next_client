@@ -12,23 +12,28 @@ function Auth2() {
   const searchParams = useSearchParams()
   const router = useRouter()
   React.useEffect(() => {
-    lrsOAuth2Instance
-      .lrsOAuth2GetToken(getV1BaseURL("/oauth2"), {
-        code: searchParams.get("code") as string,
-        state: searchParams.get("state") as string,
-      })
-      .then((res) => {
-        if (res.code !== 2000) return
-        // setCookie(OAUTH2_ACCESS_TOKEN as string, res.data.access_token)
+    if (searchParams.get("code")) {
+      lrsOAuth2Instance
+        .lrsOAuth2GetToken(getV1BaseURL("/oauth2"), {
+          code: searchParams.get("code") as string,
+          state: searchParams.get("state") as string,
+        })
+        .then((res) => {
+          if (res.code !== 2000) return
+          // setCookie(OAUTH2_ACCESS_TOKEN as string, res.data.access_token)
 
-        localStorage.setItem(OAUTH2_ACCESS_TOKEN, res.data.access_token)
-        // if (searchParams.get("is_first_login") == "true") {
-        //   router.push(`${process.env.NEXT_PUBLIC_AUTH_PATH}/firstchangepassword`)
-        // } else {
-        // }
+          localStorage.setItem(OAUTH2_ACCESS_TOKEN, res.data.access_token)
+          // if (searchParams.get("is_first_login") == "true") {
+          //   router.push(`${process.env.NEXT_PUBLIC_AUTH_PATH}/firstchangepassword`)
+          // } else {
+          // }
 
-        router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
-      })
+          router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
+        })
+    } else {
+      router.push("/")
+    }
+
     // @ts-ignore
   }, [])
   return <></>

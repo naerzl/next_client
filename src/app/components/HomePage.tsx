@@ -25,7 +25,7 @@ export default function HomePage(props: any) {
     })
     if (res.code === STATUS_SUCCESS) {
       // 存储当前的url地址
-      setCookie(OAUTH2_PATH_FROM as string, location.origin + "/dashboard")
+      setCookie(OAUTH2_PATH_FROM as string, location.href)
       // 跳转到登录页面的地址
       location.href = res.data.location
     }
