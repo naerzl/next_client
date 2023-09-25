@@ -1,7 +1,8 @@
-import HomePage from "@/app/components/HomePage"
 import { Metadata } from "next"
+import dynamic from "next/dynamic"
 
-// 鞋垫注释
+const HomePage = dynamic(() => import("@/app/components/HomePage"), { ssr: false })
+
 export default function Home() {
   return <HomePage></HomePage>
 }

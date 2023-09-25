@@ -13,6 +13,9 @@ const yuanStyle = {
 }
 export default function HomePage(props: any) {
   const router = useRouter()
+
+  console.log(process.env.NEXT_PUBLIC_API_BASE_URL)
+
   const handleGoToLogin = async () => {
     const state = generateRandomString()
     // 补货到抛出的错误 重新初始化token 重新登录
@@ -28,9 +31,15 @@ export default function HomePage(props: any) {
     }
   }
 
+  let token = localStorage.getItem(OAUTH2_ACCESS_TOKEN)
   React.useEffect(() => {
-    getCookie(OAUTH2_ACCESS_TOKEN) && router.push("/dashboard")
+    token && router.push("/dashboard")
   }, [])
+
+  if (token) {
+    return <></>
+  }
+
   return (
     <div className="h-full overflow-auto w-full flex relative">
       <div className="flex-1 bg-[#0081ff] relative">

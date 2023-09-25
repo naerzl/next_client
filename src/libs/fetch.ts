@@ -53,7 +53,8 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
   // 闭包一个请求
   const ufetch = () => {
     // 从cookie里面获取oauth2的token
-    authCodeOfCookie = getCookie(OAUTH2_ACCESS_TOKEN as string)
+    // authCodeOfCookie = getCookie(OAUTH2_ACCESS_TOKEN as string)
+    authCodeOfCookie = localStorage.getItem(OAUTH2_ACCESS_TOKEN as string)
     return fetch(`${url}`, {
       method: method || "get",
       body,
@@ -83,7 +84,8 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
       const result = await resRefresh.json()
       if (result.code == STATUS_SUCCESS) {
         // 设置新的cookie
-        setCookie(OAUTH2_ACCESS_TOKEN, result.data.access_token)
+        // setCookie(OAUTH2_ACCESS_TOKEN, result.data.access_token)
+        localStorage.setItem(OAUTH2_ACCESS_TOKEN, result.data.access_token)
       } else {
         throw new Error("500")
       }
