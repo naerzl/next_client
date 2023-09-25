@@ -17,20 +17,32 @@ import { usePathname, useRouter } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-const pathList = [
-  {
-    path: "/unit-project/",
-    open: "工程结构",
+const menuList: { [key: string]: any } = {
+  commonLibrary: {
+    title: "工程结构",
+    icon: <ArchiveOutlinedIcon />,
+    children: {
+      "unit-project": {
+        path: "/unit-project",
+        title: "单位工程",
+      },
+      "working-point": {
+        path: "/working-point",
+        title: "工点数据",
+      },
+    },
   },
-  {
-    path: "/working-point/",
-    open: "工程结构",
+  dataTemplate: {
+    title: "功能模块",
+    icon: <TuneOutlinedIcon />,
+    children: {
+      gantt: {
+        path: "/gantt",
+        title: "施工计划",
+      },
+    },
   },
-  {
-    path: "/gantt/",
-    open: "功能模块",
-  },
-]
+}
 
 function side() {
   const logo = "/static/images/logo.png"
@@ -58,9 +70,14 @@ function side() {
   }
 
   React.useEffect(() => {
-    const obj = pathList.find((item) => pathName.startsWith(item.path))
-    if (obj) {
-      setOpen([obj!.open])
+    for (const k in menuList) {
+      for (const subK in menuList[k].children) {
+        const flag = pathName.startsWith(menuList[k].children[subK].path)
+        if (flag) {
+          setOpen([k])
+          return
+        }
+      }
     }
   }, [])
 
@@ -84,84 +101,52 @@ function side() {
             <div className="text-base font-bold text-railway_303">工程数字化管理系统</div>
           </ListSubheader>
         }>
-        <ListItemButton
-          sx={{ color: "#44566c" }}
-          onClick={() => {
-            handleClickOpen("工程结构")
-          }}>
-          <ListItemIcon className="min-w-0 mr-2.5" sx={{ width: "1.5rem", height: "1.5rem" }}>
-            <ArchiveOutlinedIcon />
-          </ListItemIcon>
-          <ListItemText>工程结构</ListItemText>
-          {openList.includes("工程结构") ? <ExpandLess /> : <ExpandMore />}
-        </ListItemButton>
-
-        <Collapse in={openList.includes("工程结构")} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
+        {Object.keys(menuList).map((key, index) => (
+          <div key={index}>
             <ListItemButton
-              sx={pathName == "/unit-project/" ? { bgcolor: "#eef0f1" } : {}}
+              sx={{ color: "#44566c" }}
               onClick={() => {
-                goto("/unit-project")
+                handleClickOpen(key)
               }}>
-              <ListItemIcon
-                className="min-w-0 mr-2.5 flex justify-center items-center"
-                sx={{ width: "1.5rem", height: "1.5rem" }}>
-                {changeIcon("/unit-project/")}
+              <ListItemIcon className="min-w-0 mr-2.5" sx={{ width: "1.5rem", height: "1.5rem" }}>
+                {menuList[key].icon}
               </ListItemIcon>
-              <ListItemText
-                sx={{ color: pathName.startsWith("/unit-project/") ? "#44566c" : "#8697a8" }}>
-                单位工程
-              </ListItemText>
+              <ListItemText>{menuList[key].title}</ListItemText>
+              {openList.includes(key) ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
 
-            <ListItemButton
-              sx={pathName.startsWith("/working-point/") ? { bgcolor: "#eef0f1" } : {}}
-              onClick={() => {
-                goto("/working-point")
-              }}>
-              <ListItemIcon
-                className="min-w-0 mr-2.5 flex justify-center items-center"
-                sx={{ width: "1.5rem", height: "1.5rem" }}>
-                {changeIcon("/working-point/")}
-              </ListItemIcon>
-              <ListItemText
-                sx={{ color: pathName.startsWith("/working-point/") ? "#44566c" : "#8697a8" }}>
-                工点数据
-              </ListItemText>
-            </ListItemButton>
-          </List>
-        </Collapse>
-
-        <ListItemButton
-          sx={{ color: "#44566c" }}
-          onClick={() => {
-            handleClickOpen("功能模块")
-          }}>
-          <ListItemIcon className="min-w-0 mr-2.5" sx={{ width: "1.5rem", height: "1.5rem" }}>
-            <TuneOutlinedIcon />
-          </ListItemIcon>
-          <ListItemText>功能模块</ListItemText>
-          {openList.includes("功能模块") ? <ExpandLess /> : <ExpandMore />}
-        </ListItemButton>
-
-        <Collapse in={openList.includes("功能模块")} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              sx={pathName.startsWith("/gantt/") ? { bgcolor: "#eef0f1" } : {}}
-              onClick={() => {
-                goto("/gantt")
-              }}>
-              <ListItemIcon
-                className="min-w-0 mr-2.5 flex justify-center items-center"
-                sx={{ width: "1.5rem", height: "1.5rem" }}>
-                {changeIcon("/gantt/")}
-              </ListItemIcon>
-              <ListItemText sx={{ color: pathName.startsWith("/gantt/") ? "#44566c" : "#8697a8" }}>
-                施工计划
-              </ListItemText>
-            </ListItemButton>
-          </List>
-        </Collapse>
+            <Collapse in={openList.includes(key)} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {Object.keys(menuList[key].children).map((k, i) => (
+                  <ListItemButton
+                    key={i}
+                    sx={
+                      pathName.startsWith(menuList[key].children[k].path)
+                        ? { bgcolor: "#eef0f1" }
+                        : {}
+                    }
+                    onClick={() => {
+                      goto(menuList[key].children[k].path)
+                    }}>
+                    <ListItemIcon
+                      className="min-w-0 mr-2.5 flex justify-center items-center"
+                      sx={{ width: "1.5rem", height: "1.5rem" }}>
+                      {changeIcon(menuList[key].children[k].path)}
+                    </ListItemIcon>
+                    <ListItemText
+                      sx={{
+                        color: pathName.startsWith(menuList[key].children[k].path)
+                          ? "#44566c"
+                          : "#8697a8",
+                      }}>
+                      {menuList[key].children[k].title}
+                    </ListItemText>
+                  </ListItemButton>
+                ))}
+              </List>
+            </Collapse>
+          </div>
+        ))}
       </List>
     </>
   )
