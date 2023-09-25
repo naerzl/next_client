@@ -20,12 +20,14 @@ function Auth2() {
       .then((res) => {
         if (res.code !== 2000) return
         setCookie(OAUTH2_ACCESS_TOKEN as string, res.data.access_token)
+        console.log(res)
+        console.log(res.data.access_token)
         // if (searchParams.get("is_first_login") == "true") {
         //   router.push(`${process.env.NEXT_PUBLIC_AUTH_PATH}/firstchangepassword`)
         // } else {
         // }
 
-        router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
+        // router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
       })
     // @ts-ignore
   }, [])
