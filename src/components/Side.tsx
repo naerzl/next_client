@@ -1,5 +1,7 @@
 "use client"
 import React from "react"
+import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined"
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined"
 import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
 
@@ -11,172 +13,59 @@ import {
   ListItemText,
   ListSubheader,
 } from "@mui/material"
+import { usePathname, useRouter } from "next/navigation"
 
-// 菜单项接口
-interface MenuItemXItem {
-  // 跳转路径，可选
-  path?: string
-  // 显示标题
-  title: string
-  // 图标，可选
-  icon?: JSX.Element
-  // 是否开启
-  open: boolean
-  // 子项
-  children?: MenuItemX
-}
+export const dynamic = "force-dynamic"
 
-// 菜单列表接口
-export interface MenuItemX {
-  // 默认子项是通过 key做索引定位 正常情况下应该和路由一致
-  [key: string]: MenuItemXItem
-}
+const pathList = [
+  {
+    path: "/unit-project/",
+    open: "工程结构",
+  },
+  {
+    path: "/working-point/",
+    open: "工程结构",
+  },
+  {
+    path: "/gantt/",
+    open: "功能模块",
+  },
+]
 
-// 响应事件数据接口
-export interface ItemCombination {
-  // 聚焦项
-  item: MenuItemXItem
-  // 聚焦项索引值
-  index: string
-  // 聚焦项上级
-  parentItem?: MenuItemXItem
-  // 聚焦项上级索引值
-  parentIndex?: string
-}
-
-// 点击事件类型
-// eslint-disable-next-line no-unused-vars
-export type clickEvent = (currentItems: ItemCombination, previousItems?: ItemCombination) => boolean
-
-export const changeMenu = (
-  items: MenuItemX,
-  item: ItemCombination,
-  previousItem?: ItemCombination,
-) => {
-  let currentItems = { ...items }
-  // 这里处理只有父级的数据
-  if (previousItem && previousItem.index) {
-    if (typeof previousItem.parentIndex != "undefined") {
-      let innerItem = currentItems[previousItem.parentIndex!]
-      innerItem.open = false
-      // 如果当前只点击了上级 就不改变之前的下级状态
-      if (typeof item.parentIndex != "undefined") {
-        innerItem.children![previousItem.index].open = false
-      }
-      currentItems[previousItem.parentIndex!] = innerItem
-    } else {
-      // 当前的上级打开
-      currentItems[previousItem.index].open = false
-    }
-  }
-
-  if (typeof item.parentIndex != "undefined") {
-    let innerItem = currentItems[item.parentIndex!]
-
-    innerItem.open = true
-    innerItem.children![item.index].open = true
-
-    currentItems[item.parentIndex!] = innerItem
-  } else {
-    // 当前的上级打开
-    currentItems[item.index].open = true
-  }
-
-  return currentItems
-}
-
-// 数据传递规范接口
-interface Props {
-  // 菜单列表
-  items: MenuItemX
-  onClick: clickEvent
-}
-
-function Side(props: Props) {
-  // logo 图片地址
+function side() {
   const logo = "/static/images/logo.png"
+  const pathName = usePathname()
 
-  // 用户接收当前菜单位置，对于点击完后来说就是上一个菜单位置
-  let previousItems = {} as ItemCombination
+  const router = useRouter()
 
-  // 点击事件
-  const whenOnClick = (
-    item: MenuItemXItem,
-    index: string,
-    parentItem?: MenuItemXItem,
-    parentIndex?: string,
-  ) => {
-    // 处理对外暴露的事件回调
-    props.onClick(
-      {
-        item,
-        index,
-        parentItem,
-        parentIndex,
-      },
-      previousItems,
+  const [openList, setOpen] = React.useState<string[]>([])
+
+  // 处理展开合并方法
+  const handleClickOpen = (key: string) => {
+    if (openList.includes(key)) {
+      setOpen((pre) => pre.filter((item) => item !== key))
+    } else {
+      setOpen((pre) => [...pre, key])
+    }
+  }
+
+  const changeIcon = (path: string) => {
+    return pathName.startsWith(path) ? (
+      <i className="w-2 h-2 rounded-full bg-[#44566c]"></i>
+    ) : (
+      <i className="w-2 h-2 rounded-full border-2 border-[#44566c]"></i>
     )
   }
 
-  // 渲染子菜单
-  const RenderChildrenItem = (
-    item: MenuItemXItem,
-    index: string,
-    parentItem: MenuItemXItem,
-    parentIndex: string,
-  ) => {
-    // 如果当前子项处理开启的状态，让预定义的数据接收该项相关数据
-    if (item.open) {
-      previousItems = {} as ItemCombination
-      previousItems.item = item
-      previousItems.index = index
-      previousItems.parentItem = parentItem
-      previousItems.parentIndex = parentIndex
+  React.useEffect(() => {
+    const obj = pathList.find((item) => pathName.startsWith(item.path))
+    if (obj) {
+      setOpen([obj!.open])
     }
+  }, [])
 
-    return (
-      <ListItemButton
-        key={item.title + "-" + index}
-        sx={item.open ? { bgcolor: "#eef0f1" } : {}}
-        onClick={() => whenOnClick(item, index, parentItem, parentIndex)}>
-        <ListItemIcon
-          key={item.title + "icon" + index}
-          className="min-w-0 mr-2.5 flex justify-center items-center"
-          sx={{ width: "1.5rem", height: "1.5rem" }}>
-          {item.open ? (
-            <i className="w-2 h-2 rounded-full bg-[#44566c]"></i>
-          ) : (
-            <i className="w-2 h-2 rounded-full border-2 border-[#44566c]"></i>
-          )}
-        </ListItemIcon>
-        <ListItemText
-          key={item.title + "-text-" + index}
-          sx={{ color: item.open ? "#44566c" : "#8697a8" }}>
-          {item.title}
-        </ListItemText>
-      </ListItemButton>
-    )
-  }
-
-  // 渲染父级菜单
-  const RenderParentItem = (item: MenuItemXItem, index: string) => {
-    if (item.open) {
-      previousItems = {} as ItemCombination
-      previousItems.item = item
-      previousItems.index = index
-    }
-    return (
-      <ListItemButton
-        key={item.title + index}
-        sx={{ color: "#44566c" }}
-        onClick={() => whenOnClick(item, index)}>
-        <ListItemIcon className="min-w-0 mr-2.5" sx={{ width: "1.5rem", height: "1.5rem" }}>
-          {item.icon}
-        </ListItemIcon>
-        <ListItemText>{item.title}</ListItemText>
-        {!item.open ? <ExpandLess /> : <ExpandMore />}
-      </ListItemButton>
-    )
+  const goto = (path: string) => {
+    router.push(path)
   }
 
   return (
@@ -195,30 +84,87 @@ function Side(props: Props) {
             <div className="text-base font-bold text-railway_303">工程数字化管理系统</div>
           </ListSubheader>
         }>
-        {Object.keys(props.items).map((index) => {
-          const item = props.items[index]
-          return (
-            <div key={item.title + "-div-" + index}>
-              {RenderParentItem(item, index)}
-              {item.children && (
-                <Collapse
-                  key={item.title + "-Collapse-" + index}
-                  in={item.open}
-                  timeout="auto"
-                  unmountOnExit>
-                  <List key={item.title + "-list-" + index} component="div" disablePadding>
-                    {Object.keys(item.children).map((cIndex) =>
-                      RenderChildrenItem(item.children![cIndex], cIndex, item, index),
-                    )}
-                  </List>
-                </Collapse>
-              )}
-            </div>
-          )
-        })}
+        <ListItemButton
+          sx={{ color: "#44566c" }}
+          onClick={() => {
+            handleClickOpen("工程结构")
+          }}>
+          <ListItemIcon className="min-w-0 mr-2.5" sx={{ width: "1.5rem", height: "1.5rem" }}>
+            <ArchiveOutlinedIcon />
+          </ListItemIcon>
+          <ListItemText>工程结构</ListItemText>
+          {openList.includes("工程结构") ? <ExpandLess /> : <ExpandMore />}
+        </ListItemButton>
+
+        <Collapse in={openList.includes("工程结构")} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={pathName == "/unit-project/" ? { bgcolor: "#eef0f1" } : {}}
+              onClick={() => {
+                goto("/unit-project")
+              }}>
+              <ListItemIcon
+                className="min-w-0 mr-2.5 flex justify-center items-center"
+                sx={{ width: "1.5rem", height: "1.5rem" }}>
+                {changeIcon("/unit-project/")}
+              </ListItemIcon>
+              <ListItemText
+                sx={{ color: pathName.startsWith("/unit-project/") ? "#44566c" : "#8697a8" }}>
+                单位工程
+              </ListItemText>
+            </ListItemButton>
+
+            <ListItemButton
+              sx={pathName.startsWith("/working-point/") ? { bgcolor: "#eef0f1" } : {}}
+              onClick={() => {
+                goto("/working-point")
+              }}>
+              <ListItemIcon
+                className="min-w-0 mr-2.5 flex justify-center items-center"
+                sx={{ width: "1.5rem", height: "1.5rem" }}>
+                {changeIcon("/working-point/")}
+              </ListItemIcon>
+              <ListItemText
+                sx={{ color: pathName.startsWith("/working-point/") ? "#44566c" : "#8697a8" }}>
+                工点数据
+              </ListItemText>
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        <ListItemButton
+          sx={{ color: "#44566c" }}
+          onClick={() => {
+            handleClickOpen("功能模块")
+          }}>
+          <ListItemIcon className="min-w-0 mr-2.5" sx={{ width: "1.5rem", height: "1.5rem" }}>
+            <TuneOutlinedIcon />
+          </ListItemIcon>
+          <ListItemText>功能模块</ListItemText>
+          {openList.includes("功能模块") ? <ExpandLess /> : <ExpandMore />}
+        </ListItemButton>
+
+        <Collapse in={openList.includes("功能模块")} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton
+              sx={pathName.startsWith("/gantt/") ? { bgcolor: "#eef0f1" } : {}}
+              onClick={() => {
+                goto("/gantt")
+              }}>
+              <ListItemIcon
+                className="min-w-0 mr-2.5 flex justify-center items-center"
+                sx={{ width: "1.5rem", height: "1.5rem" }}>
+                {changeIcon("/gantt/")}
+              </ListItemIcon>
+              <ListItemText sx={{ color: pathName.startsWith("/gantt/") ? "#44566c" : "#8697a8" }}>
+                施工计划
+              </ListItemText>
+            </ListItemButton>
+          </List>
+        </Collapse>
       </List>
     </>
   )
 }
 
-export default Side
+export default side

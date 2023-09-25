@@ -4,7 +4,6 @@ import useSWRMutation from "swr/mutation"
 import { reqGetSubSection } from "@/app/unit-project/api"
 import { useSearchParams } from "next/navigation"
 import { TypeSubSectionData } from "@/app/unit-project/types"
-import { Button, Spin } from "antd"
 import TableTr from "@/app/unit-project/ebs-detail/components/TableTr"
 import { Breadcrumbs } from "@mui/material"
 import Link from "@mui/material/Link"
@@ -37,20 +36,6 @@ const columns = [
     title: "是否前缀",
     dataIndex: "is_prefix",
     key: "is_prefix",
-  },
-  {
-    title: "操作",
-    dataIndex: "操作",
-    key: "操作",
-    render() {
-      return (
-        <div>
-          <Button type="primary" className="bg-railway_blue">
-            保存
-          </Button>
-        </div>
-      )
-    },
   },
 ]
 
@@ -158,7 +143,7 @@ export default function EBSDetailPage(props: any) {
                       index == 0 ? "col-span-3" : ""
                     }`}
                     key={col.dataIndex}>
-                    {col.render ? col.render() : col.title}
+                    {col.title}
                   </th>
                 ))}
               </tr>

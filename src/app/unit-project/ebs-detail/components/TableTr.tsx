@@ -1,6 +1,5 @@
 import React, { ReactNode } from "react"
 import { TypeSubSectionData } from "@/app/unit-project/types"
-import { Switch } from "antd"
 
 interface Props {
   item: TypeSubSectionData
