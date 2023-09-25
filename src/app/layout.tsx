@@ -83,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" id="_next">
+      <meta name="version" content="1.0.0" />
       <body className={`${inter.className} flex`}>
         <StyledComponentsRegistry>
           <SWRConfig value={{ provider: () => new Map() }}>
