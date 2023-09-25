@@ -41,5 +41,5 @@ deploy-job:      # This job runs in the deploy stage.
     - "master"
   environment: production
   script:
-    - ssh root@121.37.83.16 "rm -rf /www/edms-client/.* && tar -xvf /www/client.tar -C /www/edms-client && rm /www/client.tar"
+    - ssh root@121.37.83.16 "rm -rf /www/edms-client/* && tar -xvf /www/client.tar -C /www/edms-client && rm /www/client.tar"
     - echo "发布完成"
