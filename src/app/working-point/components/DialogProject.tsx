@@ -1,5 +1,4 @@
 import React from "react"
-import { Button, Cascader, Form, Input, Modal, Select } from "antd"
 import useDebounce from "@/hooks/useDebounce"
 import WorkingPointContext from "@/app/working-point/context/workingPointContext"
 import useSWRMutation from "swr/mutation"
@@ -7,6 +6,17 @@ import { reqGetProjectSubSection, reqPostProjectSubSection } from "@/app/working
 import { TypePostProjectSubSectionParams } from "@/app/working-point/types"
 import { reqGetEBS } from "@/app/ebs-data/api"
 import { PROJECT_ID } from "@/libs/const"
+import {
+  Button,
+  Drawer,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  TextField,
+} from "@mui/material"
+import { ErrorMessage } from "@hookform/error-message"
+import { useForm } from "react-hook-form"
 
 interface Props {
   open: boolean
@@ -28,6 +38,15 @@ interface UnitOptions {
   subpart_id: string
 }
 
+type IForm = {
+  name: string
+  start_mileage: number
+  start_tally: number
+  end_mileage: number
+  end_tally: number
+  calculate_value: number
+}
+
 export default function DialogProject(props: Props) {
   const ctx = React.useContext(WorkingPointContext)
   const { open, changeDialogOpen } = props
@@ -40,11 +59,17 @@ export default function DialogProject(props: Props) {
     reqGetProjectSubSection,
   )
 
-  const [form] = Form.useForm()
   const handleCancel = () => {
-    form.resetFields()
     changeDialogOpen(false)
+    reset()
   }
+
+  const {
+    handleSubmit,
+    formState: { errors },
+    register,
+    reset,
+  } = useForm<IForm>({})
 
   const [unitOptions, setUnitOptions] = React.useState<UnitOptions[]>([])
 
@@ -72,9 +97,9 @@ export default function DialogProject(props: Props) {
     })
   }, [])
 
-  const [formData, setFormData] = React.useState<TypePostProjectSubSectionParams>(
-    {} as TypePostProjectSubSectionParams,
-  )
+  const [formData, setFormData] = React.useState<TypePostProjectSubSectionParams>({
+    parent_id: 0,
+  } as TypePostProjectSubSectionParams)
 
   const { trigger: postProjectSubSection } = useSWRMutation(
     "/project-subsection/sub",
@@ -82,7 +107,7 @@ export default function DialogProject(props: Props) {
   )
 
   // 提交表单事件（防抖）
-  const { run: onFinish } = useDebounce(async (value: any) => {
+  const { run: onSubmit } = useDebounce(async (value: any) => {
     // 深拷贝表单的对象 避免影响到表单展示
     const valueCopy = structuredClone(value)
     // 删除不需要的对象
@@ -96,68 +121,165 @@ export default function DialogProject(props: Props) {
   })
 
   // 渲染EBS专业
-  const handleSelect = (value: string | number, selectedOptions: Option) => {
-    if (value) {
-      setFormData(
-        Object.assign({}, formData, {
-          ebs_id: value,
-          ebs_name: selectedOptions.label,
-          ebs_code: selectedOptions.code,
-        }),
-      )
-    }
+  const handleEBSSelect = (event: SelectChangeEvent<number | string>) => {
+    const obj = ebsOptions.find((item) => event.target.value)
+
+    setFormData(
+      Object.assign({}, formData, {
+        ebs_id: obj!.value,
+        ebs_name: obj!.label,
+        ebs_code: obj!.code,
+      }),
+    )
   }
 
   // 选择单位工程专业
-  const handleUnitSelect = (value: string | number, selectedOptions: UnitOptions) => {
-    console.log(selectedOptions)
-    if (value) {
-      setFormData(
-        Object.assign({}, formData, {
-          parent_id: value,
-          subpart_name: selectedOptions.subpart_name,
-          subpart_id: selectedOptions.subpart_id,
-        }),
-      )
-    }
+  const handleUnitSelect = (event: SelectChangeEvent<number | string>) => {
+    const obj = unitOptions.find((item) => event.target.value)
+    setFormData(
+      Object.assign({}, formData, {
+        parent_id: obj!.value,
+        subpart_name: obj!.subpart_name,
+        subpart_id: obj!.subpart_id,
+      }),
+    )
   }
 
   return (
     <>
-      <Modal title="添加" open={open} footer={null} onCancel={handleCancel}>
-        <Form onFinish={onFinish} form={form}>
-          <Form.Item name="name" rules={[{ required: true, message: "请输入工点名称" }]}>
-            <Input placeholder="请输入工点名称" />
-          </Form.Item>
-          <Form.Item name="unit" rules={[{ required: true, message: "请输入单位工程名称" }]}>
-            <Select
-              placeholder="请选择一个单位工程"
-              options={unitOptions}
-              onSelect={handleUnitSelect}
-            />
-          </Form.Item>
-          <Form.Item name="subpart" rules={[{ required: true, message: "请选择一个专业" }]}>
-            <Select placeholder="请选择一个专业" options={ebsOptions} onSelect={handleSelect} />
-          </Form.Item>
+      <Drawer open={open} onClose={handleCancel} anchor="right">
+        <div className="w-[500px] p-10">
+          <header className="text-3xl text-[#44566C] mb-8">添加单位工程</header>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-8 relative">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="name" className="mr-3 w-20 text-left mb-2.5" required>
+                  工点名称:
+                </InputLabel>
+                <TextField
+                  variant="outlined"
+                  id="name"
+                  size="small"
+                  fullWidth
+                  error={Boolean(errors.name)}
+                  {...register("name", { required: "请输入工点名称" })}
+                  placeholder="请输入工点名称"
+                />
+              </div>
+              <ErrorMessage
+                errors={errors}
+                name="name"
+                render={({ message }) => (
+                  <p className="text-railway_error text-sm absolute">{message}</p>
+                )}
+              />
+            </div>
 
-          <Form.Item name="start_tally" rules={[{ required: true, message: "请输入开始" }]}>
-            <Input placeholder="请输入开始" />
-          </Form.Item>
+            <div className="mb-8">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="percentage" className="mr-3 w-20 text-left mb-2.5">
+                  单位工程:
+                </InputLabel>
+                <Select
+                  onChange={handleUnitSelect}
+                  value={formData.parent_id}
+                  MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
+                  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
+                  id="role_list"
+                  placeholder="请选择一个专业"
+                  size="small"
+                  defaultValue=""
+                  fullWidth>
+                  {unitOptions.map((item: any) => (
+                    <MenuItem value={item.value} key={item.value}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+            </div>
 
-          <Form.Item name="end_tally" rules={[{ required: true, message: "请输入结束" }]}>
-            <Input placeholder="请输入结束" />
-          </Form.Item>
+            <div className="mb-8">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="percentage" className="mr-3 w-20 text-left mb-2.5">
+                  EBS专业:
+                </InputLabel>
+                <Select
+                  value={formData.ebs_id}
+                  onChange={handleEBSSelect}
+                  MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
+                  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
+                  id="role_list"
+                  placeholder="请选择一个专业"
+                  size="small"
+                  defaultValue=""
+                  fullWidth>
+                  {ebsOptions.map((item: any) => (
+                    <MenuItem value={item.value} key={item.value}>
+                      {item.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+            </div>
 
-          <Form.Item>
-            <div className="flex justify-end gap-2.5">
+            <div className="mb-8 relative">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="start_tally" className="mr-3 w-20 text-left mb-2.5" required>
+                  开始:
+                </InputLabel>
+                <TextField
+                  variant="outlined"
+                  id="start_tally"
+                  size="small"
+                  fullWidth
+                  error={Boolean(errors.start_tally)}
+                  {...register("start_tally", { required: "请输入开始" })}
+                  placeholder="请输入开始"
+                />
+              </div>
+              <ErrorMessage
+                errors={errors}
+                name="start_tally"
+                render={({ message }) => (
+                  <p className="text-railway_error text-sm absolute">{message}</p>
+                )}
+              />
+            </div>
+
+            <div className="mb-8 relative">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="end_tally" className="mr-3 w-20 text-left mb-2.5" required>
+                  结束:
+                </InputLabel>
+                <TextField
+                  variant="outlined"
+                  id="end_tally"
+                  size="small"
+                  fullWidth
+                  error={Boolean(errors.end_tally)}
+                  {...register("end_tally", { required: "请输入结束" })}
+                  placeholder="请输入结束"
+                />
+              </div>
+              <ErrorMessage
+                errors={errors}
+                name="end_tally"
+                render={({ message }) => (
+                  <p className="text-railway_error text-sm absolute">{message}</p>
+                )}
+              />
+            </div>
+
+            <div>
               <Button onClick={handleCancel}>取消</Button>
-              <Button type="primary" className="bg-railway_blue" htmlType="submit">
+              <Button type="submit" variant="contained" className="bg-railway_blue">
                 确定
               </Button>
             </div>
-          </Form.Item>
-        </Form>
-      </Modal>
+          </form>
+        </div>
+      </Drawer>
     </>
   )
 }

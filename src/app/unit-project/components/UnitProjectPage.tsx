@@ -16,6 +16,7 @@ import TableHead from "@mui/material/TableHead"
 import TableRow from "@mui/material/TableRow"
 import IconButton from "@mui/material/IconButton"
 import SearchIcon from "@mui/icons-material/Search"
+import useHooksConfirm from "@/hooks/useHooksConfirm"
 
 export default function UnitProjectPage() {
   const ctx = React.useContext(UnitProjectContext)
@@ -29,10 +30,14 @@ export default function UnitProjectPage() {
     reqDelProjectSubSection,
   )
 
+  const { handleConfirm } = useHooksConfirm()
+
   // 处理点击删除
-  const handleClickDelete = async (id: number) => {
-    await delProjectSubSection({ id })
-    ctx.getProjectSubSection()
+  const handleClickDelete = (id: number) => {
+    handleConfirm(async () => {
+      await delProjectSubSection({ id })
+      ctx.getProjectSubSection()
+    })
   }
 
   // 表格配置列

@@ -32,14 +32,16 @@ export interface TypeProjectSubSectionData {
 
 // 添加分部分项数据 请求参数
 export interface TypePostProjectSubSectionParams {
-  parent_id: string
+  project_id: number
+  code: string
   name: string
-  ebs_id: number
-  ebs_name: string
-  ebs_code: string
+  subpart_id: number
+  subpart_name: string
+  start_mileage: string
+  end_mileage: string
   start_tally: string
   end_tally: string
-  project_id: number
+  calculate_value: string
 }
 
 // 获取工程数据请求参数
