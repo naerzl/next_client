@@ -4,7 +4,7 @@ import Side from "@/components/Side"
 import React from "react"
 import Nav from "@/components/Nav"
 import { SWRConfig } from "swr"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import StyledComponentsRegistry from "@/libs/AntdRegistry"
 import "./globals.scss"
 import { ConfirmProvider } from "material-ui-confirm"
@@ -13,9 +13,16 @@ import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined"
 import { generateRandomString } from "@/libs/methods"
 import { getV1BaseURL } from "@/libs/fetch"
 import { lrsOAuth2Instance } from "@/libs"
-import { OAUTH2_ACCESS_TOKEN, OAUTH2_PATH_FROM, STATUS_SUCCESS } from "@/libs/const"
+import {
+  MINTE5,
+  OAUTH2_ACCESS_TOKEN,
+  OAUTH2_PATH_FROM,
+  OAUTH2_TOKEN_EXPIRY,
+  STATUS_SUCCESS,
+} from "@/libs/const"
 import { setCookie } from "@/libs/cookies"
 import { StatusCodes } from "http-status-codes"
+import dayjs from "dayjs"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -84,15 +91,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
   }
 
-  React.useEffect(() => {
-    let token = localStorage.getItem(OAUTH2_ACCESS_TOKEN)
-    if (pathname != "/" && pathname != "/auth2/") {
-      if (!token) {
-        handleGoToLogin()
-      } else {
+  let token = localStorage.getItem(OAUTH2_ACCESS_TOKEN)
+  if (pathname != "/" && pathname != "/auth2/") {
+    if (!token) {
+      handleGoToLogin()
+      return <></>
+    } else {
+      const time = localStorage.getItem(OAUTH2_TOKEN_EXPIRY)
+      if (dayjs(time).unix() * 1000 - Date.now() < MINTE5) {
+        refreshToken(token)
       }
     }
-  }, [pathname])
+  }
 
   return (
     <html lang="en" id="_next">

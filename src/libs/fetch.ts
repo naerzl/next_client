@@ -1,6 +1,6 @@
 import { getCookie, setCookie } from "./cookies"
 import { formDataInstance, lrsOAuth2Instance } from "./init_oauth"
-import { OAUTH2_ACCESS_TOKEN, OAUTH2_PATH_FROM, STATUS_SUCCESS } from "./const"
+import { OAUTH2_ACCESS_TOKEN, OAUTH2_PATH_FROM, OAUTH2_TOKEN_EXPIRY, STATUS_SUCCESS } from "./const"
 import { StatusCodes } from "http-status-codes"
 import { generateRandomString } from "./methods"
 import { message } from "antd"
@@ -86,6 +86,7 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
         // 设置新的cookie
         // setCookie(OAUTH2_ACCESS_TOKEN, result.data.access_token)
         localStorage.setItem(OAUTH2_ACCESS_TOKEN, result.data.access_token)
+        localStorage.setItem(OAUTH2_TOKEN_EXPIRY, result.data.expiry)
       } else {
         throw new Error("500")
       }
