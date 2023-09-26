@@ -111,7 +111,7 @@ export default function DialogProject(props: Props) {
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
                 <InputLabel htmlFor="name" className="mr-3 w-20 text-left mb-2.5" required>
-                  表单名称:
+                  单位工程名称:
                 </InputLabel>
                 <TextField
                   variant="outlined"
@@ -119,8 +119,8 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.name)}
-                  {...register("name", { required: "请输入名称" })}
-                  placeholder="请输入名称"
+                  {...register("name", { required: "请输入单位工程名称" })}
+                  placeholder="请输入单位工程名称"
                 />
               </div>
               <ErrorMessage
@@ -135,7 +135,7 @@ export default function DialogProject(props: Props) {
             <div className="mb-8">
               <div className="flex items-start flex-col">
                 <InputLabel htmlFor="percentage" className="mr-3 w-20 text-left mb-2.5">
-                  关联角色:
+                  专业:
                 </InputLabel>
                 <Select
                   value={subpart.subpart_id}
@@ -256,7 +256,7 @@ export default function DialogProject(props: Props) {
                   htmlFor="calculate_value"
                   className="mr-3 w-20 text-left mb-2.5"
                   required>
-                  表单名称:
+                  长度m:
                 </InputLabel>
                 <TextField
                   variant="outlined"

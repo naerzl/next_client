@@ -1,6 +1,6 @@
 "use client"
 import { lrsOAuth2Instance } from "@/libs/init_oauth"
-import { getCookie, setCookie } from "@/libs/cookies"
+import { getCookie } from "@/libs/cookies"
 import { useSearchParams, useRouter } from "next/navigation"
 import React from "react"
 import { getV1BaseURL } from "@/libs/fetch"
@@ -23,12 +23,13 @@ function Auth2() {
           // setCookie(OAUTH2_ACCESS_TOKEN as string, res.data.access_token)
 
           localStorage.setItem(OAUTH2_ACCESS_TOKEN, res.data.access_token)
-          // if (searchParams.get("is_first_login") == "true") {
-          //   router.push(`${process.env.NEXT_PUBLIC_AUTH_PATH}/firstchangepassword`)
-          // } else {
-          // }
-
-          router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
+          if (searchParams.get("is_first_login") == "true") {
+            router.push(
+              `${process.env.NEXT_PUBLIC_AUTH_PATH}/firstchangepassword?t=${res.data.access_token}`,
+            )
+          } else {
+            router.push(getCookie(OAUTH2_PATH_FROM as string) || "/")
+          }
         })
     } else {
       router.push("/")
