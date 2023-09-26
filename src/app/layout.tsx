@@ -90,8 +90,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       if (!token) {
         handleGoToLogin()
       } else {
-        console.log(token)
-        refreshToken(token)
       }
     }
   }, [pathname])
