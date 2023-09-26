@@ -121,6 +121,7 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.name)}
                   {...register("name", { required: "请输入单位工程名称" })}
                   placeholder="请输入单位工程名称"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
@@ -168,11 +169,12 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.start_mileage)}
                   {...register("start_mileage", { required: "请输入开始里程" })}
                   placeholder="请输入开始里程"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
                 errors={errors}
-                name="name"
+                name="start_mileage"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}
@@ -192,11 +194,12 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.start_tally)}
                   {...register("start_tally", { required: "请输入开始" })}
                   placeholder="请输入开始"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
                 errors={errors}
-                name="name"
+                name="start_tally"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}
@@ -216,11 +219,12 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.end_mileage)}
                   {...register("end_mileage", { required: "请输入结束里程" })}
                   placeholder="请输入结束里程"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
                 errors={errors}
-                name="name"
+                name="end_mileage"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}
@@ -240,11 +244,12 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.end_tally)}
                   {...register("end_tally", { required: "请输入结束" })}
                   placeholder="请输入结束"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
                 errors={errors}
-                name="name"
+                name="end_tally"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}
@@ -266,11 +271,12 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.calculate_value)}
                   {...register("calculate_value", { required: "请输入长度m" })}
                   placeholder="请输入长度m"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
                 errors={errors}
-                name="name"
+                name="calculate_value"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}

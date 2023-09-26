@@ -10,6 +10,7 @@ import { message } from "antd"
 import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
 import { reqPostEBS } from "@/app/ebs-data/api"
+import { PILE_CODE } from "@/app/gantt/const"
 
 type Props = {
   tasks?: any
@@ -111,10 +112,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
   const GANTT_DOM = useRef<HTMLDivElement | null>(null)
 
   const ctx = React.useContext(ganttContext)
-
-  const handleclick = (item: Task, event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    event.preventDefault()
-  }
 
   function initGanttDataProcessor() {
     gantt.createDataProcessor((type: any, action: any, item: any, id: any) => {
@@ -253,7 +250,14 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
 
     // 提示信息文本
     gantt.templates.tooltip_text = function (start, end, task) {
-      return "<b>任务名：</b>" + task.text + "<br/><b>工期：</b> " + `${task.duration}天`
+      return (
+        "<b>任务名：</b>" +
+        task.text +
+        "<br/><b>工期：</b> " +
+        `${task.duration}天` +
+        "<br/><b>EBS编号：</b> " +
+        `${task.code ?? ""}`
+      )
     }
 
     // 关于提示信息 不知道干嘛的
@@ -319,7 +323,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       return Number(task.$level) > 1
     })
 
-    gantt.attachEvent("onBeforeTaskDrag", function (id, type) {
+    gantt.attachEvent("onBeforeTaskDrag", function (id) {
       const task = gantt.getTask(id)
       beforeDragTask.current = structuredClone(task)
       // 大于1层级（3） 才可以拖动
@@ -349,28 +353,30 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       gantt.scrollTo(pos.x, pos.y)
     })
 
-    // gantt.attachEvent("onTaskClick", function (taskId, e) {
-    //   if (/^-?\d+$/.test(taskId)) {
-    //     console.log(e)
-    //     if (e.target.className.includes("gantt_task_content")) {
-    //       const task = gantt.getTask(taskId)
-    //       const topLevelParentId = getGanttTopLevelParentId(taskId)
-    //       const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
-    //       const newTask = structuredClone(task)
-    //       newTask.project_sp_id = topLevelParentId
-    //       newTask.project_si_id = secondTask.id
-    //
-    //       ctx.changeEBSItem(newTask as any)
-    //
-    //       handleOpenDrawerProcess(newTask)
-    //     }
-    //
-    //     if (e.target.className.includes("iconfont")) {
-    //       message.info("点击了复制")
-    //     }
-    //   }
-    //   return true
-    // })
+    gantt.attachEvent("onTaskClick", function (taskId, e) {
+      if (/^-?\d+$/.test(taskId)) {
+        if (e.target.className.includes("gantt_task_content")) {
+          const task = gantt.getTask(taskId)
+          const someOne = PILE_CODE.some((code) => task.code != code && task.code.startsWith(code))
+          if (someOne && task.is_system == "none") {
+            const topLevelParentId = getGanttTopLevelParentId(taskId)
+            const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
+            const newTask = structuredClone(task)
+            newTask.project_sp_id = topLevelParentId
+            newTask.project_si_id = secondTask.id
+
+            ctx.changeEBSItem(newTask as any)
+
+            handleOpenDrawerProcess(newTask)
+          }
+        }
+
+        if (e.target.className.includes("iconfont")) {
+          message.info("点击了复制")
+        }
+      }
+      return true
+    })
 
     function is_selected_column(column_date: any) {
       return !!(selected_column && column_date.valueOf() == selected_column.valueOf())

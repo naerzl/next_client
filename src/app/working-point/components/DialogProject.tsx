@@ -98,7 +98,8 @@ export default function DialogProject(props: Props) {
   }, [])
 
   const [formData, setFormData] = React.useState<TypePostProjectSubSectionParams>({
-    parent_id: 0,
+    parent_id: "",
+    ebs_id: "",
   } as TypePostProjectSubSectionParams)
 
   const { trigger: postProjectSubSection } = useSWRMutation(
@@ -122,7 +123,9 @@ export default function DialogProject(props: Props) {
 
   // 渲染EBS专业
   const handleEBSSelect = (event: SelectChangeEvent<number | string>) => {
-    const obj = ebsOptions.find((item) => event.target.value)
+    console.log(event.target.value)
+    const obj = ebsOptions.find((item) => item.value == event.target.value)
+    console.log(obj)
 
     setFormData(
       Object.assign({}, formData, {
@@ -135,7 +138,7 @@ export default function DialogProject(props: Props) {
 
   // 选择单位工程专业
   const handleUnitSelect = (event: SelectChangeEvent<number | string>) => {
-    const obj = unitOptions.find((item) => event.target.value)
+    const obj = unitOptions.find((item) => item.value == event.target.value)
     setFormData(
       Object.assign({}, formData, {
         parent_id: obj!.value,
@@ -164,6 +167,7 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.name)}
                   {...register("name", { required: "请输入工点名称" })}
                   placeholder="请输入工点名称"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
@@ -188,7 +192,6 @@ export default function DialogProject(props: Props) {
                   id="role_list"
                   placeholder="请选择一个专业"
                   size="small"
-                  defaultValue=""
                   fullWidth>
                   {unitOptions.map((item: any) => (
                     <MenuItem value={item.value} key={item.value}>
@@ -212,7 +215,6 @@ export default function DialogProject(props: Props) {
                   id="role_list"
                   placeholder="请选择一个专业"
                   size="small"
-                  defaultValue=""
                   fullWidth>
                   {ebsOptions.map((item: any) => (
                     <MenuItem value={item.value} key={item.value}>
@@ -236,6 +238,7 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.start_tally)}
                   {...register("start_tally", { required: "请输入开始" })}
                   placeholder="请输入开始"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage
@@ -260,6 +263,7 @@ export default function DialogProject(props: Props) {
                   error={Boolean(errors.end_tally)}
                   {...register("end_tally", { required: "请输入结束" })}
                   placeholder="请输入结束"
+                  autoComplete="off"
                 />
               </div>
               <ErrorMessage

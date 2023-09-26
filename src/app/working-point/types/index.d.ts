@@ -40,11 +40,11 @@ export interface TypeProjectSubSectionData {
 // 添加分部分项数据 请求参数
 export interface TypePostProjectSubSectionParams {
   project_id: number
-  parent_id: number
+  parent_id: number | string
   name: string
   subpart_id: number
   subpart_name: string
-  ebs_id: number
+  ebs_id: number | string
   ebs_name: string
   ebs_code: string
   start_tally: string
