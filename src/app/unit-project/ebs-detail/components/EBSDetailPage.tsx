@@ -136,7 +136,7 @@ export default function EBSDetailPage(props: any) {
         <div className="h-full  ebs_data custom-scroll-bar">
           <table className="w-full h-full border-spacing-0 border-separate">
             <thead className="bg-[#fafafa] h-12 text-sm">
-              <tr className="grid grid-cols-8 h-full">
+              <tr className="grid grid-cols-7 h-full">
                 {columns.map((col, index) => (
                   <th
                     className={`border flex items-center justify-center ${

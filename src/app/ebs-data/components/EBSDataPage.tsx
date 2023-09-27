@@ -4,7 +4,6 @@ import useSWRMutation from "swr/mutation"
 import { reqGetCodeCount, reqGetEBS } from "@/app/ebs-data/api"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
 import TableTr from "@/app/ebs-data/components/TableTr"
-import { Spin } from "antd"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import DialogEBS from "@/app/ebs-data/components/DialogEBS"
 import useEBSDataDialog from "@/hooks/useEBSDataDialog"
@@ -53,7 +52,7 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = ""): TypeEBSDataList[]
   })
 }
 
-function EBSDataPage(props: any) {
+export default function EBSDataPage(props: any) {
   // 获取EBS结构数据
   const { trigger: getEBSApi, isMutating } = useSWRMutation("/ebs", reqGetEBS)
   const [tableData, setTableData] = React.useState<TypeEBSDataList[]>([])
@@ -76,7 +75,6 @@ function EBSDataPage(props: any) {
   React.useEffect(() => {
     getEBSApi({ project_id: PROJECT_ID, level: 1, is_hidde: 0 }).then((res) => {
       if (res) {
-        console.log(res)
         const filterRes = searchParams.get("code")
           ? res.filter((item) => item.code == searchParams.get("code"))
           : res
@@ -218,23 +216,21 @@ function EBSDataPage(props: any) {
         </Breadcrumbs>
       </div>
       <div className="bg-white border ">
-        <div className="h-full overflow-auto">
-          <Spin spinning={tableLoading}>
-            <table className="w-full h-full border-spacing-0 border-separate">
-              <thead className="bg-[#fafafa] h-12 text-sm">
-                <tr className="grid grid-cols-7 h-full">
-                  {columns.map((col, index) => (
-                    <th
-                      className={`border p-4 ${index == 0 ? "col-span-3" : ""}`}
-                      key={col.dataIndex}>
-                      {col.title}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>{renderTableTr(tableData)}</tbody>
-            </table>
-          </Spin>
+        <div className="h-full">
+          <table className="w-full h-full border-spacing-0 border-separate">
+            <thead className="bg-[#fafafa] h-12 text-sm">
+              <tr className="grid grid-cols-7 h-full">
+                {columns.map((col, index) => (
+                  <th
+                    className={`border p-4 ${index == 0 ? "col-span-3" : ""}`}
+                    key={col.dataIndex}>
+                    {col.title}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>{renderTableTr(tableData)}</tbody>
+          </table>
           <DialogEBS
             open={dialogOpen}
             item={item}
@@ -249,5 +245,3 @@ function EBSDataPage(props: any) {
     </EBSDataContext.Provider>
   )
 }
-
-export default EBSDataPage

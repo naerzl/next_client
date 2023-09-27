@@ -4,7 +4,7 @@ import Side from "@/components/Side"
 import React from "react"
 import Nav from "@/components/Nav"
 import { SWRConfig } from "swr"
-import { usePathname } from "next/navigation"
+import { usePathname, useSelectedLayoutSegment } from "next/navigation"
 import StyledComponentsRegistry from "@/libs/AntdRegistry"
 import "./globals.scss"
 import { ConfirmProvider } from "material-ui-confirm"
@@ -57,8 +57,10 @@ const menuList = {
     },
   },
 }
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactElement }) {
   const pathname = usePathname()
+
+  const segment = useSelectedLayoutSegment()
 
   const handleGoToLogin = async () => {
     const state = generateRandomString()
@@ -108,16 +110,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }
       }
     }
-  }, [])
+  }, [pathname])
 
-  // if (!accessToken && pathname != "/" && pathname != "/auth2/") {
-  //   return (
-  //     <html lang="en" id="_next">
-  //       <meta name="version" content="1.0.0" />
-  //       <body className={`${inter.className} flex`}></body>
-  //     </html>
-  //   )
-  // }
+  if (!accessToken && segment && segment != "auth2") {
+    return (
+      <html lang="en" id="_next">
+        <meta name="version" content="1.0.0" />
+        <body className={`${inter.className} flex`}>
+          <div className="container">
+            <div className="loader"></div>
+          </div>
+        </body>
+      </html>
+    )
+  }
 
   return (
     <html lang="en" id="_next">

@@ -358,6 +358,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
         if (e.target.className.includes("gantt_task_content")) {
           const task = gantt.getTask(taskId)
           const someOne = PILE_CODE.some((code) => task.code != code && task.code.startsWith(code))
+          console.log(someOne, task.is_system)
           if (someOne && task.is_system == "none") {
             const topLevelParentId = getGanttTopLevelParentId(taskId)
             const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])

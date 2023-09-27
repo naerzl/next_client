@@ -16,7 +16,7 @@ import { reqGetCodeCount } from "@/app/ebs-data/api"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import { reqGetProjectSubSection } from "@/app/working-point/api"
 import { getHexColor, parseQueryString } from "@/libs/methods"
-import { TypeProjectSubSectionData } from "@/app/unit-project/types"
+import { TypeProjectSubSectionData } from "@/app/working-point/types"
 import DrawerAndTabs from "./DrawerAndTabs"
 import useDrawerProcess from "@/app/gantt/hooks/useDrawerProcess"
 import GanttContext from "@/app/gantt/context/ganttContext"
@@ -451,12 +451,12 @@ const GanttPage = () => {
               }}
               value={selectValue}
               defaultValue="">
+              <MenuItem value={"all"}>全部</MenuItem>
               {projectSelectOption.map((item) => (
                 <MenuItem value={item.value} key={item.value}>
                   {item.label}
                 </MenuItem>
               ))}
-              <MenuItem value={"all"}>全部</MenuItem>
             </Select>
           </div>
           <div>

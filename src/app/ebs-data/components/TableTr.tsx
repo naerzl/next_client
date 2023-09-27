@@ -1,11 +1,11 @@
 import React, { ReactNode } from "react"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
-import { Dropdown, MenuProps, Popconfirm, Spin } from "antd"
 import useSWRMutation from "swr/mutation"
 import { reqDeleteEBS, reqGetCodeCount, reqGetEBS, reqPostEBS } from "@/app/ebs-data/api"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { PROJECT_ID } from "@/libs/const"
 import { useSearchParams } from "next/navigation"
+import useHooksConfirm from "@/hooks/useHooksConfirm"
 
 interface Props {
   item: TypeEBSDataList
@@ -44,13 +44,15 @@ function TableTr(props: Props) {
   // 获取被删除的EBS结构的数据
   const { trigger: postEBSApi } = useSWRMutation("/ebs", reqPostEBS)
 
+  const { handleConfirm } = useHooksConfirm()
+
   // 出击单元格copy按钮
   const handleTdCellCopy = async () => {
     const parentIndexArr = item.key
       ?.split("-")
       .slice(0, item.key?.split("-").length - 1) as string[]
     const parentItem = eval(`ctx.tableData[${parentIndexArr.join("].children[")}]`)
-    const res = await postEBSApi({
+    await postEBSApi({
       is_copy: 1,
       ebs_id: item.id,
       project_id: PROJECT_ID,
@@ -77,12 +79,14 @@ function TableTr(props: Props) {
   }
 
   // 处理单元格删除按钮
-  const handleTdCellDelete = async () => {
-    await deleteEBSApi({ id: item.id, project_id: PROJECT_ID })
-    //   删除成功需要刷新父级节点下面的children
-    const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
-    //   获取父级节点的层级 拿到当前的层级删除最后一个 即是父级层级
-    handleGetParentChildren(parentIndexArr as string[])
+  const handleTdCellDelete = () => {
+    handleConfirm(async () => {
+      await deleteEBSApi({ id: item.id, project_id: PROJECT_ID })
+      //   删除成功需要刷新父级节点下面的children
+      const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
+      //   获取父级节点的层级 拿到当前的层级删除最后一个 即是父级层级
+      handleGetParentChildren(parentIndexArr as string[])
+    })
   }
 
   // 处理单元格添加自定义
@@ -91,11 +95,11 @@ function TableTr(props: Props) {
   }
 
   // 菜单选项
-  const [items, setItems] = React.useState<MenuProps["items"]>([
+  const [items, setItems] = React.useState([
     {
       label: "复制",
       key: "1",
-      async onClick({ key }) {
+      async onClick() {
         const parentIndexArr = item.key
           ?.split("-")
           .slice(0, item.key?.split("-").length - 1) as string[]
@@ -133,7 +137,7 @@ function TableTr(props: Props) {
     {
       label: "删除",
       key: "4",
-      async onClick({ key }) {
+      async onClick() {
         // 调佣删除接口
         await deleteEBSApi({ id: item.id, project_id: PROJECT_ID })
         //   删除成功需要刷新父级节点下面的children
@@ -175,7 +179,7 @@ function TableTr(props: Props) {
       .slice(0, item.key?.split("-").length - 1) as string[]
 
     if (parentIndexArr.length == 0)
-      return setItems(havaSystemArr?.filter((item) => item!.key != "5") as MenuProps["items"])
+      return setItems(havaSystemArr?.filter((item) => item!.key != "5"))
 
     const parentItem = eval(`ctx.tableData[${parentIndexArr.join("].children[")}]`)
 
@@ -197,7 +201,7 @@ function TableTr(props: Props) {
         ? resArrNo5?.filter((item) => item!.key != "2")
         : resArrNo5
 
-    setItems(resNo2 as MenuProps["items"])
+    setItems(resNo2)
   }
 
   const [have2, setHave2] = React.useState(true)
@@ -297,55 +301,42 @@ function TableTr(props: Props) {
 
             <span>{item.name}</span>
           </div>
-          <Spin spinning={iconLoading} size="small">
-            {!iconLoading && (
-              <div className="text-[#6d6e6f] flex gap-x-1 w-[6.25rem] justify-end">
-                {!(item.is_loop == "no") && (
-                  <i
-                    className="iconfont icon-fuzhiwenjian w-4 aspect-square"
-                    title="复制"
-                    onClick={() => {
-                      handleTdCellCopy()
-                    }}></i>
-                )}
-                {have2 && (
-                  <i
-                    className="iconfont icon-jia w-4 aspect-square"
-                    title="添加"
-                    onClick={() => {
-                      handleTdCellAdd()
-                    }}></i>
-                )}
-                {item.is_system == "userdefined" && (
-                  <i
-                    className="iconfont icon-bianji w-4 aspect-square"
-                    title="修改"
-                    onClick={() => {
-                      handleTdCellEdit()
-                    }}></i>
-                )}
-                <Popconfirm
-                  title="Delete the task"
-                  description="Are you sure to delete this task?"
-                  onConfirm={() => {
-                    handleTdCellDelete()
-                  }}
-                  okText="Yes"
-                  cancelText="No">
-                  <i className="iconfont icon-shanchu w-4 aspect-square" title="删除"></i>
-                </Popconfirm>
 
-                {have5 && (
-                  <i
-                    className="iconfont icon-appstoreadd w-4 aspect-square"
-                    title="添加自定义"
-                    onClick={() => {
-                      handleTdCellAddCustom()
-                    }}></i>
-                )}
-              </div>
-            )}
-          </Spin>
+          {
+            <div className="text-[#6d6e6f] flex gap-x-1 w-[6.25rem] justify-end">
+              {!(item.is_loop == "no") && (
+                <i
+                  className="iconfont icon-fuzhiwenjian w-4 aspect-square"
+                  title="复制"
+                  onClick={() => {
+                    handleTdCellCopy()
+                  }}></i>
+              )}
+              {have2 && (
+                <i
+                  className="iconfont icon-jia w-4 aspect-square"
+                  title="添加已删除EBS"
+                  onClick={() => {
+                    handleTdCellAdd()
+                  }}></i>
+              )}
+              {item.is_system == "userdefined" && (
+                <i
+                  className="iconfont icon-bianji w-4 aspect-square"
+                  title="修改"
+                  onClick={() => {
+                    handleTdCellEdit()
+                  }}></i>
+              )}
+
+              <i
+                className="iconfont icon-shanchu w-4 aspect-square"
+                title="删除"
+                onClick={() => {
+                  handleTdCellDelete()
+                }}></i>
+            </div>
+          }
         </td>
         <td
           className="border p-4 whitespace-nowrap text-ellipsis overflow-hidden"

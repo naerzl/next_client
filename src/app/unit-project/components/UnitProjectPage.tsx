@@ -171,7 +171,7 @@ export default function UnitProjectPage() {
                     <Button
                       className="bg-railway_blue text-white w-[120px]"
                       onClick={() => {
-                        router.push(`/unit-project/ebs-detail?id=${row.id}`)
+                        router.push(`/unit-project/ebs-detail?id=${row.subpart_id}`)
                       }}>
                       分部、分项结构
                     </Button>

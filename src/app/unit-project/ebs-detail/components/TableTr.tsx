@@ -32,7 +32,7 @@ function TableTr(props: Props) {
   }
   return (
     <>
-      <tr className="grid grid-cols-8 border-t border-b">
+      <tr className="grid grid-cols-7 border-t border-b">
         <td
           className=" p-4 overflow-hidden cursor-pointer col-span-3 flex justify-between"
           title={item.name}>
@@ -61,7 +61,6 @@ function TableTr(props: Props) {
         <td className=" flex justify-center items-center">{EnumNodeClass[item.subpart_class]}</td>
         <td className=" flex justify-center items-center">{EnumNodeType[item.subpart_type]}</td>
         <td className=" flex justify-center items-center">{item.is_prefix == 0 ? "否" : "是"}</td>
-        <td className=" flex justify-center items-center"></td>
       </tr>
       {props.children}
     </>

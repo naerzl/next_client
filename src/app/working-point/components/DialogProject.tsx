@@ -69,6 +69,7 @@ export default function DialogProject(props: Props) {
     formState: { errors },
     register,
     reset,
+    trigger,
   } = useForm<IForm>({})
 
   const [unitOptions, setUnitOptions] = React.useState<UnitOptions[]>([])
@@ -165,7 +166,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.name)}
-                  {...register("name", { required: "请输入工点名称" })}
+                  {...register("name", {
+                    required: "请输入工点名称",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("name")
+                    },
+                  })}
                   placeholder="请输入工点名称"
                   autoComplete="off"
                 />
@@ -236,7 +246,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.start_tally)}
-                  {...register("start_tally", { required: "请输入开始" })}
+                  {...register("start_tally", {
+                    required: "请输入开始",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("start_tally")
+                    },
+                  })}
                   placeholder="请输入开始"
                   autoComplete="off"
                 />
@@ -261,7 +280,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.end_tally)}
-                  {...register("end_tally", { required: "请输入结束" })}
+                  {...register("end_tally", {
+                    required: "请输入结束",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("end_tally")
+                    },
+                  })}
                   placeholder="请输入结束"
                   autoComplete="off"
                 />

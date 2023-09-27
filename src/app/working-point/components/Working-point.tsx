@@ -158,7 +158,7 @@ export default function WorkingPoint() {
                         router.push(
                           `/ebs-data?code=${row.ebs_code}&type=${
                             row.subpart_name.startsWith("高速") ? "1" : "0"
-                          }`,
+                          }&sp=${row.parent_id}&si=${row.id}`,
                         )
                       }}>
                       EBS

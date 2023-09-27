@@ -54,6 +54,7 @@ export default function DialogProject(props: Props) {
     formState: { errors },
     register,
     reset,
+    trigger,
   } = useForm<IForm>({})
 
   const [options, setOptions] = React.useState<Option[]>([])
@@ -110,7 +111,7 @@ export default function DialogProject(props: Props) {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
-                <InputLabel htmlFor="name" className="mr-3 w-20 text-left mb-2.5" required>
+                <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
                   单位工程名称:
                 </InputLabel>
                 <TextField
@@ -119,7 +120,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.name)}
-                  {...register("name", { required: "请输入单位工程名称" })}
+                  {...register("name", {
+                    required: "请输入单位工程名称",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("name")
+                    },
+                  })}
                   placeholder="请输入单位工程名称"
                   autoComplete="off"
                 />
@@ -167,7 +177,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.start_mileage)}
-                  {...register("start_mileage", { required: "请输入开始里程" })}
+                  {...register("start_mileage", {
+                    required: "请输入开始里程",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("start_mileage")
+                    },
+                  })}
                   placeholder="请输入开始里程"
                   autoComplete="off"
                 />
@@ -192,7 +211,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.start_tally)}
-                  {...register("start_tally", { required: "请输入开始" })}
+                  {...register("start_tally", {
+                    required: "请输入开始",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("start_tally")
+                    },
+                  })}
                   placeholder="请输入开始"
                   autoComplete="off"
                 />
@@ -217,7 +245,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.end_mileage)}
-                  {...register("end_mileage", { required: "请输入结束里程" })}
+                  {...register("end_mileage", {
+                    required: "请输入结束里程",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("end_mileage")
+                    },
+                  })}
                   placeholder="请输入结束里程"
                   autoComplete="off"
                 />
@@ -242,7 +279,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.end_tally)}
-                  {...register("end_tally", { required: "请输入结束" })}
+                  {...register("end_tally", {
+                    required: "请输入结束",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("end_tally")
+                    },
+                  })}
                   placeholder="请输入结束"
                   autoComplete="off"
                 />
@@ -269,7 +315,16 @@ export default function DialogProject(props: Props) {
                   size="small"
                   fullWidth
                   error={Boolean(errors.calculate_value)}
-                  {...register("calculate_value", { required: "请输入长度m" })}
+                  {...register("calculate_value", {
+                    required: "请输入长度m",
+                    maxLength: {
+                      value: 16,
+                      message: "文本最多16个",
+                    },
+                    onBlur() {
+                      trigger("calculate_value")
+                    },
+                  })}
                   placeholder="请输入长度m"
                   autoComplete="off"
                 />

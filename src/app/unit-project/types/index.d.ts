@@ -22,12 +22,17 @@ export interface TypeProjectSubSectionData {
   parent_name: string
   code: string
   name: string
+  ebs_id: string
+  ebs_code: string
+  ebs_name: string
+  subpart_id: string
   subpart_name: string
   start_mileage: string
   end_mileage: string
   start_tally: string
   end_tally: string
   calculate_value: string
+  extend: string[]
 }
 
 // 添加分部分项数据 请求参数
