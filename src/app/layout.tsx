@@ -23,6 +23,9 @@ import {
 import { setCookie } from "@/libs/cookies"
 import { StatusCodes } from "http-status-codes"
 import dayjs from "dayjs"
+import { ConfirmationDialogProvider } from "@/components/ConfirmationDialogProvider"
+import { LocalizationProvider } from "@mui/x-date-pickers"
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -129,26 +132,30 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     <html lang="en" id="_next">
       <meta name="version" content="1.0.0" />
       <body className={`${inter.className} flex`}>
-        <StyledComponentsRegistry>
-          <SWRConfig value={{ provider: () => new Map() }}>
-            <ConfirmProvider>
-              {pathname != "/" ? (
-                <>
-                  <aside className="h-full w-60  min-w-[15rem]">
-                    {/*<Side items={menus} onClick={whenMenuClick} />*/}
-                    <Side />
-                  </aside>
-                  <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem] overflow-y-auto">
-                    <Nav />
-                    <main className="px-7.5 py-12  flex flex-col flex-1">{children}</main>
-                  </div>
-                </>
-              ) : (
-                <>{children}</>
-              )}
-            </ConfirmProvider>
-          </SWRConfig>
-        </StyledComponentsRegistry>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <StyledComponentsRegistry>
+            <SWRConfig value={{ provider: () => new Map() }}>
+              <ConfirmProvider>
+                <ConfirmationDialogProvider>
+                  {pathname != "/" ? (
+                    <>
+                      <aside className="h-full w-60  min-w-[15rem]">
+                        {/*<Side items={menus} onClick={whenMenuClick} />*/}
+                        <Side />
+                      </aside>
+                      <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem] overflow-y-auto">
+                        <Nav />
+                        <main className="px-7.5 py-12  flex flex-col flex-1">{children}</main>
+                      </div>
+                    </>
+                  ) : (
+                    <>{children}</>
+                  )}
+                </ConfirmationDialogProvider>
+              </ConfirmProvider>
+            </SWRConfig>
+          </StyledComponentsRegistry>
+        </LocalizationProvider>
       </body>
     </html>
   )

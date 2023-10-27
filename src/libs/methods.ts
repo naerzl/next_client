@@ -1,5 +1,8 @@
 import { OAUTH2_ACCESS_TOKEN } from "./const"
 import { getCookie } from "./cookies"
+import dayjs from "dayjs"
+import tz from "dayjs/plugin/timezone"
+import utc from "dayjs/plugin/utc"
 
 // oauth1.0发送statement
 
@@ -111,4 +114,10 @@ export function trim(str: string, ch: string) {
   while (end > start && str[end - 1] === ch) --end
 
   return start > 0 || end < str.length ? str.substring(start, end) : str
+}
+
+export function dateToYYYYMM(date: string | Date) {
+  dayjs.extend(tz)
+  dayjs.extend(utc)
+  return dayjs(date).tz("UTC").format("YYYY-MM-DD HH:mm:ss")
 }

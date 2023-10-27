@@ -4,7 +4,7 @@ import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined"
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined"
 import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
-
+import HiveOutlinedIcon from "@mui/icons-material/HiveOutlined"
 import {
   Collapse,
   List,
@@ -39,6 +39,24 @@ const menuList: { [key: string]: any } = {
       gantt: {
         path: "/gantt",
         title: "施工计划",
+      },
+    },
+  },
+  materialManagement: {
+    title: "物资管理",
+    icon: <HiveOutlinedIcon />,
+    children: {
+      "material-approach": {
+        path: "/material-approach",
+        title: "物资进场",
+      },
+      "material-processing": {
+        path: "/material-processing",
+        title: "物资加工",
+      },
+      "material-receipt": {
+        path: "/material-receipt",
+        title: "物资领用",
       },
     },
   },
