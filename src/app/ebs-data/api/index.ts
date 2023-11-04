@@ -29,7 +29,7 @@ export const reqPutEBS = (url: string, { arg }: FetchParams<TypeApiPutEBSParams>
 /*删除EBS结构*/
 export const reqDeleteEBS = (
   url: string,
-  { arg }: FetchParams<{ id: number; project_id: number }>,
+  { arg }: FetchParams<{ id: number; project_id: number; engineering_listing_id: number }>,
 ) => fetcher({ url, arg, method: "delete" })
 
 /*获取EBS指定code（父级）下级数量统计*/

@@ -17,6 +17,8 @@ import {
   MINTE5,
   OAUTH2_ACCESS_TOKEN,
   OAUTH2_PATH_FROM,
+  OAUTH2_PROJECT_ID,
+  OAUTH2_PROJECT_NAME,
   OAUTH2_TOKEN_EXPIRY,
   STATUS_SUCCESS,
 } from "@/libs/const"
@@ -26,6 +28,8 @@ import dayjs from "dayjs"
 import { ConfirmationDialogProvider } from "@/components/ConfirmationDialogProvider"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
+import { reqGetCurrentProject } from "@/app/member-department/api"
+import dynamic from "next/dynamic"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -80,19 +84,48 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     }
   }
 
-  const refreshToken = async (token: string) => {
-    const resRefresh = await lrsOAuth2Instance.lrsOAuth2rRefreshToken(
-      getV1BaseURL("/refresh"),
-      `Bearer ${token}`,
-    )
-    if (resRefresh.status == StatusCodes.UNAUTHORIZED) {
-      throw new Error("401")
+  React.useEffect(() => {
+    if (segment != "auth2") {
+      reqGetCurrentProject("/project/current").then((res) => {
+        const obj = res.find((item) => item.is_default == 1)
+        if (obj) {
+          setCookie(OAUTH2_PROJECT_NAME, obj.project.name)
+          setCookie(OAUTH2_PROJECT_ID, String(obj.project.id))
+        } else {
+          setCookie(OAUTH2_PROJECT_NAME, res[0].project.name)
+          setCookie(OAUTH2_PROJECT_ID, String(res[0].project.id))
+        }
+
+        // const id = res.
+        // setCookie(OAUTH2_PROJECT_ID, String(res.id))
+
+        // console.log(PROJECT_ID)
+      })
+
+      // setCookie(OAUTH2_PROJECT_ID, "2")
     }
-    const result = await resRefresh.json()
-    if (result.code == STATUS_SUCCESS) {
-      // 设置新的cookie
-      // setCookie(OAUTH2_ACCESS_TOKEN, result.data.access_token)
-      localStorage.setItem(OAUTH2_ACCESS_TOKEN, result.data.access_token)
+  }, [segment])
+
+  const [waitToken, setWaitToken] = React.useState(false)
+
+  const refreshToken = async (token: string) => {
+    try {
+      setWaitToken(true)
+      const resRefresh = await lrsOAuth2Instance.lrsOAuth2rRefreshToken(
+        getV1BaseURL("/refresh"),
+        `Bearer ${token}`,
+      )
+      if (resRefresh.status == StatusCodes.UNAUTHORIZED) {
+        throw new Error("401")
+      }
+      const result = await resRefresh.json()
+      if (result.code == STATUS_SUCCESS) {
+        // 设置新的cookie
+        // setCookie(OAUTH2_ACCESS_TOKEN, result.data.access_token)
+        localStorage.setItem(OAUTH2_ACCESS_TOKEN, result.data.access_token)
+      }
+    } finally {
+      setWaitToken(false)
     }
   }
 
@@ -115,7 +148,7 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     }
   }, [pathname])
 
-  if (!accessToken && segment && segment != "auth2") {
+  if ((!accessToken && segment && segment != "auth2") || waitToken) {
     return (
       <html lang="en" id="_next">
         <meta name="version" content="1.0.0" />

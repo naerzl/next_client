@@ -1,10 +1,13 @@
 "use client"
 import React from "react"
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined"
-import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined"
+import OutboxIcon from "@mui/icons-material/Outbox"
 import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
 import HiveOutlinedIcon from "@mui/icons-material/HiveOutlined"
+import SupervisedUserCircleOutlinedIcon from "@mui/icons-material/SupervisedUserCircleOutlined"
+import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined"
+import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined"
 import {
   Collapse,
   List,
@@ -14,14 +17,20 @@ import {
   ListSubheader,
 } from "@mui/material"
 import { usePathname, useRouter } from "next/navigation"
+import { getCookie } from "@/libs/cookies"
+import { OAUTH2_PROJECT_NAME } from "@/libs/const"
 
 export const dynamic = "force-dynamic"
 
 const menuList: { [key: string]: any } = {
   commonLibrary: {
     title: "工程结构",
-    icon: <ArchiveOutlinedIcon />,
+    icon: <HandymanOutlinedIcon />,
     children: {
+      "basic-engineering-management": {
+        path: "/basic-engineering-management",
+        title: "构筑物",
+      },
       "unit-project": {
         path: "/unit-project",
         title: "单位工程",
@@ -32,16 +41,7 @@ const menuList: { [key: string]: any } = {
       },
     },
   },
-  dataTemplate: {
-    title: "功能模块",
-    icon: <TuneOutlinedIcon />,
-    children: {
-      gantt: {
-        path: "/gantt",
-        title: "施工计划",
-      },
-    },
-  },
+
   materialManagement: {
     title: "物资管理",
     icon: <HiveOutlinedIcon />,
@@ -57,6 +57,52 @@ const menuList: { [key: string]: any } = {
       "material-receipt": {
         path: "/material-receipt",
         title: "物资领用",
+      },
+    },
+  },
+  dataTemplate: {
+    title: "功能模块",
+    icon: <TuneOutlinedIcon />,
+    children: {
+      gantt: {
+        path: "/gantt",
+        title: "施工计划",
+      },
+    },
+  },
+  userManagement: {
+    title: "用户管理",
+    icon: <SupervisedUserCircleOutlinedIcon />,
+    open: false,
+    children: {
+      "member-department": {
+        path: "/member-department",
+        title: "成员部门",
+        open: false,
+      },
+    },
+  },
+  completionManagement: {
+    title: "竣工管理",
+    icon: <EventAvailableOutlinedIcon />,
+    open: false,
+    children: {
+      "completion-management": {
+        path: "/completion-management",
+        title: "竣工资料",
+        open: false,
+      },
+    },
+  },
+  queue: {
+    title: "导出管理",
+    icon: <OutboxIcon />,
+    open: false,
+    children: {
+      queue: {
+        path: "/queue",
+        title: "导出任务",
+        open: false,
       },
     },
   },
@@ -116,7 +162,11 @@ function side() {
             className="h-16 flex items-center gap-1 max-h-16"
             sx={{ fontSize: "24px" }}>
             <img src={logo} alt="" className="w-10 h-10" />
-            <div className="text-base font-bold text-railway_303">工程数字化管理系统</div>
+            <div className="text-base font-bold text-railway_303">
+              {getCookie(OAUTH2_PROJECT_NAME)
+                ? getCookie(OAUTH2_PROJECT_NAME)
+                : "工程数字化管理系统"}
+            </div>
           </ListSubheader>
         }>
         {Object.keys(menuList).map((key, index) => (

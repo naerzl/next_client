@@ -8,9 +8,8 @@ import Radio from "@mui/material/Radio"
 import { TypeApiGetEBSParams, TypeApiPutEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
 import dayjs from "dayjs"
 import useSWRMutation from "swr/mutation"
-import { reqGetEBS } from "@/app/ceshi/api"
 import { PROJECT_ID } from "@/libs/const"
-import { reqPutEBS } from "../api/index"
+import { reqPutEBS, reqGetEBS } from "../api/index"
 import { Breadcrumbs, MenuItem, Select } from "@mui/material"
 import { reqGetCodeCount } from "@/app/ebs-data/api"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
@@ -165,7 +164,7 @@ const changeRes2GanttData = (
 const params = {
   project_id: PROJECT_ID,
   level: 1,
-  is_hidde: 0,
+  is_hidden: 0,
 } as TypeApiGetEBSParams
 
 const GanttPage = () => {
@@ -217,7 +216,7 @@ const GanttPage = () => {
     getProjectSubSectionApi({ is_subset: 1, project_id: PROJECT_ID }).then((res) => {
       setWorkingSelectOption(changeRes2SelectOptionListData(res || []))
     })
-    getProjectSubSectionApi({ is_subset: 0, project_id: PROJECT_ID, is_s_data: 1 }).then((res) => {
+    getProjectSubSectionApi({ project_id: PROJECT_ID, is_s_data: 1 }).then((res) => {
       StorageProjectDataRef.current = res
       changeAndRenderGanttLists(res, "project")
       setProjectSelectOption(changeRes2SelectOptionListData(res || []))
@@ -323,7 +322,7 @@ const GanttPage = () => {
 
   // 获取工点数据的字节
   const getWorkingSubGanttList = (item: any) => {
-    getEBSApi({ project_id: PROJECT_ID, level: 2, is_hidde: 0, code: item.ebs_code }).then(
+    getEBSApi({ project_id: PROJECT_ID, level: 2, is_hidden: 0, code: item.ebs_code }).then(
       async (res) => {
         const renderArr = await getEBSChildrenCount(res, { ...item, code: item.ebs_code, level: 1 })
         changeAndRenderGanttLists(renderArr, "ebs", item.id)

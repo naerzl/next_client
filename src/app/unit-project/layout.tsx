@@ -26,9 +26,7 @@ export default function UnitProjectLayout({ children }: { children: React.ReactN
 
   // 获取表格数据方法
   const getProjectSubSection = async (option?: TypeGetProjectSubSectionParams) => {
-    const res = await getProjectSubSectionApi(
-      option ? { is_subset: 0, ...option } : { is_subset: 0, project_id: PROJECT_ID },
-    )
+    const res = await getProjectSubSectionApi(option ? { ...option } : { project_id: PROJECT_ID })
     setTableList(res || [])
   }
 
@@ -46,9 +44,17 @@ export default function UnitProjectLayout({ children }: { children: React.ReactN
   const handleAddTableList = () => {
     setTableList([{} as TypeProjectSubSectionData, ...tableList])
   }
+
+  const [editItem, setEditItem] = React.useState<TypeProjectSubSectionData | null>(null)
+
+  const changeEditItem = (item: TypeProjectSubSectionData | null) => {
+    setEditItem(item)
+  }
+
   return (
-    <UnitProjectContext.Provider value={{ tableList, getProjectSubSection, professionList }}>
-      <div className=" unit_project">{children}</div>
+    <UnitProjectContext.Provider
+      value={{ tableList, getProjectSubSection, professionList, editItem, changeEditItem }}>
+      <div className="min-h-full unit_project">{children}</div>
     </UnitProjectContext.Provider>
   )
 }

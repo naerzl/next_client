@@ -17,7 +17,6 @@ import {
   MaterialReceiveData,
 } from "@/app/material-receipt/types"
 import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
-import { reqGetEBS } from "@/app/ceshi/api"
 
 type AllSelectType = {
   ebs_id: number | null
@@ -152,7 +151,7 @@ export default function AddOrEditMaterial(props: Props) {
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
   React.useEffect(() => {
-    getEBSApi({ is_hidde: 0, project_id: PROJECT_ID, level: 1 }).then((res) => {
+    getEBSApi({ is_hidden: 0, project_id: PROJECT_ID, level: 1 }).then((res) => {
       console.log(res)
       if (res && res.length > 0) {
         setEBSOption(res.map((e) => ({ ...e, title: e.name, value: e.id })))

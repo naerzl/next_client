@@ -5,6 +5,6 @@
     "react-hooks/exhaustive-deps": "off",
     "vars-on-top": "warn",
     "no-unused-vars": "warn",
-    "react-hooks/rules-of-hooks":"off"
+    "react-hooks/rules-of-hooks": "off"
   }
 }

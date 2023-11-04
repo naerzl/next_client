@@ -25,6 +25,12 @@ export const reqPostProjectSubSection = (
   { arg }: FetchParams<TypePostProjectSubSectionParams>,
 ) => fetcher({ url, method: "post", arg })
 
+// 添加分部分项数据
+export const reqPutProjectSubSection = (
+  url: string,
+  { arg }: FetchParams<TypePostProjectSubSectionParams>,
+) => fetcher({ url, method: "put", arg })
+
 // 删除分部分项数据
 export const reqDelProjectSubSection = (url: string, { arg }: FetchParams<{ id: number }>) =>
   fetcher({ url, method: "delete", arg })

@@ -4,7 +4,6 @@ import WorkingPointContext from "@/app/working-point/context/workingPointContext
 import { useRouter } from "next/navigation"
 import useSWRMutation from "swr/mutation"
 import { reqDelProjectSubSection } from "@/app/working-point/api"
-import DialogProject from "@/app/working-point/components/DialogProject"
 import { PROJECT_ID } from "@/libs/const"
 import { Breadcrumbs, Button, InputAdornment, InputBase } from "@mui/material"
 import Link from "@mui/material/Link"
@@ -16,6 +15,9 @@ import TableBody from "@mui/material/TableBody"
 import IconButton from "@mui/material/IconButton"
 import SearchIcon from "@mui/icons-material/Search"
 import Table from "@mui/material/Table"
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
+import { TypeProjectSubSectionData } from "@/app/working-point/types"
 
 export default function WorkingPoint() {
   const ctx = React.useContext(WorkingPointContext)
@@ -47,23 +49,7 @@ export default function WorkingPoint() {
       dataIndex: "name",
       key: "name",
     },
-    {
-      title: "EBS专业名称",
-      dataIndex: "ebs_name",
-      key: "ebs_name",
-    },
 
-    {
-      title: "开始",
-      dataIndex: "start_tally",
-      key: "start_tally",
-    },
-
-    {
-      title: "结束",
-      dataIndex: "end_tally",
-      key: "end_tally",
-    },
     {
       title: "所属单位工程",
       dataIndex: "parent_name",
@@ -82,6 +68,12 @@ export default function WorkingPoint() {
   const handleClickSearch = (value: string) => {
     ctx.getProjectSubSection({ name: value, project_id: PROJECT_ID })
   }
+
+  const handleClickEdit = (row: TypeProjectSubSectionData) => {
+    router.push(`/working-point/detail?spId=${row.parent_id}&siId=${row.id}`)
+    ctx.changeEditItem(row)
+  }
+
   return (
     <>
       <h3 className="font-bold text-[1.875rem]">工点数据</h3>
@@ -100,11 +92,10 @@ export default function WorkingPoint() {
           <Button
             className="bg-railway_blue text-white"
             onClick={() => {
-              setDialogOpen(true)
+              router.push("/working-point/detail")
             }}>
             添加
           </Button>
-          <Button className="bg-railway_blue text-white">导出</Button>
         </div>
         <div>
           <InputBase
@@ -133,7 +124,7 @@ export default function WorkingPoint() {
           <TableHead sx={{ position: "sticky", top: "64px", zIndex: 5 }}>
             <TableRow>
               {columns.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.key == "action" ? "150px" : "auto" }}>
+                <TableCell key={col.key} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
                   {col.title}
                 </TableCell>
               ))}
@@ -146,27 +137,24 @@ export default function WorkingPoint() {
                   {row.id}
                 </TableCell>
                 <TableCell align="left">{row.name}</TableCell>
-                <TableCell align="left">{row.ebs_name}</TableCell>
-                <TableCell align="left">{row.start_tally}</TableCell>
-                <TableCell align="left">{row.end_tally}</TableCell>
-                <TableCell align="left">{row.parent_name}</TableCell>
+                <TableCell align="left">{row.parent ? row.parent.name : ""}</TableCell>
                 <TableCell align="left">
                   <div className="flex justify-between">
                     <Button
-                      className="bg-railway_blue text-white"
+                      variant="outlined"
                       onClick={() => {
-                        router.push(
-                          `/ebs-data?code=${row.ebs_code}&type=${
-                            row.subpart_name.startsWith("高速") ? "1" : "0"
-                          }&sp=${row.parent_id}&si=${row.id}`,
-                        )
-                      }}>
-                      EBS
+                        handleClickEdit(row)
+                      }}
+                      startIcon={<EditOutlinedIcon />}>
+                      编辑
                     </Button>
                     <Button
+                      variant="outlined"
+                      color="error"
                       onClick={() => {
                         handleClickDelete(row.id)
-                      }}>
+                      }}
+                      startIcon={<DeleteOutlineIcon />}>
                       删除
                     </Button>
                   </div>
@@ -176,9 +164,9 @@ export default function WorkingPoint() {
           </TableBody>
         </Table>
       </div>
-      {dialogOpen && (
-        <DialogProject open={dialogOpen} changeDialogOpen={changeDialogOpen}></DialogProject>
-      )}
+      {/*{dialogOpen && (*/}
+      {/*  <DialogProject open={dialogOpen} changeDialogOpen={changeDialogOpen}></DialogProject>*/}
+      {/*)}*/}
     </>
   )
 }

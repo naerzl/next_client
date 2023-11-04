@@ -104,7 +104,6 @@ export default function AddOrEditMaterial(props: Props) {
       setValue("certificate_number", editItem.certificate_number)
       setValue("supplier", editItem.supplier)
       setValue("arrivaled_quantity", editItem.arrivaled_quantity)
-      setValue("entrust_number", editItem.entrust_number)
       setValue("manufacturer", editItem.manufacturer)
       setValue("storage_location", editItem.storage_location)
       setQualified(editItem.status)
@@ -114,9 +113,9 @@ export default function AddOrEditMaterial(props: Props) {
 
   const [timeAt, setTimeAt] = React.useState<Dayjs | null>(dayjs(new Date()))
 
-  const [qualified, setQualified] = React.useState("unqualified")
+  const [qualified, setQualified] = React.useState("qualified")
 
-  const [classValue, setClassValue] = React.useState("")
+  const [classValue, setClassValue] = React.useState("null")
 
   const {
     handleSubmit,
@@ -150,7 +149,6 @@ export default function AddOrEditMaterial(props: Props) {
       params.certificate_number = values.certificate_number
       params.supplier = values.supplier
       params.arrivaled_quantity = values.arrivaled_quantity
-      params.entrust_number = values.entrust_number
       params.manufacturer = values.manufacturer
       params.storage_location = values.storage_location
       params.arrivaled_at = timeAt?.format("YYYY-MM-DD HH:mm:ss") as string
@@ -211,6 +209,9 @@ export default function AddOrEditMaterial(props: Props) {
                 到货日期:
               </InputLabel>
               <DateTimePicker
+                // views={["year", "month", "day"]}
+                format="YYYY-MM-DD HH:mm"
+                ampm={false}
                 label="到货日期"
                 value={timeAt}
                 className="w-full"
@@ -237,6 +238,9 @@ export default function AddOrEditMaterial(props: Props) {
                   setClassValue(event.target.value)
                 }}
                 fullWidth>
+                <MenuItem value="null" disabled>
+                  <i className="text-[#ababab]">请选择一个物资类别</i>
+                </MenuItem>
                 {CLASS_OPTION.map((item: any) => (
                   <MenuItem value={item.value} key={item.value}>
                     {item.label}
@@ -284,7 +288,7 @@ export default function AddOrEditMaterial(props: Props) {
                   }}
                   fullWidth>
                   <MenuItem value={0} disabled>
-                    <i className="text-[#ababab]">请选择一个字典</i>
+                    <i className="text-[#ababab]">请选择一个物资</i>
                   </MenuItem>
                   {dictionaryList.map((item: any) => (
                     <MenuItem value={item.id} key={item.id}>
@@ -405,53 +409,6 @@ export default function AddOrEditMaterial(props: Props) {
                 <p className="text-railway_error text-sm absolute">{message}</p>
               )}
             />
-          </div>
-
-          <div className="mb-8 relative">
-            <div className="flex items-start flex-col">
-              <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
-                委托单编号:
-              </InputLabel>
-              <TextField
-                variant="outlined"
-                id="name"
-                size="small"
-                fullWidth
-                error={Boolean(errors.entrust_number)}
-                {...register("entrust_number", {
-                  required: "请输入委托单编号",
-                  onBlur() {
-                    trigger("entrust_number")
-                  },
-                })}
-                label="委托单编号"
-                autoComplete="off"
-              />
-            </div>
-            <ErrorMessage
-              errors={errors}
-              name="entrust_number"
-              render={({ message }) => (
-                <p className="text-railway_error text-sm absolute">{message}</p>
-              )}
-            />
-          </div>
-
-          <div className="mb-8 relative">
-            <div className="flex items-start flex-col">
-              <InputLabel htmlFor="name111" className="mr-3 w-full text-left mb-2.5" required>
-                上传委托单:
-              </InputLabel>
-              <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
-                Upload file
-                <VisuallyHiddenInput
-                  type="file"
-                  onChange={(event) => {
-                    handleUpload(event)
-                  }}
-                />
-              </Button>
-            </div>
           </div>
 
           <div className="mb-8 relative">

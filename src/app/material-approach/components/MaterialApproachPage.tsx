@@ -118,7 +118,7 @@ export default function MaterialApproachPage() {
   const [swrState, setSWRState] = React.useState<GetMaterialApproachParams>({
     page: 1,
     limit: 20,
-    project_id: 1,
+    project_id: PROJECT_ID,
   })
 
   const { trigger: getMaterialApproach, isMutating } = useSWRMutation(

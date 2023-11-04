@@ -42,7 +42,7 @@ export interface TypeEBSDataList {
   level: number
   unit: string
   is_loop: "yes" | "no"
-  is_system: "platform" | "system" | "userdefined" | "null"
+  class: "platform" | "system" | "userdefined" | "null"
   has_structure: string
   structure_status: string
   has_children: string

@@ -40,11 +40,20 @@ export default function WorkingPointLayout({ children }: { children: React.React
 
   React.useEffect(() => {
     getProjectSubSection()
-    getSubSection()
+    // getSubSection()
   }, [])
 
+  const [editItem, setEditItem] = React.useState<TypeProjectSubSectionData | null>(null)
+
+  const changeEditItem = (item: TypeProjectSubSectionData | null) => {
+    setEditItem(item)
+
+    console.log(item)
+  }
+
   return (
-    <WorkingPointContext.Provider value={{ tableList, getProjectSubSection, professionList }}>
+    <WorkingPointContext.Provider
+      value={{ tableList, getProjectSubSection, professionList, editItem, changeEditItem }}>
       <div className="h-full">{children}</div>
     </WorkingPointContext.Provider>
   )

@@ -2,7 +2,6 @@
 import React from "react"
 import useSWRMutation from "swr/mutation"
 import UnitProjectContext from "@/app/unit-project/context/unitProjectContext"
-import DialogProject from "@/app/unit-project/components/DialogProject"
 import { reqDelProjectSubSection } from "@/app/unit-project/api"
 import { useRouter } from "next/navigation"
 import { PROJECT_ID } from "@/libs/const"
@@ -16,7 +15,20 @@ import TableHead from "@mui/material/TableHead"
 import TableRow from "@mui/material/TableRow"
 import IconButton from "@mui/material/IconButton"
 import SearchIcon from "@mui/icons-material/Search"
-import useHooksConfirm from "@/hooks/useHooksConfirm"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
+
+const renderTableTd = (arr: any[], type: "name" | "ebs"): string => {
+  switch (type) {
+    case "ebs":
+      return arr.map((item) => item.ebs_name).join("，")
+    case "name":
+      return arr.map((item) => item.name + `(${item.ebs_name})`).join("，")
+    default:
+      return ""
+  }
+}
 
 export default function UnitProjectPage() {
   const ctx = React.useContext(UnitProjectContext)
@@ -30,11 +42,11 @@ export default function UnitProjectPage() {
     reqDelProjectSubSection,
   )
 
-  const { handleConfirm } = useHooksConfirm()
+  const { showConfirmationDialog } = useConfirmationDialog()
 
   // 处理点击删除
   const handleClickDelete = (id: number) => {
-    handleConfirm(async () => {
+    showConfirmationDialog("确认删除吗？", async () => {
       await delProjectSubSection({ id })
       ctx.getProjectSubSection()
     })
@@ -43,7 +55,7 @@ export default function UnitProjectPage() {
   // 表格配置列
   const columns = [
     {
-      title: "编号",
+      title: "id",
       dataIndex: "code",
       key: "code",
     },
@@ -53,35 +65,11 @@ export default function UnitProjectPage() {
       key: "name",
     },
     {
-      title: "专业名称",
+      title: "基础工程",
       dataIndex: "subpart_name",
       key: "subpart_name",
     },
-    {
-      title: "开始里程",
-      dataIndex: "start_mileage",
-      key: "start_mileage",
-    },
-    {
-      title: "开始",
-      dataIndex: "start_tally",
-      key: "start_tally",
-    },
-    {
-      title: "结束里程",
-      dataIndex: "end_mileage",
-      key: "end_mileage",
-    },
-    {
-      title: "结束",
-      dataIndex: "end_tally",
-      key: "end_tally",
-    },
-    {
-      title: "长度m",
-      dataIndex: "calculate_value",
-      key: "calculate_value",
-    },
+
     {
       width: "400px",
       title: "操作",
@@ -115,7 +103,8 @@ export default function UnitProjectPage() {
           <Button
             className="bg-railway_blue text-white"
             onClick={() => {
-              setDialogOpen(true)
+              router.push("/unit-project/detail")
+              ctx.changeEditItem(null)
             }}>
             添加
           </Button>
@@ -147,7 +136,7 @@ export default function UnitProjectPage() {
           <TableHead sx={{ position: "sticky", top: "64px", zIndex: 5 }}>
             <TableRow>
               {columns.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.key == "action" ? "150px" : "auto" }}>
+                <TableCell key={col.key} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
                   {col.title}
                 </TableCell>
               ))}
@@ -155,30 +144,33 @@ export default function UnitProjectPage() {
           </TableHead>
           <TableBody>
             {ctx.tableList.map((row) => (
-              <TableRow key={row.code} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+              <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                 <TableCell component="th" scope="row">
-                  {row.code}
+                  {row.id}
                 </TableCell>
                 <TableCell align="left">{row.name}</TableCell>
-                <TableCell align="left">{row.subpart_name}</TableCell>
-                <TableCell align="left">{row.start_mileage}</TableCell>
-                <TableCell align="left">{row.start_tally}</TableCell>
-                <TableCell align="left">{row.end_mileage}</TableCell>
-                <TableCell align="left">{row.end_tally}</TableCell>
-                <TableCell align="left">{row.calculate_value}</TableCell>
+                <TableCell align="left">
+                  {renderTableTd(row.engineering_listings, "name")}
+                </TableCell>
+
                 <TableCell align="left">
                   <div className="flex justify-between">
                     <Button
-                      className="bg-railway_blue text-white w-[120px]"
+                      variant="outlined"
                       onClick={() => {
-                        router.push(`/unit-project/ebs-detail?id=${row.subpart_id}`)
-                      }}>
-                      分部、分项结构
+                        router.push(`/unit-project/detail?spId=${row.id}`)
+                        ctx.changeEditItem(row)
+                      }}
+                      startIcon={<EditOutlinedIcon />}>
+                      编辑
                     </Button>
                     <Button
+                      variant="outlined"
+                      color="error"
                       onClick={() => {
                         handleClickDelete(row.id)
-                      }}>
+                      }}
+                      startIcon={<DeleteOutlineIcon />}>
                       删除
                     </Button>
                   </div>
@@ -188,7 +180,6 @@ export default function UnitProjectPage() {
           </TableBody>
         </Table>
       </div>
-      <DialogProject open={dialogOpen} changeDialogOpen={changeDialogOpen}></DialogProject>
     </>
   )
 }

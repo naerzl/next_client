@@ -98,7 +98,7 @@ export default function MaterialReceiptPage() {
   const [swrState, setSWRState] = React.useState<GetMaterialReceiveParams>({
     page: 1,
     limit: 20,
-    project_id: 1,
+    project_id: PROJECT_ID,
   })
 
   const { trigger: getMaterialReceive, isMutating } = useSWRMutation(

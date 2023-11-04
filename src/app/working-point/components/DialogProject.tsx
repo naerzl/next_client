@@ -87,7 +87,7 @@ export default function DialogProject(props: Props) {
       }
     })
 
-    getEBSApi({ project_id: PROJECT_ID, is_hidde: 0 }).then((res) => {
+    getEBSApi({ project_id: PROJECT_ID, is_hidden: 0 }).then((res) => {
       if (res && res.length > 0) {
         setEBSOption(
           res.map(

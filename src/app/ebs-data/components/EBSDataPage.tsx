@@ -55,7 +55,9 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = ""): TypeEBSDataList[]
 export default function EBSDataPage(props: any) {
   // 获取EBS结构数据
   const { trigger: getEBSApi, isMutating } = useSWRMutation("/ebs", reqGetEBS)
+
   const [tableData, setTableData] = React.useState<TypeEBSDataList[]>([])
+
   const searchParams = useSearchParams()
 
   const {
@@ -73,7 +75,12 @@ export default function EBSDataPage(props: any) {
 
   // 页面加载获取数据
   React.useEffect(() => {
-    getEBSApi({ project_id: PROJECT_ID, level: 1, is_hidde: 0 }).then((res) => {
+    getEBSApi({
+      project_id: PROJECT_ID,
+      level: 1,
+      is_hidden: 0,
+      engineering_listing_id: Number(searchParams.get("baseId")),
+    }).then((res) => {
       if (res) {
         const filterRes = searchParams.get("code")
           ? res.filter((item) => item.code == searchParams.get("code"))
@@ -107,8 +114,6 @@ export default function EBSDataPage(props: any) {
   // 控制表格加载状态
   const [tableLoading, setTableLoading] = React.useState(false)
 
-  const { trigger: getCodeCountApi } = useSWRMutation("/ebs/code-count", reqGetCodeCount)
-
   // 列表展开合并触发的方法
   const handleExpandChange = async (expanded: boolean, record: TypeEBSDataList) => {
     setTableLoading(true)
@@ -118,51 +123,34 @@ export default function EBSDataPage(props: any) {
         code: record.code,
         project_id: PROJECT_ID,
         level: record.level + 1,
-        is_hidde: 0,
+        is_hidden: 0,
+        engineering_listing_id: Number(searchParams.get("baseId")),
       })
 
-      if (res.length > 0) {
-        // 获取子节点的code数组
-        const codeArr = res.map((item) => item.code)
-        // 获取子节点
-        const resCount = await getCodeCountApi({
-          code: JSON.stringify(codeArr),
-          // code: JSON.stringify(["0102", "0101"]),
-          level: record.level + 2,
-          is_hidden: 0,
-          project_id: PROJECT_ID,
-        })
-        if (Object.keys(resCount).length > 0) {
-          const childrenArr = res.map((item) => ({
-            ...item,
-            childrenCount: resCount[String(item.code) as any] || {
-              platform: 0,
-              system: 0,
-              userdefined: 0,
-              none: 0,
-            },
-          }))
-          renderTreeArr(childrenArr, record.key as string)
-        } else {
-          const childrenArr = res.map((item) => ({
-            ...item,
-            childrenCount: { platform: 0, system: 0, userdefined: 0, none: 0 },
-          }))
-          renderTreeArr(childrenArr, record.key as string)
-        }
-      }
+      renderTreeArr(res, record.key as string)
+      return res.length
     } else {
       renderTreeArrOfCloseChildren(record.key as string)
     }
     setTableLoading(false)
+    return 1
   }
 
   // 获取父级的子集节点
   const handleGetParentChildren = async (parentIndexArr: string[]) => {
-    if (parentIndexArr[0] == "") {
-      getEBSApi({ project_id: PROJECT_ID, level: 1, is_hidde: 0 }).then((res) => {
+    if (parentIndexArr[0] == undefined) {
+      getEBSApi({
+        project_id: PROJECT_ID,
+        level: 1,
+        is_hidden: 0,
+        engineering_listing_id: Number(searchParams.get("baseId")),
+      }).then((res) => {
         if (res) {
-          const newArr = changeTreeArr(res)
+          const filterRes = searchParams.get("code")
+            ? res.filter((item) => item.code == searchParams.get("code"))
+            : res
+
+          const newArr = changeTreeArr(filterRes)
           setTableData(newArr)
         }
       })
@@ -174,7 +162,8 @@ export default function EBSDataPage(props: any) {
         code: parentItem.code,
         project_id: PROJECT_ID,
         level: parentItem.level + 1,
-        is_hidde: 0,
+        is_hidden: 0,
+        engineering_listing_id: Number(searchParams.get("baseId")),
       })
 
       renderTreeArr(res, parentItem.key as string)
@@ -183,8 +172,9 @@ export default function EBSDataPage(props: any) {
 
   // 渲染表格每一行
   const renderTableTr = (arr: TypeEBSDataList[]) => {
-    return arr.map((item) => (
+    return arr.map((item, index) => (
       <TableTr
+        isLastOne={index == arr.length - 1}
         item={item}
         key={item.id}
         handleGetParentChildren={handleGetParentChildren}
@@ -201,17 +191,21 @@ export default function EBSDataPage(props: any) {
 
   return (
     <EBSDataContext.Provider value={{ handleExpandChange, tableData }}>
-      <h3 className="font-bold text-[1.875rem]">EBS模板</h3>
+      <h3 className="font-bold text-[1.875rem]">工程结构</h3>
       <div className="mb-9 mt-7">
         <Breadcrumbs aria-label="breadcrumb" separator=">">
           <Link underline="hover" color="inherit" href="/dashboard">
             <i className="iconfont icon-homefill" style={{ fontSize: "14px" }}></i>
           </Link>
-          <Link underline="hover" color="inherit" href="/working-point" sx={{ fontSize: "14px" }}>
-            工点数据
+          <Link
+            underline="hover"
+            color="inherit"
+            href="/basic-engineering-management"
+            sx={{ fontSize: "14px" }}>
+            构筑物
           </Link>
           <Typography color="text.primary" sx={{ fontSize: "14px" }}>
-            EBS模板
+            工程结构
           </Typography>
         </Breadcrumbs>
       </div>
@@ -231,15 +225,17 @@ export default function EBSDataPage(props: any) {
             </thead>
             <tbody>{renderTableTr(tableData)}</tbody>
           </table>
-          <DialogEBS
-            open={dialogOpen}
-            item={item}
-            changeDialogOpen={changeDialogOpen}
-            deletedDataList={deletedDataList}
-            addType={addType}
-            isEdit={isEdit}
-            handleGetParentChildren={handleGetParentChildren}
-            changeIsEdit={changeIsEdit}></DialogEBS>
+          {dialogOpen && (
+            <DialogEBS
+              open={dialogOpen}
+              item={item}
+              changeDialogOpen={changeDialogOpen}
+              deletedDataList={deletedDataList}
+              addType={addType}
+              isEdit={isEdit}
+              handleGetParentChildren={handleGetParentChildren}
+              changeIsEdit={changeIsEdit}></DialogEBS>
+          )}
         </div>
       </div>
     </EBSDataContext.Provider>

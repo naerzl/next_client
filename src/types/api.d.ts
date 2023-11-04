@@ -1,3 +1,5 @@
+declare module "react-file-viewer"
+
 export interface FetchParams<T> {
   arg: T
 }

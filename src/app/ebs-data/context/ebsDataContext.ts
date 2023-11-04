@@ -2,10 +2,10 @@ import React from "react"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
 
 const EBSDataContext = React.createContext<{
-  handleExpandChange: (expanded: boolean, record: TypeEBSDataList) => void
+  handleExpandChange: (expanded: boolean, record: TypeEBSDataList) => Promise<any>
   tableData: TypeEBSDataList[]
 }>({
-  handleExpandChange: () => {},
+  handleExpandChange: () => Promise.resolve(),
   tableData: [],
 })
 

@@ -9,7 +9,7 @@ import ganttContext from "@/app/gantt/context/ganttContext"
 import { message } from "antd"
 import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
-import { reqPostEBS } from "@/app/ebs-data/api"
+import { reqPostEBS, reqGetEBS } from "@/app/ebs-data/api"
 import { PILE_CODE } from "@/app/gantt/const"
 
 type Props = {
@@ -218,7 +218,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
               is_copy: 1,
               ebs_id: +task.id,
               project_id: PROJECT_ID,
-              is_system: task.is_system,
+              class: task.class,
               next_ebs_id: +String(parentItem.id).replace(/[a-zA-Z]/, ""),
               project_sp_id: +String(topTask.id).replace(/[a-zA-Z]/, ""),
               project_si_id: +String(secondTask.id).replace(/[a-zA-Z]/, ""),
@@ -358,8 +358,8 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
         if (e.target.className.includes("gantt_task_content")) {
           const task = gantt.getTask(taskId)
           const someOne = PILE_CODE.some((code) => task.code != code && task.code.startsWith(code))
-          console.log(someOne, task.is_system)
-          if (someOne && task.is_system == "none") {
+          console.log(someOne, task.class)
+          if (someOne && task.class == "none") {
             const topLevelParentId = getGanttTopLevelParentId(taskId)
             const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
             const newTask = structuredClone(task)
