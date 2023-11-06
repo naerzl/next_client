@@ -16,7 +16,7 @@ import {
   reqPostEngineeringListing,
   reqPutEngineeringListing,
 } from "@/app/basic-engineering-management/api"
-import { reqGetEBS } from "@/app/ebs-data/api"
+import { reqGetEBS, reqGetEBSSystem } from "@/app/ebs-data/api"
 import { LayoutContext } from "@/components/LayoutContext"
 
 type AllSelectType = {
@@ -144,10 +144,10 @@ export default function AddOrEditEngineering(props: Props) {
     setAllSelectValue((prevState) => ({ ...prevState, [type]: value }))
   }
 
-  const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
+  const { trigger: getEBSSystemApi } = useSWRMutation("/ebs/system", reqGetEBSSystem)
 
   React.useEffect(() => {
-    getEBSApi({ is_hidden: 0, project_id: PROJECT_ID, level: 1 }).then((res) => {
+    getEBSSystemApi({ subpart_class: "field", level: 1 }).then((res) => {
       if (res && res.length > 0) {
         setEBSOption(res.map((e) => ({ ...e, title: e.name, value: e.id }) as any))
       }
@@ -155,31 +155,7 @@ export default function AddOrEditEngineering(props: Props) {
   }, [])
 
   // 部门下拉框选项
-  const [ebsOption, setEBSOption] = React.useState<
-    (TypeEBSDataList & { title: string; value: number; children?: any[]; isLeaf?: boolean })[]
-  >([])
-
-  const onLoadData: TreeSelectProps["loadData"] = (node) => {
-    return new Promise(async (resolve) => {
-      const { pos, code, level } = node
-
-      const getEBSParams = {
-        code,
-        project_id: PROJECT_ID,
-        level: level + 1,
-      } as TypeApiGetEBSParams
-
-      const res = await getEBSApi(getEBSParams)
-      const reslut = res.map((item) => ({ ...item, title: item.name, value: item.id }))
-      const indexArr = pos.split("-")
-      indexArr.splice(0, 1)
-      const newArr = structuredClone(ebsOption)
-      const str = "newArr[" + indexArr.join("].children[") + "].children"
-      eval(str + "=reslut")
-      setEBSOption(newArr)
-      resolve(undefined)
-    })
-  }
+  const [ebsOption, setEBSOption] = React.useState<TypeEBSDataList[]>([])
 
   const handleEBSSelectChange = (id: number | null) => {
     handleChangeAllSelectValue(id ?? 0, "ebs_id")

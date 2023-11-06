@@ -10,10 +10,18 @@ import {
   TypeEBSDataList,
 } from "@/app/ebs-data/types"
 
+type SubpartClass = "field" | "subpart" | "subitem" | "examination"
+
 /* 获取EBS结构列表*/
 export const reqGetEBS = (
   url: string,
   { arg }: FetchParams<TypeApiGetEBSParams>,
+): Promise<TypeEBSDataList[]> => fetcher({ url, arg })
+
+/* 获取系统EBS结构列表*/
+export const reqGetEBSSystem = (
+  url: string,
+  { arg }: FetchParams<{ code?: string; level?: number; subpart_class: SubpartClass }>,
 ): Promise<TypeEBSDataList[]> => fetcher({ url, arg })
 
 /*创建EBS结构*/

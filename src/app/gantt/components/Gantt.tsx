@@ -200,44 +200,44 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       },
       { name: "duration", label: "工期", align: "center", max_width: 40, resize: true },
       // { name: "aaa", label: "负责人", align: "center", max_width: 80, resize: true, sort: false },
-      {
-        name: "is_loop",
-        label: "操作",
-        max_width: 50,
-        align: "center",
-        resize: true,
-        sort: false,
-        onrender(task: Task, node: HTMLElement): any {
-          const div = document.createElement("div")
-          div.className = "h-full aspect-square cursor-pointer"
-          div.innerHTML = "<i class='iconfont icon-copy'></i>"
-          div.onclick = async function () {
-            const topLevelParentId = getGanttTopLevelParentId(task.id)
-            const topTask = gantt.getTask(topLevelParentId)
-            const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
-            const parentItem = gantt.getTask(gantt.getParent(task.id))
-            const res = await postEBSApi({
-              is_copy: 1,
-              ebs_id: +task.id,
-              project_id: PROJECT_ID,
-              class: task.class,
-              next_ebs_id: +String(parentItem.id).replace(/[a-zA-Z]/, ""),
-              project_sp_id: +String(topTask.id).replace(/[a-zA-Z]/, ""),
-              project_si_id: +String(secondTask.id).replace(/[a-zA-Z]/, ""),
-            })
-            // gantt.copy()
-            const newTask = structuredClone(task)
-            newTask.id = res.id
-            newTask.code = res.code
-            resetRenderGantt({ data: [newTask] })
-          }
-          node.innerHTML = ""
-          if (task.is_loop && task.is_loop == "yes") {
-            node.appendChild(div)
-          }
-          return
-        },
-      },
+      // {
+      //   name: "is_loop",
+      //   label: "操作",
+      //   max_width: 50,
+      //   align: "center",
+      //   resize: true,
+      //   sort: false,
+      //   onrender(task: Task, node: HTMLElement): any {
+      //     const div = document.createElement("div")
+      //     div.className = "h-full aspect-square cursor-pointer"
+      //     div.innerHTML = "<i class='iconfont icon-copy'></i>"
+      //     div.onclick = async function () {
+      //       const topLevelParentId = getGanttTopLevelParentId(task.id)
+      //       const topTask = gantt.getTask(topLevelParentId)
+      //       const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
+      //       const parentItem = gantt.getTask(gantt.getParent(task.id))
+      //       const res = await postEBSApi({
+      //         is_copy: 1,
+      //         ebs_id: +task.id,
+      //         project_id: PROJECT_ID,
+      //         class: task.class,
+      //         next_ebs_id: +String(parentItem.id).replace(/[a-zA-Z]/, ""),
+      //         project_sp_id: +String(topTask.id).replace(/[a-zA-Z]/, ""),
+      //         project_si_id: +String(secondTask.id).replace(/[a-zA-Z]/, ""),
+      //       })
+      //       // gantt.copy()
+      //       const newTask = structuredClone(task)
+      //       newTask.id = res.id
+      //       newTask.code = res.code
+      //       resetRenderGantt({ data: [newTask] })
+      //     }
+      //     node.innerHTML = ""
+      //     if (task.is_loop && task.is_loop == "yes") {
+      //       node.appendChild(div)
+      //     }
+      //     return
+      //   },
+      // },
     ]
 
     // 将外部组件呈现到 DOM 中

@@ -1,6 +1,6 @@
 /*获取EBS结构列表 请求参数*/
 export interface TypeApiGetEBSParams {
-  project_id: number
+  project_id?: number
   code?: string
   level?: number
   is_hidden?: 0 | 1
