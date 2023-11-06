@@ -14,7 +14,6 @@ import {
   reqGetBridgeBoredBasicData,
   reqGetRebarData,
 } from "@/app/gantt/api"
-import { PROJECT_ID } from "@/libs/const"
 import { BridgeBoredBasicData, RebarData, TypeEBSDataList } from "@/app/gantt/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import useAddBridgeBoredWithDrawer from "@/app/gantt/hooks/useAddBridgeBoredWithDrawer"
@@ -26,6 +25,7 @@ import ganttContext from "@/app/gantt/context/ganttContext"
 import useAddRebarWithDrawer from "@/app/gantt/hooks/useAddRebarWithDrawer"
 import AddRebar from "@/app/gantt/components/AddRebar"
 import dayjs from "dayjs"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const columns = [
   {
@@ -90,6 +90,8 @@ function renderCellConnectMethod(item: RebarData) {
 
 export default function RebarForm() {
   const ctx = React.useContext(ganttContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { data: tableList, mutate: mutateTableList } = useSWR(
     () => (ctx.ebsItem.id ? `/material-rebar?ebs_id=${ctx.ebsItem.id}` : null),

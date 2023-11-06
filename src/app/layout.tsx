@@ -22,14 +22,13 @@ import {
   OAUTH2_TOKEN_EXPIRY,
   STATUS_SUCCESS,
 } from "@/libs/const"
-import { setCookie } from "@/libs/cookies"
+import { getCookie, setCookie } from "@/libs/cookies"
 import { StatusCodes } from "http-status-codes"
 import dayjs from "dayjs"
 import { ConfirmationDialogProvider } from "@/components/ConfirmationDialogProvider"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
-import { reqGetCurrentProject } from "@/app/member-department/api"
-import dynamic from "next/dynamic"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -64,6 +63,7 @@ const menuList = {
     },
   },
 }
+
 export default function RootLayout({ children }: { children: React.ReactElement }) {
   const pathname = usePathname()
 
@@ -83,28 +83,6 @@ export default function RootLayout({ children }: { children: React.ReactElement 
       location.href = res.data.location
     }
   }
-
-  React.useEffect(() => {
-    if (segment != "auth2") {
-      reqGetCurrentProject("/project/current").then((res) => {
-        const obj = res.find((item) => item.is_default == 1)
-        if (obj) {
-          setCookie(OAUTH2_PROJECT_NAME, obj.project.name)
-          setCookie(OAUTH2_PROJECT_ID, String(obj.project.id))
-        } else {
-          setCookie(OAUTH2_PROJECT_NAME, res[0].project.name)
-          setCookie(OAUTH2_PROJECT_ID, String(res[0].project.id))
-        }
-
-        // const id = res.
-        // setCookie(OAUTH2_PROJECT_ID, String(res.id))
-
-        // console.log(PROJECT_ID)
-      })
-
-      // setCookie(OAUTH2_PROJECT_ID, "2")
-    }
-  }, [segment])
 
   const [waitToken, setWaitToken] = React.useState(false)
 
@@ -148,6 +126,15 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     }
   }, [pathname])
 
+  const [projectId, setProjectId] = React.useState(
+    getCookie(OAUTH2_PROJECT_ID) ? Number(getCookie(OAUTH2_PROJECT_ID)) : 0,
+  )
+
+  const changeProjectId = (id: number) => {
+    setProjectId(id)
+    setCookie(OAUTH2_PROJECT_ID, String(id))
+  }
+
   if ((!accessToken && segment && segment != "auth2") || waitToken) {
     return (
       <html lang="en" id="_next">
@@ -165,30 +152,32 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     <html lang="en" id="_next">
       <meta name="version" content="1.0.0" />
       <body className={`${inter.className} flex`}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <StyledComponentsRegistry>
-            <SWRConfig value={{ provider: () => new Map() }}>
-              <ConfirmProvider>
-                <ConfirmationDialogProvider>
-                  {pathname != "/" ? (
-                    <>
-                      <aside className="h-full w-60  min-w-[15rem]">
-                        {/*<Side items={menus} onClick={whenMenuClick} />*/}
-                        <Side />
-                      </aside>
-                      <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem] overflow-y-auto">
-                        <Nav />
-                        <main className="px-7.5 py-12  flex flex-col flex-1">{children}</main>
-                      </div>
-                    </>
-                  ) : (
-                    <>{children}</>
-                  )}
-                </ConfirmationDialogProvider>
-              </ConfirmProvider>
-            </SWRConfig>
-          </StyledComponentsRegistry>
-        </LocalizationProvider>
+        <LayoutContext.Provider value={{ projectId, changeProject: changeProjectId }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <StyledComponentsRegistry>
+              <SWRConfig value={{ provider: () => new Map() }}>
+                <ConfirmProvider>
+                  <ConfirmationDialogProvider>
+                    {pathname != "/" ? (
+                      <>
+                        <aside className="h-full w-60  min-w-[15rem]">
+                          {/*<Side items={menus} onClick={whenMenuClick} />*/}
+                          <Side />
+                        </aside>
+                        <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem] overflow-y-auto">
+                          <Nav />
+                          <main className="px-7.5 py-12  flex flex-col flex-1">{children}</main>
+                        </div>
+                      </>
+                    ) : (
+                      <>{children}</>
+                    )}
+                  </ConfirmationDialogProvider>
+                </ConfirmProvider>
+              </SWRConfig>
+            </StyledComponentsRegistry>
+          </LocalizationProvider>
+        </LayoutContext.Provider>
       </body>
     </html>
   )

@@ -8,8 +8,8 @@ import TableBody from "@mui/material/TableBody"
 import useSWR from "swr"
 import { reqGetProcessForm } from "@/app/gantt/api/index"
 import { ProcessListData, ProcessRoleData, TypeEBSDataList } from "@/app/gantt/types/index"
-import { PROJECT_ID } from "@/libs/const"
 import ganttContext from "@/app/gantt/context/ganttContext"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type Props = {
   open: boolean
@@ -75,6 +75,8 @@ const renderTableCellRole = (arr: ProcessRoleData[]) => {
 
 export default function DialogProcessForm(props: Props) {
   const { open, handleCloseDialogAddForm, item } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const ctx = React.useContext(ganttContext)
 

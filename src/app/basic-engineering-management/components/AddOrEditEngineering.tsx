@@ -3,10 +3,8 @@ import React from "react"
 import { SubmitHandler, useForm } from "react-hook-form"
 import useDebounce from "@/hooks/useDebounce"
 import { ErrorMessage } from "@hookform/error-message"
-import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
-import { reqPostMaterialReceive, reqPutMaterialReceive } from "@/app/material-receipt/api"
-import { TreeSelect, message, TreeSelectProps } from "antd"
+import { message, TreeSelectProps } from "antd"
 import {
   EngineeringListing,
   PostEngineeringListingParams,
@@ -19,6 +17,7 @@ import {
   reqPutEngineeringListing,
 } from "@/app/basic-engineering-management/api"
 import { reqGetEBS } from "@/app/ebs-data/api"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type AllSelectType = {
   ebs_id: number | null
@@ -48,6 +47,8 @@ const findKmAndM = (str: string) => {
 
 export default function AddOrEditEngineering(props: Props) {
   const { open, close, editItem, getDataList } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const handleClose = () => {
     close()

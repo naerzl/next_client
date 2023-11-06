@@ -2,7 +2,6 @@
 import React from "react"
 import useSWRMutation from "swr/mutation"
 import { reqPostProjectSubSection, reqPutProjectSubSection } from "@/app/unit-project/api"
-import { PROJECT_ID } from "@/libs/const"
 import {
   Accordion,
   AccordionDetails,
@@ -28,6 +27,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
 import { TypePostProjectSubSectionParams } from "@/app/unit-project/types"
 import UnitProjectContext from "@/app/unit-project/context/unitProjectContext"
 import { useRouter, useSearchParams } from "next/navigation"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type IForm = {
   name: string
@@ -55,6 +55,8 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = "", flag: boolean): Ty
 
 export default function UnitProjectDetailPage() {
   const ctx = React.useContext(UnitProjectContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const router = useRouter()
 

@@ -6,7 +6,6 @@ import dayjs, { Dayjs } from "dayjs"
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker"
 import { ErrorMessage } from "@hookform/error-message"
 import { DictionaryData, MaterialApproachData } from "@/app/material-approach/types"
-import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
 import { reqGetDictionary, reqGetMaterialApproach } from "@/app/material-approach/api"
 import { reqPostMaterialReceive, reqPutMaterialReceive } from "@/app/material-receipt/api"
@@ -17,6 +16,7 @@ import {
   MaterialReceiveData,
 } from "@/app/material-receipt/types"
 import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type AllSelectType = {
   ebs_id: number | null
@@ -34,6 +34,8 @@ interface Props {
 
 export default function AddOrEditMaterial(props: Props) {
   const { open, close, editItem, getDataList } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const handleClose = () => {
     close()

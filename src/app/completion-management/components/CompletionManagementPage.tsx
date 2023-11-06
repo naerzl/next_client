@@ -8,15 +8,17 @@ import {
   reqGetCompletionArchive,
   reqGetCompletionArchiveObject,
 } from "@/app/completion-management/api"
-import { PROJECT_ID } from "@/libs/const"
 import {
   CompletionArchiveList,
   CompletionArchiveListFiles,
 } from "@/app/completion-management/types"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const PATH = "completion_archives/basic/"
 
 export default function CompletionManagementPage() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   const { trigger: getCompletionArchiveApi } = useSWRMutation(
     "/completion-archive",
     reqGetCompletionArchive,
@@ -67,9 +69,24 @@ export default function CompletionManagementPage() {
     setCurrentPath(path + "/")
   }
 
+  const [pdfUrl, setPDFUrl] = React.useState("")
+
   const handleReview = async (item: CompletionArchiveListFiles) => {
     const res = await getCompletionArchiveObjectApi({ project_id: PROJECT_ID, path: item.key })
-    console.log(res)
+    if (res.url.includes("pdf")) {
+      setPDFUrl(res.url)
+      return
+    }
+    setPDFUrl("")
+    const el = document.createElement("a")
+    el.style.display = "none"
+    el.setAttribute("target", "_blank")
+    el.setAttribute("download", "文件")
+    el.href = res.url
+    console.log(el)
+    document.body.appendChild(el)
+    el.click()
+    document.body.removeChild(el)
   }
 
   const handleGetFile = () => {}
@@ -120,9 +137,7 @@ export default function CompletionManagementPage() {
       </div>
       <header className="flex justify-between mb-4">
         <div className="flex">{renderPath(currentPath)}</div>
-        <div>
-          <button>文件</button>
-        </div>
+        <div></div>
       </header>
       <div className="bg-white border custom-scroll-bar shadow-sm flex-1 flex gap-x-3">
         <div className="flex-1">
@@ -213,19 +228,16 @@ export default function CompletionManagementPage() {
           {/*  sandbox="allow-scripts allow-top-navigation allow-same-origin allow-popups"*/}
           {/*/>*/}
 
-          <embed
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-            type="application/pdf"
-            src={
-              "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf#toolbar=0&navpanes=0&scrollbar=0#pagemode=none"
-            }
-            // src={
-            //   "https://api.idocv.com/view/url?url=http%3a%2f%2fapi.idocv.com%2fdata%2fdoc%2ftest.xlsx"
-            // }
-          />
+          {pdfUrl && (
+            <embed
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+              type="application/pdf"
+              src={pdfUrl}
+            />
+          )}
         </div>
       </div>
     </>

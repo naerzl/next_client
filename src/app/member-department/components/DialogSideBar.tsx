@@ -18,7 +18,7 @@ import { message } from "antd"
 import memberDepartmentContext from "@/app/member-department/context/memberDepartmentContext"
 import { reqPostRole, reqPutRole } from "@/app/member-department/api"
 import { ReqPostRolesParams, RolesListData } from "@/app/member-department/types"
-import { PROJECT_ID } from "@/libs/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
   open: boolean
@@ -34,6 +34,8 @@ interface Props {
 
 export default function dialogSideBar(props: Props) {
   const ctx = React.useContext(memberDepartmentContext)
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   const { open, close, parent_id, cb, editItem, setEditItem } = props
 
   // 表单控制hooks

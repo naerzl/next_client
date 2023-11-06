@@ -16,7 +16,6 @@ import {
   reqGetConcreteData,
   reqGetRebarData,
 } from "@/app/gantt/api"
-import { PROJECT_ID } from "@/libs/const"
 import { BridgeBoredBasicData, ConcreteData, RebarData, TypeEBSDataList } from "@/app/gantt/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import useAddBridgeBoredWithDrawer from "@/app/gantt/hooks/useAddBridgeBoredWithDrawer"
@@ -30,6 +29,7 @@ import AddRebar from "@/app/gantt/components/AddRebar"
 import useAddConcreteWithDrawer from "../hooks/useAddConcreteWithDrawer"
 import AddConrete from "@/app/gantt/components/AddConrete"
 import dayjs from "dayjs"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const columns = [
   {
@@ -68,6 +68,8 @@ function renderCellDrillMode(item: BridgeBoredBasicData) {
 
 export default function ConcreteForm() {
   const ctx = React.useContext(ganttContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { data: tableList, mutate: mutateTableList } = useSWR(
     () => (ctx.ebsItem.id ? `/material-concrete?ebs_id=${ctx.ebsItem.id}` : null),

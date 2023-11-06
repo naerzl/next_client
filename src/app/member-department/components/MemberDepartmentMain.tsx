@@ -11,7 +11,7 @@ import TableCell from "@mui/material/TableCell"
 import TableBody from "@mui/material/TableBody"
 import memberDepartmentContext from "@/app/member-department/context/memberDepartmentContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { PROJECT_ID } from "@/libs/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const select_option = [
   {
@@ -91,6 +91,8 @@ const renderTableCellRole = (arr: RolesListData[]) => {
 
 export default function memberDepartmentMain(props: Props) {
   const { tableData: tableList, handleRowEditStart, handleDelUserListSWR } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const ctx = React.useContext(memberDepartmentContext)
 

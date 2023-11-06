@@ -23,7 +23,7 @@ export const OAUTH2_PROJECT_NAME = "oauth2_project_NAME"
 
 export const MINTE5 = 300000
 
-export const PROJECT_ID = getCookie(OAUTH2_PROJECT_ID) ? +getCookie(OAUTH2_PROJECT_ID)! : 0
+// export const PROJECT_ID = getCookie(OAUTH2_PROJECT_ID) ? +getCookie(OAUTH2_PROJECT_ID)! : 0
 
 // 邮箱正则
 export const REGEXP_MAIL = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/

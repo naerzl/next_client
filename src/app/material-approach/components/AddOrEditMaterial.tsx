@@ -13,7 +13,7 @@ import {
   PostMaterialApproachParams,
   PutMaterialApproachParams,
 } from "@/app/material-approach/types"
-import { OAUTH2_ACCESS_TOKEN, PROJECT_ID } from "@/libs/const"
+import { OAUTH2_ACCESS_TOKEN } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
 import {
   reqGetDictionary,
@@ -26,6 +26,7 @@ import { message } from "antd"
 import { styled } from "@mui/material/styles"
 import CloudUploadIcon from "@mui/icons-material/CloudUpload"
 import { getV1BaseURL } from "@/libs/fetch"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -49,6 +50,8 @@ interface Props {
 
 export default function AddOrEditMaterial(props: Props) {
   const { open, close, editItem, getDataList } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const handleClose = () => {
     close()

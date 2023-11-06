@@ -16,7 +16,6 @@ import Loading from "@/components/loading"
 import useSWRMutation from "swr/mutation"
 import { dateToYYYYMM } from "@/libs/methods"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { PROJECT_ID } from "@/libs/const"
 import { message } from "antd"
 import { reqDelMaterialMachine, reqGetMaterialMachine } from "@/app/material-processing/api"
 import {
@@ -24,6 +23,7 @@ import {
   MaterialProcessingData,
 } from "@/app/material-processing/types"
 import { CLASS_OPTION } from "@/app/material-processing/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 function renderPerson(
   classes: "rebar" | "concrete",
@@ -47,6 +47,8 @@ function renderPerson(
   }
 }
 export default function MaterialProcessingPage() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   // 表格配置列
   const columns = [
     {

@@ -14,9 +14,8 @@ import useDebounce from "@/hooks/useDebounce"
 import useSWRMutation from "swr/mutation"
 import { reqGetDictionary, reqPostConcreteData, reqPutConcreteData } from "@/app/gantt/api"
 import { ConcreteData, DictionaryData, TypePostConcreteParams } from "../types"
-import { PROJECT_ID } from "@/libs/const"
-import { Connect_method_enum, Drill_Mode_Enum, Pile_Type_Enum } from "@/app/gantt/const"
 import ganttContext from "@/app/gantt/context/ganttContext"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type Props = {
   open: boolean
@@ -36,6 +35,8 @@ export default function AddConrete(props: Props) {
   const { open, handleCloseAddConcreteWithDrawer, cb, editItem } = props
 
   const ctx = React.useContext(ganttContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const handleClose = () => {
     handleCloseAddConcreteWithDrawer()

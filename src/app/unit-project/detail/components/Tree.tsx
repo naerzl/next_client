@@ -1,12 +1,10 @@
 "use client"
 import * as React from "react"
-import useSWRMutation from "swr/mutation"
-import { reqGetEBS } from "@/app/ebs-data/api"
-import { PROJECT_ID } from "@/libs/const"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
 import { useSearchParams } from "next/navigation"
 import RefreshIcon from "@mui/icons-material/Refresh"
 import { XIABU } from "@/app/unit-project/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
   // eslint-disable-next-line no-unused-vars
@@ -39,6 +37,8 @@ const findCheckedId = (arr: TypeEBSDataList[], spID: number): number[] => {
 
 export default function Tree(props: Props) {
   const { treeData, getSubEBSData, onChecked, engineeringId } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const searchParams = useSearchParams()
 

@@ -23,9 +23,9 @@ import {
   TypeApiPostBridgeBoredBasicDataParams,
   TypeEBSDataList,
 } from "../types"
-import { PROJECT_ID } from "@/libs/const"
 import { Drill_Mode_Enum, Pile_Type_Enum } from "@/app/gantt/const"
 import ganttContext from "@/app/gantt/context/ganttContext"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type Props = {
   open: boolean
@@ -45,6 +45,8 @@ type IForm = {
 }
 export default function AddBridge(props: Props) {
   const { open, handleCloseAddBridgeWithDrawer, cb, editItem } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const ctx = React.useContext(ganttContext)
 

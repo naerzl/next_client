@@ -5,7 +5,6 @@ import useSWRMutation from "swr/mutation"
 import { reqGetEBS, reqPostEBS, reqPutEBS } from "@/app/ebs-data/api"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { Type_Is_system } from "@/app/ebs-data/components/TableTr"
-import { PROJECT_ID } from "@/libs/const"
 import {
   Autocomplete,
   Button,
@@ -18,6 +17,7 @@ import {
 import { ErrorMessage } from "@hookform/error-message"
 import { useForm } from "react-hook-form"
 import { useSearchParams } from "next/navigation"
+import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
   open: boolean
@@ -32,8 +32,11 @@ interface Props {
   // eslint-disable-next-line no-unused-vars
   handleGetParentChildren: (parentIndexArr: string[]) => void
 }
-function DialogEBS(props: Props) {
+export default function DialogEBS(props: Props) {
   const ctx = React.useContext(EBSDataContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   const {
     open,
     item,
@@ -294,5 +297,3 @@ function DialogEBS(props: Props) {
     </>
   )
 }
-
-export default DialogEBS

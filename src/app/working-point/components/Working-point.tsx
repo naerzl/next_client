@@ -4,7 +4,6 @@ import WorkingPointContext from "@/app/working-point/context/workingPointContext
 import { useRouter } from "next/navigation"
 import useSWRMutation from "swr/mutation"
 import { reqDelProjectSubSection } from "@/app/working-point/api"
-import { PROJECT_ID } from "@/libs/const"
 import { Breadcrumbs, Button, InputAdornment, InputBase } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
@@ -18,9 +17,12 @@ import Table from "@mui/material/Table"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { TypeProjectSubSectionData } from "@/app/working-point/types"
+import { LayoutContext } from "@/components/LayoutContext"
 
 export default function WorkingPoint() {
   const ctx = React.useContext(WorkingPointContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const router = useRouter()
 

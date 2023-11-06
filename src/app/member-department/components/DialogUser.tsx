@@ -15,8 +15,9 @@ import useSWRMutation from "swr/mutation"
 import { message, TreeSelect, TreeSelectProps } from "antd"
 import { ErrorMessage } from "@hookform/error-message"
 import { reqGetRole, reqGetUserExisted, reqPostUser, reqPutUser } from "@/app/member-department/api"
-import { PROJECT_ID, REGEXP_MAIL, REGEXP_PHONE } from "@/libs/const"
+import { REGEXP_MAIL, REGEXP_PHONE } from "@/libs/const"
 import { ReqPostUserParams, RolesListData, UserListData } from "@/app/member-department/types"
+import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
   open: boolean
@@ -48,6 +49,8 @@ type IForm = {
 
 export default function dialogUser(props: Props) {
   const { open, close, cb, isEdit, item, handleEditEnd } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { trigger: postUserApi } = useSWRMutation("/user", reqPostUser)
 

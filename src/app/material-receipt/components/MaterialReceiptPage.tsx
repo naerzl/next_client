@@ -16,10 +16,10 @@ import { useAddOrEditMaterial } from "@/app/material-receipt/hooks/useAddOrEditM
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import useSWRMutation from "swr/mutation"
 import { reqGetMaterialReceive, reqDelMaterialReceive } from "@/app/material-receipt/api"
-import { PROJECT_ID } from "@/libs/const"
 import { message } from "antd"
 import { GetMaterialReceiveParams, MaterialReceiveData } from "@/app/material-receipt/types"
 import AddOrEditMaterial from "@/app/material-receipt/components/AddOrEditMaterial"
+import { LayoutContext } from "@/components/LayoutContext"
 
 function renderProperty(str: string) {
   const arr: { key: string; value: string }[] | any = JSON.parse(str || "{}")
@@ -40,6 +40,8 @@ function renderProperty(str: string) {
 }
 
 export default function MaterialReceiptPage() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   // 表格配置列
   const columns = [
     {

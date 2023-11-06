@@ -9,7 +9,6 @@ import DeleteIcon from "@mui/icons-material/DeleteOutlined"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import useSWR from "swr"
 import { reqDelBridgeBoredBasicData, reqGetBridgeBoredBasicData } from "@/app/gantt/api"
-import { PROJECT_ID } from "@/libs/const"
 import { BridgeBoredBasicData, TypeEBSDataList } from "@/app/gantt/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import useAddBridgeBoredWithDrawer from "@/app/gantt/hooks/useAddBridgeBoredWithDrawer"
@@ -18,6 +17,7 @@ import { Pile_Type_Enum, Drill_Mode_Enum } from "@/app/gantt/const"
 import useHooksConfirm from "@/hooks/useHooksConfirm"
 import useSWRMutation from "swr/mutation"
 import ganttContext from "@/app/gantt/context/ganttContext"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const columns = [
   {
@@ -92,6 +92,8 @@ function renderCellDrillMode(item: BridgeBoredBasicData) {
 
 export default function BaseForm() {
   const ctx = React.useContext(ganttContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { data: tableList, mutate: mutateTableList } = useSWR(
     () => (ctx.ebsItem.id ? `/bridge-bored-basic-datum?ebs_id=${ctx.ebsItem.id}` : null),

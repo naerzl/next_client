@@ -92,3 +92,9 @@ html {
 #gantt_cover{
   z-index: 99!important;
 }
+
+.no-border-select{
+  .MuiOutlinedInput-notchedOutline{
+    border:none !important;
+  }
+}

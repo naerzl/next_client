@@ -8,10 +8,10 @@ import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import DialogEBS from "@/app/ebs-data/components/DialogEBS"
 import useEBSDataDialog from "@/hooks/useEBSDataDialog"
 import { useSearchParams } from "next/navigation"
-import { PROJECT_ID } from "@/libs/const"
 import { Breadcrumbs } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
+import { LayoutContext } from "@/components/LayoutContext"
 
 // 表格每一列的字段
 const columns = [
@@ -55,6 +55,8 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = ""): TypeEBSDataList[]
 export default function EBSDataPage(props: any) {
   // 获取EBS结构数据
   const { trigger: getEBSApi, isMutating } = useSWRMutation("/ebs", reqGetEBS)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const [tableData, setTableData] = React.useState<TypeEBSDataList[]>([])
 

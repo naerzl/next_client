@@ -8,10 +8,12 @@ import {
 } from "@/app/unit-project/types"
 import useSWRMutation from "swr/mutation"
 import { reqGetProjectSubSection, reqGetSubSection } from "@/app/unit-project/api"
-import { PROJECT_ID } from "@/libs/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 export default function UnitProjectLayout({ children }: { children: React.ReactNode }) {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
   //页面表格数据
+
   const [tableList, setTableList] = React.useState<TypeProjectSubSectionData[]>([])
   const [professionList, setProfessionList] = React.useState<TypeSubSectionData[]>([])
 

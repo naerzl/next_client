@@ -4,7 +4,6 @@ import useSWRMutation from "swr/mutation"
 import UnitProjectContext from "@/app/unit-project/context/unitProjectContext"
 import { reqDelProjectSubSection } from "@/app/unit-project/api"
 import { useRouter } from "next/navigation"
-import { PROJECT_ID } from "@/libs/const"
 import { Breadcrumbs, InputAdornment, InputBase, Button } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
@@ -18,6 +17,7 @@ import SearchIcon from "@mui/icons-material/Search"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
+import { LayoutContext } from "@/components/LayoutContext"
 
 const renderTableTd = (arr: any[], type: "name" | "ebs"): string => {
   switch (type) {
@@ -32,6 +32,8 @@ const renderTableTd = (arr: any[], type: "name" | "ebs"): string => {
 
 export default function UnitProjectPage() {
   const ctx = React.useContext(UnitProjectContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const router = useRouter()
 

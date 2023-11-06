@@ -2,7 +2,6 @@
 import * as React from "react"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
 import { useSearchParams } from "next/navigation"
-import RefreshIcon from "@mui/icons-material/Refresh"
 import { XIABU } from "@/app/unit-project/const"
 
 interface Props {

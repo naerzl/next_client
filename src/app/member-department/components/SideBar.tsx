@@ -20,7 +20,7 @@ import useMutation from "swr/mutation"
 import { reqDelRole } from "@/app/member-department/api"
 import { RolesListData } from "@/app/member-department/types"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { PROJECT_ID } from "@/libs/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 export default function sideBar() {
   const ctx = React.useContext(memberDepartmentContext)
@@ -43,6 +43,8 @@ export default function sideBar() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
 
   const open = Boolean(anchorEl)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   // 关闭菜单
   const handleCloseMenu = () => {

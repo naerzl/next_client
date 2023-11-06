@@ -27,7 +27,7 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import DialogAuthSetting from "@/app/member-department/components/DialogAuthSetting"
 import useAuthSettingDialog from "@/app/member-department/hooks/useAuthSettingDialog"
-import { PROJECT_ID } from "@/libs/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type STATUS_TYPE = "normal" | "forbidden"
 
@@ -48,6 +48,7 @@ const params = {
 } as ReqGetUserListParams
 
 export default function memberDepartmentPage() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
   // 获取表格数据的参数
   const [apiParams, setApiParams] = React.useState(params)
 

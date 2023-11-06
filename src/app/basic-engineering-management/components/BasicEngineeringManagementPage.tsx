@@ -2,7 +2,6 @@
 import React from "react"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import useSWRMutation from "swr/mutation"
-import { PROJECT_ID } from "@/libs/const"
 import { message } from "antd"
 import { Breadcrumbs, Button } from "@mui/material"
 import Link from "@mui/material/Link"
@@ -25,8 +24,11 @@ import { useAddOrEditEngineering } from "@/app/basic-engineering-management/hook
 import AddOrEditEngineering from "@/app/basic-engineering-management/components/AddOrEditEngineering"
 import { useRouter } from "next/navigation"
 import ConstructionIcon from "@mui/icons-material/Construction"
+import { LayoutContext } from "@/components/LayoutContext"
 
 export default function BasicEngineeringManagementPage() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   // 表格配置列
   const columns = [
     {

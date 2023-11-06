@@ -2,7 +2,6 @@
 import React from "react"
 import useSWRMutation from "swr/mutation"
 import { reqGetProjectSubSection } from "@/app/unit-project/api"
-import { PROJECT_ID } from "@/libs/const"
 import {
   Button,
   InputLabel,
@@ -28,6 +27,7 @@ import { TypePostProjectSubSectionParams } from "@/app/working-point/types"
 import { useRouter, useSearchParams } from "next/navigation"
 import { reqPostProjectSubSection, reqPutProjectSubSection } from "@/app/working-point/api"
 import WorkingPointContext from "@/app/working-point/context/workingPointContext"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type IForm = {
   name: string
@@ -55,6 +55,8 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = "", flag: boolean): Ty
 
 export default function WorkingPointDetailPage() {
   const ctx = React.useContext(WorkingPointContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const searchParams = useSearchParams()
 

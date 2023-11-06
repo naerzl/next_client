@@ -3,11 +3,11 @@ import { TypeEBSDataList } from "@/app/ebs-data/types"
 import useSWRMutation from "swr/mutation"
 import { reqDeleteEBS, reqGetEBS, reqPostEBS } from "@/app/ebs-data/api"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
-import { PROJECT_ID } from "@/libs/const"
 import { useSearchParams } from "next/navigation"
 import useHooksConfirm from "@/hooks/useHooksConfirm"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import RefreshIcon from "@mui/icons-material/Refresh"
+import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
   item: TypeEBSDataList
@@ -34,6 +34,9 @@ export type Type_Is_system = "platform" | "system" | "userdefined"
 
 function TableTr(props: Props) {
   const ctx = React.useContext(EBSDataContext)
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   const {
     item,
     handleGetParentChildren,

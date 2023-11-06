@@ -19,8 +19,9 @@ import { PROCESSING_RESULT } from "@/app/material-approach/const/enum"
 import useSWRMutation from "swr/mutation"
 import { dateToYYYYMM } from "@/libs/methods"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { OAUTH2_ACCESS_TOKEN, PROJECT_ID } from "@/libs/const"
+import { OAUTH2_ACCESS_TOKEN } from "@/libs/const"
 import { message } from "antd"
+import { LayoutContext } from "@/components/LayoutContext"
 
 function renderStatus(label: string): React.ReactNode {
   switch (label) {
@@ -55,6 +56,8 @@ function renderProperty(str: string) {
   }
 }
 export default function MaterialApproachPage() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   // 表格配置列
   const columns = [
     {

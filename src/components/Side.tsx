@@ -15,11 +15,14 @@ import {
   ListItemIcon,
   ListItemText,
   ListSubheader,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
 } from "@mui/material"
 import { usePathname, useRouter } from "next/navigation"
-import { getCookie } from "@/libs/cookies"
-import { OAUTH2_PROJECT_NAME } from "@/libs/const"
-
+import { reqGetCurrentProject } from "@/app/member-department/api"
+import { ReqGetProjectCurrentResponse } from "@/app/member-department/types"
+import { LayoutContext } from "@/components/LayoutContext"
 export const dynamic = "force-dynamic"
 
 const menuList: { [key: string]: any } = {
@@ -114,6 +117,8 @@ function side() {
 
   const router = useRouter()
 
+  const ctxLayout = React.useContext(LayoutContext)
+
   const [openList, setOpen] = React.useState<string[]>([])
 
   // 处理展开合并方法
@@ -149,6 +154,36 @@ function side() {
     router.push(path)
   }
 
+  const [projectList, setProjectList] = React.useState<ReqGetProjectCurrentResponse[]>([])
+  const [currentProject, setCurrentProject] = React.useState<number>(0)
+
+  React.useEffect(() => {
+    console.log(pathName)
+    if (!pathName.startsWith("/auth2") && pathName != "/") {
+      reqGetCurrentProject("/project/current").then((res) => {
+        setProjectList(res ?? [])
+        const obj = res.find((item) => item.is_default == 1)
+        if (obj) {
+          console.log(obj)
+          setCurrentProject(obj.project.id)
+          ctxLayout.changeProject(obj.project.id)
+        } else {
+          setCurrentProject(res[0].project.id)
+          ctxLayout.changeProject(res[0].project.id)
+          console.log(ctxLayout.projectId)
+        }
+      })
+    }
+  }, [pathName])
+
+  const handleChangeCurrentProject = (event: SelectChangeEvent<number>) => {
+    const obj = projectList.find((item) => item.project.id == event.target.value)
+    if (obj) {
+      ctxLayout.changeProject(obj.project.id)
+      setCurrentProject(obj.project.id)
+    }
+  }
+
   return (
     <>
       <List
@@ -162,10 +197,23 @@ function side() {
             className="h-16 flex items-center gap-1 max-h-16"
             sx={{ fontSize: "24px" }}>
             <img src={logo} alt="" className="w-10 h-10" />
-            <div className="text-base font-bold text-railway_303">
-              {getCookie(OAUTH2_PROJECT_NAME)
-                ? getCookie(OAUTH2_PROJECT_NAME)
-                : "工程数字化管理系统"}
+            <div className="text-base font-bold text-railway_303 flex-1">
+              <Select
+                fullWidth
+                className="no-border-select"
+                size="small"
+                labelId="demo-simple-select-helper-label"
+                id="no-border-select"
+                value={currentProject}
+                onChange={(event) => {
+                  handleChangeCurrentProject(event)
+                }}>
+                {projectList.map((item, index) => (
+                  <MenuItem key={index} value={item.project.id}>
+                    {item.project.name}
+                  </MenuItem>
+                ))}
+              </Select>
             </div>
           </ListSubheader>
         }>

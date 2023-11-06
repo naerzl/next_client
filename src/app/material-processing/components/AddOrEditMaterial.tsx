@@ -9,7 +9,6 @@ import {
   DictionaryData,
   MaterialApproachData,
 } from "@/app/material-approach/types"
-import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
 import {
   reqGetDictionary,
@@ -27,6 +26,7 @@ import AddIcon from "@mui/icons-material/Add"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import IconButton from "@mui/material/IconButton"
 import { reqPostMaterialMachine, reqPutMaterialMachine } from "@/app/material-processing/api"
+import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
   open: boolean
@@ -62,6 +62,8 @@ type RelateData = {
 
 export default function AddOrEditMaterial(props: Props) {
   const { open, close, editItem, getDataList } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const handleClose = () => {
     close()

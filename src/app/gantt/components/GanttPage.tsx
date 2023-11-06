@@ -8,7 +8,6 @@ import Radio from "@mui/material/Radio"
 import { TypeApiGetEBSParams, TypeApiPutEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
 import dayjs from "dayjs"
 import useSWRMutation from "swr/mutation"
-import { PROJECT_ID } from "@/libs/const"
 import { reqPutEBS, reqGetEBS } from "../api/index"
 import { Breadcrumbs, MenuItem, Select } from "@mui/material"
 import { reqGetCodeCount } from "@/app/ebs-data/api"
@@ -21,6 +20,7 @@ import useDrawerProcess from "@/app/gantt/hooks/useDrawerProcess"
 import GanttContext from "@/app/gantt/context/ganttContext"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
+import { LayoutContext } from "@/components/LayoutContext"
 
 // type GanttItemType = {
 //   id: number | string
@@ -161,18 +161,20 @@ const changeRes2GanttData = (
   }
 }
 
-const params = {
-  project_id: PROJECT_ID,
-  level: 1,
-  is_hidden: 0,
-} as TypeApiGetEBSParams
-
 const GanttPage = () => {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   const { trigger: putEBSApi } = useSWRMutation("/ebs", reqPutEBS)
 
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
   const { trigger: getCodeCountApi } = useSWRMutation("/ebs/code-count", reqGetCodeCount)
+
+  const params = {
+    project_id: PROJECT_ID,
+    level: 1,
+    is_hidden: 0,
+  } as TypeApiGetEBSParams
 
   // gantt组件DOM
   const DOM_GANTT = React.useRef<{

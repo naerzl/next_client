@@ -7,10 +7,10 @@ import "./Gantt.scss"
 import dayjs from "dayjs"
 import ganttContext from "@/app/gantt/context/ganttContext"
 import { message } from "antd"
-import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
 import { reqPostEBS, reqGetEBS } from "@/app/ebs-data/api"
 import { PILE_CODE } from "@/app/gantt/const"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type Props = {
   tasks?: any
@@ -106,6 +106,8 @@ function updateChildrenTask(task: Task, duration?: number) {
 
 const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
   const { zoom, onDataUpdated, editGanttItem, getSubGanttList, handleOpenDrawerProcess } = props
+
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { trigger: postEBSApi } = useSWRMutation("/ebs", reqPostEBS)
   //
