@@ -17,6 +17,7 @@ import {
 } from "@/app/material-receipt/types"
 import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
 import { LayoutContext } from "@/components/LayoutContext"
+import { reqGetEBS, reqGetEBSSystem } from "@/app/ebs-data/api"
 
 type AllSelectType = {
   ebs_id: number | null
@@ -150,10 +151,10 @@ export default function AddOrEditMaterial(props: Props) {
     setAllSelectValue((prevState) => ({ ...prevState, [type]: value }))
   }
 
-  const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
+  const { trigger: getEBSApi } = useSWRMutation("/ebs/system", reqGetEBSSystem)
 
   React.useEffect(() => {
-    getEBSApi({ is_hidden: 0, project_id: PROJECT_ID, level: 1 }).then((res) => {
+    getEBSApi({ subpart_class: "field", level: 1 }).then((res) => {
       console.log(res)
       if (res && res.length > 0) {
         setEBSOption(res.map((e) => ({ ...e, title: e.name, value: e.id })))
@@ -161,7 +162,6 @@ export default function AddOrEditMaterial(props: Props) {
     })
   }, [])
 
-  // 部门下拉框选项
   const [ebsOption, setEBSOption] = React.useState<
     (TypeEBSDataList & { title: string; value: number; children?: any[]; isLeaf?: boolean })[]
   >([])
@@ -173,9 +173,9 @@ export default function AddOrEditMaterial(props: Props) {
 
       const getEBSParams = {
         code,
-        project_id: PROJECT_ID,
         level: level + 1,
-      } as TypeApiGetEBSParams
+        subpart_class: "field",
+      } as any
 
       const res = await getEBSApi(getEBSParams)
       const reslut = res.map((item) => ({ ...item, title: item.name, value: item.id }))
@@ -310,7 +310,6 @@ export default function AddOrEditMaterial(props: Props) {
                 style={{ width: "100%" }}
                 value={allSelectValue.ebs_id}
                 dropdownStyle={{ maxHeight: 400, overflow: "auto", zIndex: 2000 }}
-                placeholder="选择一个部门"
                 onSelect={handleEBSSelectChange}
                 loadData={onLoadData}
                 size="large"

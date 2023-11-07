@@ -100,7 +100,7 @@ export default function Tree(props: Props) {
       cEBSId = pEBSItem
         .children!.filter(
           (item) =>
-            item.is_loop != 1 ||
+            item.is_loop == 0 &&
             (item.extend
               ? item.extend.project_sp_id == +searchParams.get("spId")! &&
                 (item.extend.project_si_id == null ||
@@ -111,7 +111,7 @@ export default function Tree(props: Props) {
     } else {
       cEBSId = pEBSItem
         .children!.filter(
-          (item) => item.is_loop != 1 || (!!item.extend && item.extend.project_si_id == null),
+          (item) => item.is_loop == 0 && !!item.extend && item.extend.project_si_id == null,
         )
         .map((item) => item.id)
     }

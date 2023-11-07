@@ -42,13 +42,13 @@ const select_option = [
   },
 ]
 
-const params = {
-  status: "normal",
-  project_id: PROJECT_ID,
-} as ReqGetUserListParams
-
 export default function memberDepartmentPage() {
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
+  const params = {
+    status: "normal",
+    project_id: PROJECT_ID,
+  } as ReqGetUserListParams
   // 获取表格数据的参数
   const [apiParams, setApiParams] = React.useState(params)
 

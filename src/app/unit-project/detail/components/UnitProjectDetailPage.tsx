@@ -63,6 +63,7 @@ export default function UnitProjectDetailPage() {
   const searchParams = useSearchParams()
   const handleCancel = () => {
     reset()
+    router.back()
   }
 
   const {
@@ -131,8 +132,6 @@ export default function UnitProjectDetailPage() {
   // 获取EBS结构数据
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
-  const [basicId, setBasicId] = React.useState<null | number>(null)
-
   // 提交表单事件（防抖）
   const { run: onSubmit } = useDebounce(async (value: any) => {
     const params = {} as TypePostProjectSubSectionParams
@@ -156,8 +155,7 @@ export default function UnitProjectDetailPage() {
     }
 
     ctx.getProjectSubSection()
-    // handleCancel()
-    router.push("/unit-project")
+    handleCancel()
   })
 
   const [engineeringSelect, setEngineeringSelect] = React.useState<number[]>([])
@@ -343,7 +341,6 @@ export default function UnitProjectDetailPage() {
                           primary={item.name}
                           onClick={() => {
                             // setCheckedKeys(related_to.current[item.id] ?? [])
-                            setBasicId(item.id)
                           }}
                         />
                       </div>

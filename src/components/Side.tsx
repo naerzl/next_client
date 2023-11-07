@@ -208,6 +208,9 @@ function side() {
                 onChange={(event) => {
                   handleChangeCurrentProject(event)
                 }}>
+                <MenuItem disabled>
+                  <i className="text-[#ababab]">请选择一个项目</i>
+                </MenuItem>
                 {projectList.map((item, index) => (
                   <MenuItem key={index} value={item.project.id}>
                     {item.project.name}

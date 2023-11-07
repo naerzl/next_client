@@ -273,7 +273,7 @@ function TableTr(props: Props) {
   }
   return (
     <>
-      <tr className="h-14 grid grid-cols-7">
+      <tr className="h-14 grid grid-cols-6">
         <td
           className="border p-4 overflow-hidden cursor-pointer col-span-3 flex justify-between"
           title={renderName()}
@@ -338,7 +338,7 @@ function TableTr(props: Props) {
                   }}></i>
               )}
 
-              {item.level > 1 && ((item.class == "none" && isLastOne) || item.class != "none") && (
+              {item.level > 1 && (
                 <i
                   className="iconfont icon-shanchu w-4 aspect-square"
                   title="删除"
@@ -363,9 +363,6 @@ function TableTr(props: Props) {
                 : item.n_subpart_code_class
             ]
           }
-        </td>
-        <td className="border p-4">
-          {searchParams.get("type") == "1" ? item.h_subpart_code : item.n_subpart_code}
         </td>
       </tr>
       {props.children}

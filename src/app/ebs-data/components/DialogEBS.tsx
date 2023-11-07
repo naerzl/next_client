@@ -81,8 +81,11 @@ export default function DialogEBS(props: Props) {
       is_hidden: 0,
       engineering_listing_id: Number(searchParams.get("baseId")),
     })
-    if (res.length > 0) {
+    if (res.length > 1) {
       setLength(parseInt(res[res.length - 1].name) + 10)
+      setLaseOne(res[res.length - 1])
+    } else {
+      setLength(10)
       setLaseOne(res[res.length - 1])
     }
   }

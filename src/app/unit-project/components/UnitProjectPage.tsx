@@ -57,11 +57,6 @@ export default function UnitProjectPage() {
   // 表格配置列
   const columns = [
     {
-      title: "id",
-      dataIndex: "code",
-      key: "code",
-    },
-    {
       title: "单位工程名称",
       dataIndex: "name",
       key: "name",
@@ -147,9 +142,6 @@ export default function UnitProjectPage() {
           <TableBody>
             {ctx.tableList.map((row) => (
               <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                <TableCell component="th" scope="row">
-                  {row.id}
-                </TableCell>
                 <TableCell align="left">{row.name}</TableCell>
                 <TableCell align="left">
                   {renderTableTd(row.engineering_listings, "name")}

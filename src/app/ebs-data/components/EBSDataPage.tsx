@@ -36,11 +36,6 @@ const columns = [
     dataIndex: "节点类型",
     key: "节点类型",
   },
-  {
-    title: "分部分项编码",
-    dataIndex: "分部分项编码",
-    key: "分部分项编码",
-  },
 ]
 
 // 转换数据 添加自定义字段 key
@@ -215,7 +210,7 @@ export default function EBSDataPage(props: any) {
         <div className="h-full">
           <table className="w-full h-full border-spacing-0 border-separate">
             <thead className="bg-[#fafafa] h-12 text-sm">
-              <tr className="grid grid-cols-7 h-full">
+              <tr className="grid grid-cols-6 h-full">
                 {columns.map((col, index) => (
                   <th
                     className={`border p-4 ${index == 0 ? "col-span-3" : ""}`}

@@ -3,17 +3,17 @@ import React from "react"
 import useSWRMutation from "swr/mutation"
 import { reqGetProjectSubSection } from "@/app/unit-project/api"
 import {
-  Button,
-  InputLabel,
-  TextField,
-  CardContent,
-  Card,
-  AccordionSummary,
   Accordion,
   AccordionDetails,
-  Typography,
-  Select,
+  AccordionSummary,
+  Button,
+  Card,
+  CardContent,
+  InputLabel,
   MenuItem,
+  Select,
+  TextField,
+  Typography,
 } from "@mui/material"
 import { ErrorMessage } from "@hookform/error-message"
 import { useForm } from "react-hook-form"
@@ -21,13 +21,13 @@ import useDebounce from "@/hooks/useDebounce"
 import { reqGetEBS } from "@/app/ebs-data/api"
 import Tree from "./Tree"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
-import { EngineeringListing } from "@/app/basic-engineering-management/types/index.d"
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
 import { TypePostProjectSubSectionParams } from "@/app/working-point/types"
 import { useRouter, useSearchParams } from "next/navigation"
 import { reqPostProjectSubSection, reqPutProjectSubSection } from "@/app/working-point/api"
 import WorkingPointContext from "@/app/working-point/context/workingPointContext"
 import { LayoutContext } from "@/components/LayoutContext"
+import { message } from "antd"
 
 type IForm = {
   name: string
@@ -46,7 +46,6 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = "", flag: boolean): Ty
     return {
       ...item,
       key: String(item.id),
-      checkable: flag,
       disableCheckbox: !flag,
       children: changeTreeArr(item.children as TypeEBSDataList[], str, flag),
     }
@@ -62,6 +61,7 @@ export default function WorkingPointDetailPage() {
 
   const router = useRouter()
 
+  // 处理取消按钮
   const handleCancel = () => {
     router.push("/working-point")
     reset()
@@ -91,7 +91,10 @@ export default function WorkingPointDetailPage() {
     reqGetProjectSubSection,
   )
 
+  // 构筑物列表
   const [engineeringList, setEngineeringList] = React.useState<any[]>([])
+
+  // 单位工程列表
   const [projectSubSection, setProjectSubSection] = React.useState<any[]>([])
 
   const getProjectSubSectionList = async () => {
@@ -101,33 +104,34 @@ export default function WorkingPointDetailPage() {
 
   React.useEffect(() => {
     getProjectSubSectionList()
+    ctx.getProjectSubSection()
   }, [])
 
   const [projectState, setProjectState] = React.useState<number>(0)
 
+  // 单位工程切换时修改购猪物的列表
   React.useEffect(() => {
     if (projectState > 0 && projectSubSection.length > 0) {
-      console.log(projectSubSection, projectState)
       const unitProjectItem = projectSubSection.find((item) => item.id == projectState)
       setEngineeringList(unitProjectItem.engineering_listings)
     }
   }, [projectState, projectSubSection])
 
   React.useEffect(() => {
-    if (ctx.tableList.length <= 0) {
-      ctx.getProjectSubSection()
-    }
     if (ctx.tableList.length > 0 && searchParams.get("siId")) {
+      // 通过上下文 找到编辑的工点
       const _editItem = ctx.tableList.find((item: any) => item.id == +searchParams.get("siId")!)
-      console.log(_editItem)
       if (_editItem) {
         setValue("name", _editItem.name)
-        setProjectState(+_editItem.parent_id)
-        setEngineeringList(_editItem.engineering_listings)
-        setEngineeringSelect(+_editItem.engineering_listings[0].id)
+        if (_editItem.parent_id) {
+          setProjectState(+_editItem.parent_id)
+        }
+        if (_editItem.engineering_listings && _editItem.engineering_listings.length > 0) {
+          setEngineeringSelect(+_editItem.engineering_listings[0].id)
+        }
       }
     }
-  }, [ctx.tableList, engineeringList])
+  }, [ctx.tableList, searchParams])
 
   // 获取EBS结构数据
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
@@ -138,13 +142,20 @@ export default function WorkingPointDetailPage() {
 
     params.name = value.name
     params.project_id = PROJECT_ID
-    params.parent_id = String(projectState)
     params.ebs_ids = JSON.stringify(relateTo.current)
-    params.engineering_listing_id = engineeringSelect
+    if (projectState) {
+      params.parent_id = String(projectState)
+    }
+    if (engineeringSelect) {
+      params.engineering_listing_id = engineeringSelect
+    }
     if (searchParams.get("siId")) {
       params.id = +searchParams.get("siId")!
       await putProjectSubSectionApi(params)
     } else {
+      if (!params.parent_id || !params.engineering_listing_id) {
+        return message.error("请选择单位工程和构筑物")
+      }
       await postProjectSubSection(params)
     }
 
@@ -172,10 +183,10 @@ export default function WorkingPointDetailPage() {
   }
 
   React.useEffect(() => {
-    if (engineeringSelect > 0 && projectState > 0) {
+    if (engineeringSelect > 0 && projectState > 0 && engineeringList.length > 0) {
       getEBSData(engineeringSelect)
     }
-  }, [engineeringSelect, projectState])
+  }, [engineeringSelect, projectState, engineeringList.length])
 
   const getSubEBSData = async (ebsItem: TypeEBSDataList, pos: string, type: boolean) => {
     const ebsAllValue = structuredClone(ebsAll)
@@ -183,7 +194,7 @@ export default function WorkingPointDetailPage() {
     let arr: TypeEBSDataList[] = []
     // 展开
     if (type) {
-      const res = await getEBSApi({
+      arr = await getEBSApi({
         project_id: PROJECT_ID,
         level: ebsItem.level + 1,
         code: ebsItem.code,
@@ -192,14 +203,10 @@ export default function WorkingPointDetailPage() {
         project_sp_id: String(projectState),
       })
 
-      arr = res
-
       const indexArr = pos.split("-")
       const evalStr = `ebsAllValue[${indexArr.join("].children[")}]`
 
       eval(`${evalStr}.children= arr`)
-
-      console.log(arr)
 
       setEBSAll(ebsAllValue)
     } else {
@@ -289,7 +296,7 @@ export default function WorkingPointDetailPage() {
                   </div>
                 </div>
 
-                {engineeringList.length > 0 && (
+                {projectState > 0 && (
                   <div className="mb-8">
                     <div className="flex items-start flex-col">
                       <InputLabel htmlFor="role_list" className="mr-3 w-full text-left mb-2.5">

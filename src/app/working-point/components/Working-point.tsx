@@ -18,6 +18,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { TypeProjectSubSectionData } from "@/app/working-point/types"
 import { LayoutContext } from "@/components/LayoutContext"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 
 export default function WorkingPoint() {
   const ctx = React.useContext(WorkingPointContext)
@@ -33,19 +34,18 @@ export default function WorkingPoint() {
     reqDelProjectSubSection,
   )
 
+  const { showConfirmationDialog } = useConfirmationDialog()
+
   // 处理点击删除
-  const handleClickDelete = async (id: number) => {
-    await delProjectSubSection({ id })
-    ctx.getProjectSubSection()
+  const handleClickDelete = (id: number) => {
+    showConfirmationDialog("确定要删除吗？", async () => {
+      await delProjectSubSection({ id })
+      ctx.getProjectSubSection()
+    })
   }
 
   // 表格配置列
   const columns = [
-    {
-      title: "序号",
-      dataIndex: "id",
-      key: "id",
-    },
     {
       title: "工点名称",
       dataIndex: "name",
@@ -135,9 +135,6 @@ export default function WorkingPoint() {
           <TableBody>
             {ctx.tableList.map((row: any) => (
               <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                <TableCell component="th" scope="row">
-                  {row.id}
-                </TableCell>
                 <TableCell align="left">{row.name}</TableCell>
                 <TableCell align="left">{row.parent ? row.parent.name : ""}</TableCell>
                 <TableCell align="left">
