@@ -106,7 +106,7 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
       // 存储当前的url地址
       setCookie(OAUTH2_PATH_FROM as string, location.href)
       // 跳转到登录页面的地址
-      // location.href = res.data.location
+      location.href = res.data.location
     }
   }
 
@@ -114,6 +114,7 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
   const r = await res!.json()
   if (r.code !== STATUS_SUCCESS) {
     if (!whitelist.includes(shortPath)) {
+      message.config({ maxCount: 1 })
       message.error(r.msg)
     }
     return Promise.reject(r.msg)
