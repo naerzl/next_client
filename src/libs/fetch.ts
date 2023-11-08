@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes"
 import { generateRandomString } from "./methods"
 import { message } from "antd"
 
+const whitelist = ["/user/existed"]
 // 拼接接口地址
 export const getV1BaseURL = (url: string): string => {
   return process.env.NEXT_PUBLIC_API_BASE_URL + url
@@ -26,6 +27,9 @@ const handleGetUrl = (url: string) => {
 //
 export async function fetcher<T>(params: FetcherOptions<T>) {
   let { url, arg, method, isJSON } = params
+
+  const shortPath = url
+
   if (!method || method == "get") {
     url = handleGetUrl(url)
   }
@@ -109,7 +113,9 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
   const res = await (isStatusOk ? fetch_res : ufetch())
   const r = await res!.json()
   if (r.code !== STATUS_SUCCESS) {
-    message.error(r.msg)
+    if (!whitelist.includes(shortPath)) {
+      message.error(r.msg)
+    }
     return Promise.reject(r.msg)
   }
   return r.data
