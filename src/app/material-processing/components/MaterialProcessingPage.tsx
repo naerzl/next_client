@@ -122,7 +122,7 @@ export default function MaterialProcessingPage() {
   const [swrState, setSWRState] = React.useState<GetMaterialProcessingParams>({
     page: 1,
     limit: 20,
-    project_id: 1,
+    project_id: PROJECT_ID,
   })
 
   const { trigger: getMaterialMachine, isMutating } = useSWRMutation(

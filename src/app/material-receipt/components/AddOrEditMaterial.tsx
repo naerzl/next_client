@@ -207,6 +207,8 @@ export default function AddOrEditMaterial(props: Props) {
                 到货日期:
               </InputLabel>
               <DateTimePicker
+                format="YYYY-MM-DD HH:mm"
+                ampm={false}
                 label="到货日期"
                 value={timeAt}
                 className="w-full"
@@ -312,6 +314,7 @@ export default function AddOrEditMaterial(props: Props) {
                 dropdownStyle={{ maxHeight: 400, overflow: "auto", zIndex: 2000 }}
                 onSelect={handleEBSSelectChange}
                 loadData={onLoadData}
+                placeholder="请选择一个EBS结构"
                 size="large"
                 treeData={ebsOption}
               />

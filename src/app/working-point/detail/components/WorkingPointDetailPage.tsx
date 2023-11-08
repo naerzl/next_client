@@ -76,16 +76,19 @@ export default function WorkingPointDetailPage() {
     setValue,
   } = useForm<IForm>({})
 
+  // 添加单位工程接口
   const { trigger: postProjectSubSection } = useSWRMutation(
     "/project-subsection/sub",
     reqPostProjectSubSection,
   )
 
+  // 修改单位工程接口
   const { trigger: putProjectSubSectionApi } = useSWRMutation(
     "/project-subsection/sub",
     reqPutProjectSubSection,
   )
 
+  // 获取单位工程接口
   const { trigger: getProjectSubSectionApi } = useSWRMutation(
     "/project-subsection",
     reqGetProjectSubSection,
@@ -97,6 +100,7 @@ export default function WorkingPointDetailPage() {
   // 单位工程列表
   const [projectSubSection, setProjectSubSection] = React.useState<any[]>([])
 
+  // 获取单位工程列表
   const getProjectSubSectionList = async () => {
     const res = await getProjectSubSectionApi({ project_id: PROJECT_ID })
     setProjectSubSection(res)
@@ -109,18 +113,11 @@ export default function WorkingPointDetailPage() {
 
   const [projectState, setProjectState] = React.useState<number>(0)
 
-  // 单位工程切换时修改购猪物的列表
-  React.useEffect(() => {
-    if (projectState > 0 && projectSubSection.length > 0) {
-      const unitProjectItem = projectSubSection.find((item) => item.id == projectState)
-      setEngineeringList(unitProjectItem.engineering_listings)
-    }
-  }, [projectState, projectSubSection])
-
   React.useEffect(() => {
     if (ctx.tableList.length > 0 && searchParams.get("siId")) {
       // 通过上下文 找到编辑的工点
       const _editItem = ctx.tableList.find((item: any) => item.id == +searchParams.get("siId")!)
+      // 找到编辑的对象
       if (_editItem) {
         setValue("name", _editItem.name)
         if (_editItem.parent_id) {
@@ -131,23 +128,35 @@ export default function WorkingPointDetailPage() {
         }
       }
     }
-  }, [ctx.tableList, searchParams])
+  }, [ctx.tableList])
+
+  // 单位工程切换时修改购猪物的列表
+  React.useEffect(() => {
+    if (projectState > 0 && projectSubSection.length > 0) {
+      const unitProjectItem = projectSubSection.find((item) => item.id == projectState)
+      setEngineeringList(unitProjectItem.engineering_listings)
+    }
+  }, [projectState, projectSubSection])
 
   // 获取EBS结构数据
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
   // 提交表单事件（防抖）
   const { run: onSubmit } = useDebounce(async (value: any) => {
+    if (!projectState) {
+      message.error("请选择一个单位工程")
+      return
+    }
     const params = {} as TypePostProjectSubSectionParams
 
     params.name = value.name
     params.project_id = PROJECT_ID
     params.ebs_ids = JSON.stringify(relateTo.current)
-    if (projectState) {
-      params.parent_id = String(projectState)
-    }
     if (engineeringSelect) {
       params.engineering_listing_id = engineeringSelect
+    }
+    params.parent_id = String(projectState)
+    if (projectState) {
     }
     if (searchParams.get("siId")) {
       params.id = +searchParams.get("siId")!
@@ -174,7 +183,7 @@ export default function WorkingPointDetailPage() {
 
     params["engineering_listing_id"] = engineering_listing_id
     params["project_sp_id"] = projectState
-    params["code"] = obj.ebs_code
+    params["code"] = obj?.ebs_code
 
     const res = await getEBSApi(params)
 
@@ -186,7 +195,7 @@ export default function WorkingPointDetailPage() {
     if (engineeringSelect > 0 && projectState > 0 && engineeringList.length > 0) {
       getEBSData(engineeringSelect)
     }
-  }, [engineeringSelect, projectState, engineeringList.length])
+  }, [engineeringSelect, projectState, engineeringList])
 
   const getSubEBSData = async (ebsItem: TypeEBSDataList, pos: string, type: boolean) => {
     const ebsAllValue = structuredClone(ebsAll)
@@ -281,6 +290,7 @@ export default function WorkingPointDetailPage() {
                       fullWidth
                       value={projectState}
                       size="small"
+                      defaultValue={0}
                       onChange={(event) => {
                         setProjectState(+event.target.value)
                       }}>
@@ -308,6 +318,7 @@ export default function WorkingPointDetailPage() {
                         fullWidth
                         value={engineeringSelect}
                         size="small"
+                        defaultValue={0}
                         onChange={(event) => {
                           setEngineeringSelect(+event.target.value)
                         }}>

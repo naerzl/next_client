@@ -15,7 +15,7 @@ import {
   reqGetDictionaryClass,
   reqGetMaterialApproach,
 } from "@/app/material-approach/api"
-import { message } from "antd"
+import { message, TreeSelect, TreeSelectProps } from "antd"
 import { CLASS_OPTION } from "@/app/material-processing/const"
 import {
   MaterialProcessingData,
@@ -97,7 +97,7 @@ export default function AddOrEditMaterial(props: Props) {
     reqGetDictionaryClass,
   )
 
-  const [dictionaryClass, setDictionaryClass] = React.useState(0)
+  const [dictionaryClass, setDictionaryClass] = React.useState<number>()
 
   const [dictionaryList, setDictionaryList] = React.useState<DictionaryData[]>([])
 
@@ -121,6 +121,29 @@ export default function AddOrEditMaterial(props: Props) {
       setDictionaryList(res)
     })
   }, [dictionaryClass])
+
+  const handleDictionarySelectChange = (newValue: number, node: any) => {
+    console.log(newValue, node)
+    setDictionaryClass(newValue)
+  }
+
+  const onLoadData: TreeSelectProps["loadData"] = (node) => {
+    return new Promise(async (resolve) => {
+      console.log(node)
+      const { id, pos } = node
+
+      const res = await getDictionaryClassApi({ page: 1, limit: 1, parent_id: id })
+      const indexArr = pos.split("-")
+      indexArr.splice(0, 1)
+      const newList = structuredClone(dictionaryClassList)
+      const str = "newList[" + indexArr.join("].children[") + "].children"
+
+      eval(str + "=res")
+      setDictionaryClassList(newList)
+
+      resolve(undefined)
+    })
+  }
 
   const [materialApproachList, setMaterialApproachList] = React.useState<MaterialApproachData[]>([])
 
@@ -657,23 +680,18 @@ export default function AddOrEditMaterial(props: Props) {
                 物资名称:
               </InputLabel>
               <div className="grid grid-cols-2 w-full gap-x-2">
-                <Select
-                  MenuProps={{ sx: { zIndex: 1702, height: "25rem" } }}
-                  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
-                  id="zidian"
-                  size="small"
+                <TreeSelect
+                  placement="topLeft"
+                  style={{ width: "100%" }}
                   value={dictionaryClass}
-                  onChange={(event) => {
-                    setDictionaryClass(+event.target.value)
-                  }}
-                  fullWidth>
-                  <MenuItem value={0}>全部</MenuItem>
-                  {dictionaryClassList.map((item: any) => (
-                    <MenuItem value={item.id} key={item.id}>
-                      {item.name}
-                    </MenuItem>
-                  ))}
-                </Select>
+                  dropdownStyle={{ maxHeight: 400, overflow: "auto", zIndex: 2000 }}
+                  placeholder="选择一个物资分类"
+                  onSelect={handleDictionarySelectChange}
+                  loadData={onLoadData}
+                  fieldNames={{ label: "name", value: "id" }}
+                  size="large"
+                  treeData={dictionaryClassList}
+                />
 
                 <Select
                   MenuProps={{ sx: { zIndex: 1702, height: "25rem" } }}
