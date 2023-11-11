@@ -32,7 +32,7 @@ export default function UnitProjectLayout({ children }: { children: React.ReactN
     const res = await getProjectSubSectionApi(option ? { ...option } : { project_id: PROJECT_ID })
 
     const newArr = res.sort((a, b) => {
-      return dayjs(b.create_at).unix() - dayjs(a.create_at).unix()
+      return dayjs(b.created_at).unix() - dayjs(a.created_at).unix()
     })
 
     setTableList(newArr || [])

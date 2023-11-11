@@ -1,6 +1,14 @@
 "use client"
 import React from "react"
-import { Breadcrumbs, Button, Chip, InputAdornment, InputBase } from "@mui/material"
+import {
+  Breadcrumbs,
+  Button,
+  Chip,
+  InputAdornment,
+  InputBase,
+  Select,
+  MenuItem,
+} from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import TableHead from "@mui/material/TableHead"
@@ -22,6 +30,9 @@ import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import { OAUTH2_ACCESS_TOKEN } from "@/libs/const"
 import { message } from "antd"
 import { LayoutContext } from "@/components/LayoutContext"
+import IconButton from "@mui/material/IconButton"
+import SearchIcon from "@mui/icons-material/Search"
+import dayjs from "dayjs"
 
 function renderStatus(label: string): React.ReactNode {
   switch (label) {
@@ -140,12 +151,44 @@ export default function MaterialApproachPage() {
   const getDataList = async () => {
     const res = await getMaterialApproach(swrState)
     console.log(res)
-    setMaterialApproachList(res.items)
+    const newArr = res.items.sort(
+      (a, b) => dayjs(b.arrivaled_at).unix() - dayjs(a.arrivaled_at).unix(),
+    )
+    setMaterialApproachList(newArr)
   }
 
   React.useEffect(() => {
     getDataList()
   }, [])
+
+  const [searchOption, setSearchOption] = React.useState({
+    name: "",
+    manufacturer: "",
+    status: "",
+  })
+
+  const handleChangeSearchOption = (value: string, type: keyof GetMaterialApproachParams) => {
+    setSearchOption((prevState) => ({ ...prevState, [type]: value }))
+  }
+
+  const handleSearchMaterialApproachList = async () => {
+    const params = {
+      page: swrState.page,
+      limit: swrState.limit,
+      project_id: PROJECT_ID,
+    } as GetMaterialApproachParams
+
+    if (searchOption.name) params.name = searchOption.name
+    if (searchOption.manufacturer) params.manufacturer = searchOption.manufacturer
+    if (searchOption.status) params.status = searchOption.status
+
+    const res = await getMaterialApproach(params)
+    console.log(res)
+    const newArr = res.items.sort(
+      (a, b) => dayjs(b.arrivaled_at).unix() - dayjs(a.arrivaled_at).unix(),
+    )
+    setMaterialApproachList(newArr)
+  }
 
   // 删除物资进场数据
   const handleDelMaterialApproach = (id: number) => {
@@ -174,32 +217,84 @@ export default function MaterialApproachPage() {
         </Breadcrumbs>
       </div>
       <header className="flex justify-between mb-4">
-        <div className="flex gap-2">
-          {/*<Button*/}
-          {/*  className="bg-railway_blue text-white"*/}
-          {/*  onClick={() => {*/}
-          {/*    handleAddMaterial()*/}
-          {/*  }}>*/}
-          {/*  添加*/}
-          {/*</Button>*/}
+        <div className="flex gap-x-2">
+          <InputBase
+            className="w-[12rem] h-10 border  px-2 shadow bg-white"
+            placeholder="请输入物资名称"
+            value={searchOption.name}
+            onChange={(event) => {
+              handleChangeSearchOption(event.target.value, "name")
+            }}
+            // endAdornment={
+            //   <InputAdornment position="end">
+            //     <IconButton
+            //       type="button"
+            //       edge="end"
+            //       sx={{ p: "10px" }}
+            //       aria-label="search"
+            //       disableRipple>
+            //       <SearchIcon />
+            //     </IconButton>
+            //   </InputAdornment>
+            // }
+          />
+
+          <InputBase
+            className="w-[12rem] h-10 border  px-2 shadow bg-white"
+            placeholder="请输入生产厂家"
+            value={searchOption.manufacturer}
+            onChange={(event) => {
+              handleChangeSearchOption(event.target.value, "manufacturer")
+            }}
+            // endAdornment={
+            //   <InputAdornment position="end">
+            //     <IconButton
+            //       type="button"
+            //       edge="end"
+            //       sx={{ p: "10px" }}
+            //       aria-label="search"
+            //       disableRipple>
+            //       <SearchIcon />
+            //     </IconButton>
+            //   </InputAdornment>
+            // }
+          />
+
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            size="small"
+            placeholder="请选择一个状态"
+            value={searchOption.status}
+            onChange={(event) => {
+              handleChangeSearchOption(event.target.value, "status")
+            }}
+            className="w-[12rem] bg-white shadow">
+            <MenuItem value="" disabled>
+              <i className="text-[#ababab]">请选择一个状态</i>
+            </MenuItem>
+            {PROCESSING_RESULT.map((item: any) => (
+              <MenuItem value={item.value} key={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </Select>
+          <Button
+            className="bg-railway_blue text-white"
+            onClick={() => {
+              handleSearchMaterialApproachList()
+            }}>
+            搜索
+          </Button>
         </div>
         <div>
-          {/*<InputBase*/}
-          {/*  className="w-[18.125rem] h-10 border  px-2 shadow bg-white"*/}
-          {/*  onBlur={(event) => {}}*/}
-          {/*  endAdornment={*/}
-          {/*    <InputAdornment position="end">*/}
-          {/*      <IconButton*/}
-          {/*        type="button"*/}
-          {/*        edge="end"*/}
-          {/*        sx={{ p: "10px" }}*/}
-          {/*        aria-label="search"*/}
-          {/*        disableRipple>*/}
-          {/*        <SearchIcon />*/}
-          {/*      </IconButton>*/}
-          {/*    </InputAdornment>*/}
-          {/*  }*/}
-          {/*/>*/}
+          <Button
+            className="bg-railway_blue text-white"
+            onClick={() => {
+              handleAddMaterial()
+            }}>
+            添加
+          </Button>
         </div>
       </header>
       {isMutating ? (
@@ -230,7 +325,7 @@ export default function MaterialApproachPage() {
                   <TableCell align="left">{row.manufacturer}</TableCell>
                   <TableCell align="left">{renderStatus(row.status)}</TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
-                  <TableCell align="left">{row.recorder}</TableCell>
+                  <TableCell align="left">{row.creator}</TableCell>
                   {/*<TableCell align="left">*/}
                   {/*  <div className="flex justify-between">*/}
                   {/*    <Button*/}

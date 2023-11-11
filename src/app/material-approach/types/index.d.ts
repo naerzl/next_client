@@ -5,6 +5,9 @@ export interface GetMaterialApproachParams {
   limit: number
   project_id: number
   has_test?: boolean
+  name?: string
+  manufacturer?: string
+  status?: string
 }
 
 export interface GetMaterialApproachResponse {

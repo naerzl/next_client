@@ -43,7 +43,7 @@ export const CLASS_OPTION = [
     unit: "吨",
   },
   {
-    value: "additive",
+    value: "mineral_admixture",
     label: "矿物掺和料",
     id: 11,
     unit: "吨",

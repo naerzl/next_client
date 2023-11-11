@@ -155,7 +155,7 @@ export default function UnitProjectDetailPage() {
       const relateToIsEmpty = relateTo.current.some((item) => item.length <= 0)
 
       if (related.length <= 0) return message.error("请关联构筑物")
-      if (relateToIsEmpty) return message.error("哈哈哈哈 ")
+      if (relateToIsEmpty) return message.error("保存失败，请选择工程构造")
       await postProjectSubSection(params)
     }
 

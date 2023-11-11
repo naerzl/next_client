@@ -164,8 +164,9 @@ export default function AddOrEditEngineering(props: Props) {
     ) => {
       if (!allSelectValue.ebs_id) return message.error("请选择EBS")
 
-      const flagSome = engineeringList.some((item) => item.name.includes(values.name))
+      let flagSome = engineeringList.some((item) => item.name.includes(values.name))
 
+      if (Boolean(editItem) && editItem?.name == values.name) flagSome = false
       flagSome
         ? showConfirmationDialog("该工程名已存在，确认添加？", () => {
             handleSubmitFormCB(values)

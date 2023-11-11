@@ -9,6 +9,7 @@ import useSWRMutation from "swr/mutation"
 import { reqGetProjectSubSection, reqGetSubSection } from "@/app/working-point/api"
 import WorkingPointContext from "@/app/working-point/context/workingPointContext"
 import { LayoutContext } from "@/components/LayoutContext"
+import dayjs from "dayjs"
 
 export default function WorkingPointLayout({ children }: { children: React.ReactNode }) {
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
@@ -31,7 +32,10 @@ export default function WorkingPointLayout({ children }: { children: React.React
     const res = await getProjectSubSectionApi(
       option ? { is_subset: 1, ...option } : { is_subset: 1, project_id: PROJECT_ID },
     )
-    setTableList(res || [])
+    const newArr = res.sort((a, b) => {
+      return dayjs(b.created_at).unix() - dayjs(a.created_at).unix()
+    })
+    setTableList(newArr || [])
   }
 
   // 获取专业列表

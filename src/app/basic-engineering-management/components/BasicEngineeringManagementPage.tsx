@@ -213,12 +213,6 @@ export default function BasicEngineeringManagementPage() {
             </TableBody>
             <TableFooter></TableFooter>
           </Table>
-          <div className="relative px-4 h-14 w-full overflow-hidden">
-            <div className="h-0.5 bg-[#8f8f8f] w-100 absolute  top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2"></div>
-            <h6 className="absolute  top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white w-28 h-8 text-[#545454] text-center leading-8 text-sm">
-              我是有底线的
-            </h6>
-          </div>
         </div>
       )}
       {drawerOpen && (

@@ -39,6 +39,8 @@ export interface TypeProjectSubSectionData {
     ebs_code: string
     ebs_name: string
   }[]
+  created_at: string
+  creator: string
 }
 
 // 添加分部分项数据 请求参数

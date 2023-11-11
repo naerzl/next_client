@@ -37,7 +37,7 @@ export interface TypeProjectSubSectionData {
     id: number
     name: string
   }[]
-  create_at: string
+  created_at: string
   creator: string
 }
 

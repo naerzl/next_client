@@ -19,6 +19,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { TypeProjectSubSectionData } from "@/app/working-point/types"
 import { LayoutContext } from "@/components/LayoutContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import { dateToUTCCustom } from "@/libs/methods"
 
 export default function WorkingPoint() {
   const ctx = React.useContext(WorkingPointContext)
@@ -47,6 +48,11 @@ export default function WorkingPoint() {
   // 表格配置列
   const columns = [
     {
+      title: "创建时间",
+      dataIndex: "create_at",
+      key: "create_at",
+    },
+    {
       title: "工点名称",
       dataIndex: "name",
       key: "name",
@@ -56,6 +62,11 @@ export default function WorkingPoint() {
       title: "所属单位工程",
       dataIndex: "parent_name",
       key: "parent_name",
+    },
+    {
+      title: "创建人",
+      dataIndex: "creator",
+      key: "creator",
     },
     {
       title: "操作",
@@ -102,7 +113,7 @@ export default function WorkingPoint() {
         <div>
           <InputBase
             className="w-[18.125rem] h-10 border  px-2 shadow bg-white"
-            placeholder="搜索模板名称"
+            placeholder="搜索工点名称"
             onBlur={(event) => {
               handleClickSearch(event.target.value)
             }}
@@ -135,8 +146,14 @@ export default function WorkingPoint() {
           <TableBody>
             {ctx.tableList.map((row: any) => (
               <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                <TableCell align="left">
+                  {dateToUTCCustom(row.created_at, "YYYY-MM-DD HH:mm")}
+                </TableCell>
                 <TableCell align="left">{row.name}</TableCell>
                 <TableCell align="left">{row.parent ? row.parent.name : ""}</TableCell>
+                <TableCell align="left" className="min-w-[146px]">
+                  {row.creator}
+                </TableCell>
                 <TableCell align="left">
                   <div className="flex justify-between">
                     <Button
