@@ -81,10 +81,10 @@ export default function MaterialReceiptPage() {
       dataIndex: "parent_name",
       key: "parent_name",
     },
-    {
-      title: "操作",
-      key: "action",
-    },
+    // {
+    //   title: "操作",
+    //   key: "action",
+    // },
   ]
 
   const {
@@ -149,22 +149,22 @@ export default function MaterialReceiptPage() {
       </div>
       <header className="flex justify-between mb-4">
         <div className="flex gap-2">
-          <Button
-            className="bg-railway_blue text-white"
-            onClick={() => {
-              handleAddMaterial()
-            }}>
-            添加
-          </Button>
+          {/*<Button*/}
+          {/*  className="bg-railway_blue text-white"*/}
+          {/*  onClick={() => {*/}
+          {/*    handleAddMaterial()*/}
+          {/*  }}>*/}
+          {/*  添加*/}
+          {/*</Button>*/}
         </div>
         <div></div>
       </header>
       {isMutating ? (
         <Loading />
       ) : (
-        <div className="bg-white border custom-scroll-bar shadow-sm min-h-[570px]">
+        <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-y-auto">
           <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
-            <TableHead sx={{ position: "sticky", top: "64px", zIndex: 5 }}>
+            <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
               <TableRow>
                 {columns.map((col, index) => (
                   <TableCell key={index} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
@@ -185,27 +185,27 @@ export default function MaterialReceiptPage() {
                   <TableCell align="left">{row.construction_team_full_name}</TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">{row.creator}</TableCell>
-                  <TableCell align="left">
-                    <div className="flex justify-between">
-                      <Button
-                        variant="outlined"
-                        onClick={() => {
-                          handleEditMaterialApproach(row)
-                        }}
-                        startIcon={<EditOutlinedIcon />}>
-                        编辑
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => {
-                          handleDelMaterialApproach(row.id)
-                        }}
-                        startIcon={<DeleteOutlineIcon />}>
-                        删除
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {/*<TableCell align="left">*/}
+                  {/*  <div className="flex justify-between">*/}
+                  {/*    <Button*/}
+                  {/*      variant="outlined"*/}
+                  {/*      onClick={() => {*/}
+                  {/*        handleEditMaterialApproach(row)*/}
+                  {/*      }}*/}
+                  {/*      startIcon={<EditOutlinedIcon />}>*/}
+                  {/*      编辑*/}
+                  {/*    </Button>*/}
+                  {/*    <Button*/}
+                  {/*      variant="outlined"*/}
+                  {/*      color="error"*/}
+                  {/*      onClick={() => {*/}
+                  {/*        handleDelMaterialApproach(row.id)*/}
+                  {/*      }}*/}
+                  {/*      startIcon={<DeleteOutlineIcon />}>*/}
+                  {/*      删除*/}
+                  {/*    </Button>*/}
+                  {/*  </div>*/}
+                  {/*</TableCell>*/}
                 </TableRow>
               ))}
             </TableBody>

@@ -12,6 +12,7 @@ export interface EngineeringListing {
     code: string
     name: string
   }
+  creator: string
 }
 
 export interface PostEngineeringListingParams {

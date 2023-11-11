@@ -139,15 +139,15 @@ export default function CompletionManagementPage() {
         <div className="flex">{renderPath(currentPath)}</div>
         <div></div>
       </header>
-      <div className="bg-white border custom-scroll-bar shadow-sm flex-1 flex gap-x-3">
-        <div className="flex-1">
+      <div className="bg-white border custom-scroll-bar shadow-sm flex-1 flex gap-x-3 overflow-y-auto h-[584px]">
+        <div className="flex-1 overflow-y-auto">
           {dirLoading ? (
             <div className=" flex items-center justify-center w-full h-full">
               <div className="loader"></div>
             </div>
           ) : (
-            <ul className="h-full">
-              <li className="border-b h-9 flex items-center gap-x-2 pl-3">
+            <ul>
+              <li className="border-b h-9 flex items-center gap-x-2 pl-3 sticky top-0 bg-white">
                 <i
                   className="iconfont icon-return text-xl cursor-pointer"
                   title="返回上一级"
@@ -181,7 +181,7 @@ export default function CompletionManagementPage() {
             </ul>
           )}
         </div>
-        <div className="flex-1 border-x">
+        <div className="flex-1 border-x overflow-y-auto">
           {dirLoading ? (
             <div className=" flex items-center justify-center w-full h-full">
               <div className="loader"></div>
@@ -220,7 +220,7 @@ export default function CompletionManagementPage() {
             </ul>
           )}
         </div>
-        <div className="flex-[2]">
+        <div className="flex-[2] overflow-y-auto">
           {/*<iframe*/}
           {/*  // src="http://192.168.2.17:3002/"*/}
           {/*  src={preViewPath}*/}

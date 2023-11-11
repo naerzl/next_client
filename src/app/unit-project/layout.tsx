@@ -9,6 +9,7 @@ import {
 import useSWRMutation from "swr/mutation"
 import { reqGetProjectSubSection, reqGetSubSection } from "@/app/unit-project/api"
 import { LayoutContext } from "@/components/LayoutContext"
+import dayjs from "dayjs"
 
 export default function UnitProjectLayout({ children }: { children: React.ReactNode }) {
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
@@ -29,7 +30,12 @@ export default function UnitProjectLayout({ children }: { children: React.ReactN
   // 获取表格数据方法
   const getProjectSubSection = async (option?: TypeGetProjectSubSectionParams) => {
     const res = await getProjectSubSectionApi(option ? { ...option } : { project_id: PROJECT_ID })
-    setTableList(res || [])
+
+    const newArr = res.sort((a, b) => {
+      return dayjs(b.create_at).unix() - dayjs(a.create_at).unix()
+    })
+
+    setTableList(newArr || [])
   }
 
   // 获取专业列表
@@ -56,7 +62,7 @@ export default function UnitProjectLayout({ children }: { children: React.ReactN
   return (
     <UnitProjectContext.Provider
       value={{ tableList, getProjectSubSection, professionList, editItem, changeEditItem }}>
-      <div className="min-h-full unit_project">{children}</div>
+      <div className="h-full unit_project flex flex-col">{children}</div>
     </UnitProjectContext.Provider>
   )
 }

@@ -164,9 +164,13 @@ export default function RootLayout({ children }: { children: React.ReactElement 
                           {/*<Side items={menus} onClick={whenMenuClick} />*/}
                           <Side />
                         </aside>
-                        <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem] overflow-y-auto">
+                        <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem]">
                           <Nav />
-                          <main className="px-7.5 py-12  flex flex-col flex-1">{children}</main>
+                          <main
+                            className="px-7.5 py-12  flex flex-col flex-1"
+                            style={{ height: "calc(100vh - 64px)" }}>
+                            {children}
+                          </main>
                         </div>
                       </>
                     ) : (

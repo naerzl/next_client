@@ -37,6 +37,8 @@ export interface TypeProjectSubSectionData {
     id: number
     name: string
   }[]
+  create_at: string
+  creator: string
 }
 
 // 添加分部分项数据 请求参数

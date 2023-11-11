@@ -56,7 +56,7 @@ export default function WorkingPointLayout({ children }: { children: React.React
   return (
     <WorkingPointContext.Provider
       value={{ tableList, getProjectSubSection, professionList, editItem, changeEditItem }}>
-      <div className="h-full">{children}</div>
+      <div className="h-full flex flex-col">{children}</div>
     </WorkingPointContext.Provider>
   )
 }

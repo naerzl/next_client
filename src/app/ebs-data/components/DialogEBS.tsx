@@ -11,6 +11,7 @@ import {
   Chip,
   DialogActions,
   Drawer,
+  IconButton,
   InputLabel,
   TextField,
 } from "@mui/material"
@@ -18,6 +19,7 @@ import { ErrorMessage } from "@hookform/error-message"
 import { useForm } from "react-hook-form"
 import { useSearchParams } from "next/navigation"
 import { LayoutContext } from "@/components/LayoutContext"
+import Tooltip from "@mui/material/Tooltip"
 
 interface Props {
   open: boolean
@@ -65,12 +67,13 @@ export default function DialogEBS(props: Props) {
     let titleType: string | undefined = ""
     if (lastOne) {
       titleType = titleEnum.find((str) => lastOne.name.includes(str))
-      title = lastOne.name.replace("N", "0") + `~结束${titleType}号`
+      // title = lastOne.name.replace("N", "0") + `~结束${titleType}号`
+      title = `结束${titleType}号`
     }
     if (type == "label") {
       return title
     } else {
-      return titleType
+      return `请输入结束${titleType}号，最大数字为10`
     }
   }
   const getEBSData = async () => {
@@ -160,7 +163,7 @@ export default function DialogEBS(props: Props) {
       <div className="mb-8">
         <div className="flex items-start flex-col">
           <InputLabel htmlFor="name" className="mr-3 mb-2.5 w-24 text-left inline-block">
-            EBS节点:
+            工程结构:
           </InputLabel>
           <Autocomplete
             disablePortal
@@ -172,7 +175,7 @@ export default function DialogEBS(props: Props) {
             onChange={(event, value) => {
               setEBSNode(value)
             }}
-            renderInput={(params) => <TextField {...params} label="请选择EBS" />}
+            renderInput={(params) => <TextField {...params} label="请选择工程结构" />}
             renderOption={(props, option) => {
               return (
                 <li {...props} key={option}>
@@ -211,6 +214,9 @@ export default function DialogEBS(props: Props) {
               htmlFor="end_position"
               className="mr-3 mb-2.5 w-full text-left inline-block">
               <span className="font-bold">{findTitle("label")}</span>
+              <Tooltip title="计算规则：输入数字为该工程结构的总数。">
+                <i className="iconfont icon-wenhao-xianxingyuankuang cursor-pointer"></i>
+              </Tooltip>
             </InputLabel>
             <TextField
               id="end_position"

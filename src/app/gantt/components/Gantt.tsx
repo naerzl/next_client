@@ -149,19 +149,9 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     // }
     // }
 
-    // 配置列线条标注
-    let dateToStr = gantt.date.date_to_str(gantt.config.task_date)
-    let today = new Date()
-    gantt.addMarker({
-      start_date: today,
-      css: "today",
-      text: "今日",
-      title: "Today: " + dateToStr(today),
-    })
-
     initGanttDataProcessor()
     gantt.init(GANTT_DOM!.current as HTMLDivElement) //根据 id
-  }, [])
+  }, [gantt])
 
   const beforeDragTask = React.useRef({} as Task)
 
@@ -314,7 +304,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
         resetRenderGantt({ data: updatedChildrenTasks })
         updatedChildrenTasks = []
       } catch (e) {
-        console.log(e)
         resetRenderGantt({ data: [beforeDragTask.current] })
       }
     })
@@ -335,6 +324,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     // 监听侧边树形数据展开事件
     gantt.attachEvent("onTaskOpened", function (taskId) {
       const ganttItem = gantt.getTask(taskId)
+      console.log(ganttItem)
       ganttItem.hasChild && getSubGanttList(ganttItem)
       return true
     })
@@ -379,6 +369,13 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
         }
       }
       return true
+    })
+
+    gantt.attachEvent("onLightboxDelete", function (id, ...arg) {
+      console.log(arg)
+      const task = gantt.getTask(id)
+      console.log(task)
+      return false
     })
 
     function is_selected_column(column_date: any) {

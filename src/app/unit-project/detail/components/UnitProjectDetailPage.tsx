@@ -28,6 +28,7 @@ import { TypePostProjectSubSectionParams } from "@/app/unit-project/types"
 import UnitProjectContext from "@/app/unit-project/context/unitProjectContext"
 import { useRouter, useSearchParams } from "next/navigation"
 import { LayoutContext } from "@/components/LayoutContext"
+import { message } from "antd"
 
 type IForm = {
   name: string
@@ -151,6 +152,10 @@ export default function UnitProjectDetailPage() {
       params.id = +searchParams.get("spId")!
       await putProjectSubSectionApi(params)
     } else {
+      const relateToIsEmpty = relateTo.current.some((item) => item.length <= 0)
+
+      if (related.length <= 0) return message.error("请关联构筑物")
+      if (relateToIsEmpty) return message.error("哈哈哈哈 ")
       await postProjectSubSection(params)
     }
 
@@ -277,17 +282,19 @@ export default function UnitProjectDetailPage() {
   return (
     <>
       <Card sx={{ minWidth: 275, height: "100%" }}>
-        <CardContent className="flex">
-          <div>
-            <div className="w-[500px] p-10">
-              <header className="text-3xl text-[#44566C] mb-8">
+        <CardContent className="flex h-full">
+          <div className="h-full">
+            <div className="w-[500px] p-10 flex flex-col h-full">
+              <header className="text-3xl text-[#44566C] mb-8 h-9">
                 {Boolean(searchParams.get("spId")) ? "编辑单位工程" : "添加单位工程"}
               </header>
-              <form onSubmit={handleSubmit(onSubmit)}>
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="flex-1 flex flex-col overflow-y-auto">
                 <div className="mb-8 relative">
                   <div className="flex items-start flex-col">
-                    <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
-                      单位工程名称:
+                    <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5">
+                      <span className="text-railway_error mr-0.5">*</span>单位工程名称:
                     </InputLabel>
                     <TextField
                       variant="outlined"
@@ -318,12 +325,14 @@ export default function UnitProjectDetailPage() {
                   />
                 </div>
 
-                <div className="mb-8 relative">
+                <div className="mb-8 relative overflow-y-auto flex-1">
                   <div className="flex items-start flex-col">
                     <InputLabel
                       id="demo-multiple-checkbox-label"
-                      className="mr-3 w-full text-left mb-2.5"
-                      required>
+                      className="mr-3 w-full text-left mb-2.5">
+                      {!searchParams.get("spId") && (
+                        <span className="text-railway_error mr-0.5">*</span>
+                      )}
                       关联构筑物
                     </InputLabel>
 
@@ -357,7 +366,7 @@ export default function UnitProjectDetailPage() {
               </form>
             </div>
           </div>
-          <div className="mt-10 ml-10 flex-1">
+          <div className="mt-10 ml-10 flex-1 overflow-y-auto">
             {engineeringSelect.map((id, index) => {
               const item = engineeringList.find((item) => item.id == id)!
 

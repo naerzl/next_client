@@ -121,3 +121,9 @@ export function dateToYYYYMM(date: string | Date) {
   dayjs.extend(utc)
   return dayjs(date).tz("UTC").format("YYYY-MM-DD HH:mm:ss")
 }
+
+export function dateToUTCCustom(date: string | Date, type: string) {
+  dayjs.extend(tz)
+  dayjs.extend(utc)
+  return dayjs(date).tz("UTC").format(type)
+}

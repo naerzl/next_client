@@ -250,6 +250,7 @@ const GanttPage = () => {
       params.project_id = PROJECT_ID
       params.name = item.text
       params.period = Number(item.duration)
+      params.engineering_listing_id = item.engineering_listing_id!
       params.scheduled_start_at = dayjs(item.start_date).format("YYYY-MM-DD")
       params.project_sp_id = +String(projectTask.id).replace(/[a-zA-Z]/, "")
       params.project_si_id = +String(workingTask.id).replace(/[a-zA-Z]/, "")
@@ -324,12 +325,20 @@ const GanttPage = () => {
 
   // 获取工点数据的字节
   const getWorkingSubGanttList = (item: any) => {
-    getEBSApi({ project_id: PROJECT_ID, level: 2, is_hidden: 0, code: item.ebs_code }).then(
-      async (res) => {
-        const renderArr = await getEBSChildrenCount(res, { ...item, code: item.ebs_code, level: 1 })
-        changeAndRenderGanttLists(renderArr, "ebs", item.id)
-      },
-    )
+    getEBSApi({
+      project_id: PROJECT_ID,
+      level: 2,
+      is_hidden: 0,
+      code: item?.engineering_listings[0]?.ebs_code,
+      engineering_listing_id: item?.engineering_listings[0]?.id,
+    }).then(async (res) => {
+      const renderArr = await getEBSChildrenCount(res, { ...item, code: item.ebs_code, level: 1 })
+      const newArr = renderArr.map((el) => ({
+        ...el,
+        engineering_listing_id: item?.engineering_listings[0]?.id,
+      }))
+      changeAndRenderGanttLists(newArr, "ebs", item.id)
+    })
   }
 
   const getEBSChildrenCount = async (res: TypeEBSDataList[], item: TypeEBSDataList) => {
@@ -373,14 +382,20 @@ const GanttPage = () => {
       code: item.code,
       project_id: PROJECT_ID,
       level: item.level + 1,
+      engineering_listing_id: item.engineering_listing_id!,
     } as TypeApiGetEBSParams
 
     const res = await getEBSApi(getEBSParams)
     const renderArr = await getEBSChildrenCount(res, item)
-    changeAndRenderGanttLists(renderArr, "ebs", item.id)
+    const newArr = renderArr.map((el) => ({
+      ...el,
+      engineering_listing_id: item.engineering_listing_id,
+    }))
+    changeAndRenderGanttLists(newArr, "ebs", item.id)
   }
 
   const getSubGanttList = async (item: any) => {
+    console.log(item)
     switch (item.$level) {
       case 0:
         getProjectSubGanttList(item)
@@ -516,11 +531,13 @@ const GanttPage = () => {
             handleOpenDrawerProcess={handleOpenDrawerProcess}
           />
         </div>
-        <DrawerAndTabs
-          item={item}
-          open={drawerProcessOpen}
-          handleCloseDrawerProcess={handleCloseDrawerProcess}
-        />
+        {drawerProcessOpen && (
+          <DrawerAndTabs
+            item={item}
+            open={drawerProcessOpen}
+            handleCloseDrawerProcess={handleCloseDrawerProcess}
+          />
+        )}
       </div>
     </GanttContext.Provider>
   )

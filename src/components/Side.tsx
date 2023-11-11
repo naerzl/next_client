@@ -8,6 +8,7 @@ import HiveOutlinedIcon from "@mui/icons-material/HiveOutlined"
 import SupervisedUserCircleOutlinedIcon from "@mui/icons-material/SupervisedUserCircleOutlined"
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined"
 import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined"
+import SpeedOutlinedIcon from "@mui/icons-material/SpeedOutlined"
 import {
   Collapse,
   List,
@@ -60,6 +61,16 @@ const menuList: { [key: string]: any } = {
       "material-receipt": {
         path: "/material-receipt",
         title: "物资领用",
+      },
+    },
+  },
+  testManagement: {
+    title: "试验管理",
+    icon: <SpeedOutlinedIcon />,
+    children: {
+      test: {
+        path: "/test",
+        title: "试验列表",
       },
     },
   },

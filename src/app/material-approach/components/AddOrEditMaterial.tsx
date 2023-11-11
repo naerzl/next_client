@@ -1,4 +1,16 @@
-import { Button, Drawer, InputLabel, MenuItem, Select, TextField } from "@mui/material"
+import {
+  Autocomplete,
+  Button,
+  Chip,
+  Drawer,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  SelectChangeEvent,
+  TextField,
+} from "@mui/material"
 import React, { ChangeEvent } from "react"
 import { FieldErrors, SubmitHandler, useForm } from "react-hook-form"
 import useDebounce from "@/hooks/useDebounce"
@@ -24,7 +36,6 @@ import {
 } from "@/app/material-approach/api"
 import { message, TreeSelect, TreeSelectProps } from "antd"
 import { styled } from "@mui/material/styles"
-import CloudUploadIcon from "@mui/icons-material/CloudUpload"
 import { getV1BaseURL } from "@/libs/fetch"
 import { LayoutContext } from "@/components/LayoutContext"
 
@@ -46,6 +57,11 @@ interface Props {
   close: () => void
   editItem: null | MaterialApproachData
   getDataList: () => void
+}
+
+const findUnit = (id: number | undefined) => {
+  const classItem = CLASS_OPTION.find((item) => item.id == id)
+  return classItem ? classItem.unit : "单位"
 }
 
 export default function AddOrEditMaterial(props: Props) {
@@ -78,7 +94,7 @@ export default function AddOrEditMaterial(props: Props) {
     [],
   )
 
-  const [dictionaryId, setDictionaryId] = React.useState(0)
+  const [dictionaryId, setDictionaryId] = React.useState<number>(0)
 
   const getDictionary = async () => {
     const res = await getDictionaryApi({})
@@ -91,18 +107,11 @@ export default function AddOrEditMaterial(props: Props) {
     })
   }, [dictionaryClass])
 
-  const getDictionaryClass = async () => {
-    const res = await getDictionaryClassApi({ page: 1, limit: 20 })
-    setDictionaryClassList(res || [])
-  }
+  const handleDictionaryClassSelectChange = (event: SelectChangeEvent<string>) => {
+    const _classItem = CLASS_OPTION.find((classItem) => classItem.value == event.target.value)!
 
-  React.useEffect(() => {
-    getDictionaryClass()
-  }, [])
-
-  const handleDictionarySelectChange = (newValue: number, node: any) => {
-    console.log(newValue, node)
-    setDictionaryClass(newValue)
+    setDictionaryClass(_classItem.id)
+    setClassValue(_classItem.value)
   }
 
   const onLoadData: TreeSelectProps["loadData"] = (node) => {
@@ -164,11 +173,11 @@ export default function AddOrEditMaterial(props: Props) {
 
   const { run: onSubmit }: { run: SubmitHandler<PostMaterialApproachParams> } = useDebounce(
     async (values: PostMaterialApproachParams) => {
-      // if (dictionaryId <= 0) {
-      //   message.error("请选择物资名称")
-      //   setCustomError({ dictionaryId: { message: "请选择物资名称" } })
-      //   return
-      // }
+      if (!Boolean(dictionaryId)) {
+        message.error("请选择物资名称")
+        setCustomError({ dictionaryId: { message: "请选择物资名称" } })
+        return
+      }
       let params = {} as PostMaterialApproachParams & PutMaterialApproachParams
       params.handling_suggestions = values.handling_suggestions
       params.desc = values.desc
@@ -180,7 +189,7 @@ export default function AddOrEditMaterial(props: Props) {
       params.arrivaled_at = timeAt?.format("YYYY-MM-DD HH:mm:ss") as string
       params.status = qualified
       params.project_id = PROJECT_ID
-      params.dictionary_id = dictionaryId
+      params.dictionary_id = dictionaryId!
       params.class = classValue
       // params.dictionary_id = 1
 
@@ -256,19 +265,19 @@ export default function AddOrEditMaterial(props: Props) {
 
               <Select
                 MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
-                sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
+                sx={{ color: "#303133", zIndex: 1602 }}
                 id="role_list"
                 size="small"
                 value={classValue}
                 onChange={(event) => {
-                  setClassValue(event.target.value)
+                  handleDictionaryClassSelectChange(event)
                 }}
                 fullWidth>
                 <MenuItem value="null" disabled>
                   <i className="text-[#ababab]">请选择一个物资类别</i>
                 </MenuItem>
                 {CLASS_OPTION.map((item: any) => (
-                  <MenuItem value={item.value} key={item.value}>
+                  <MenuItem value={item.value} key={item.id}>
                     {item.label}
                   </MenuItem>
                 ))}
@@ -279,62 +288,78 @@ export default function AddOrEditMaterial(props: Props) {
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
               <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
-                物资名称:
+                物资名称及规格型号:
               </InputLabel>
-              <div className="grid grid-cols-2 w-full gap-x-2">
+              <div className="w-full">
                 {/*<Select*/}
                 {/*  MenuProps={{ sx: { zIndex: 1702, height: "25rem" } }}*/}
                 {/*  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}*/}
                 {/*  id="zidian"*/}
                 {/*  size="small"*/}
-                {/*  value={dictionaryClass}*/}
+                {/*  fullWidth*/}
+                {/*  value={dictionaryId}*/}
+                {/*  error={Boolean(customError["dictionaryId"])}*/}
                 {/*  onChange={(event) => {*/}
-                {/*    setDictionaryClass(+event.target.value)*/}
-                {/*  }}*/}
-                {/*  fullWidth>*/}
-                {/*  <MenuItem value={0}>全部</MenuItem>*/}
-                {/*  {dictionaryClassList.map((item: any) => (*/}
+                {/*    console.log(event.target.value)*/}
+                {/*    setDictionaryId(+event.target.value)*/}
+                {/*    setCustomError({})*/}
+                {/*  }}>*/}
+                {/*  <MenuItem value={0} disabled>*/}
+                {/*    <i className="text-[#ababab]">请选择一个物资名称及规格型号</i>*/}
+                {/*  </MenuItem>*/}
+                {/*  {dictionaryList.map((item: any) => (*/}
                 {/*    <MenuItem value={item.id} key={item.id}>*/}
                 {/*      {item.name}*/}
                 {/*    </MenuItem>*/}
                 {/*  ))}*/}
                 {/*</Select>*/}
 
-                <TreeSelect
-                  placement="topLeft"
-                  style={{ width: "100%" }}
-                  value={dictionaryClass}
-                  dropdownStyle={{ maxHeight: 400, overflow: "auto", zIndex: 2000 }}
-                  placeholder="选择一个物资分类"
-                  onSelect={handleDictionarySelectChange}
-                  loadData={onLoadData}
-                  fieldNames={{ label: "name", value: "id" }}
-                  size="large"
-                  treeData={dictionaryClassList}
-                />
-
-                <Select
-                  MenuProps={{ sx: { zIndex: 1702, height: "25rem" } }}
-                  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
-                  id="zidian"
-                  size="small"
+                <Autocomplete
+                  disablePortal
+                  id="h_subpart_code"
+                  options={dictionaryList.map((item) => item.id)}
+                  fullWidth
                   value={dictionaryId}
-                  error={Boolean(customError["dictionaryId"])}
-                  onChange={(event) => {
-                    console.log(event.target.value)
-                    setDictionaryId(+event.target.value)
-                    setCustomError({})
+                  size="small"
+                  getOptionLabel={(option) => {
+                    const dictionaryItem = dictionaryList.find((item) => item.id == option)
+                    return dictionaryItem ? dictionaryItem.name : ""
                   }}
-                  fullWidth>
-                  <MenuItem value={0} disabled>
-                    <i className="text-[#ababab]">请选择一个物资</i>
-                  </MenuItem>
-                  {dictionaryList.map((item: any) => (
-                    <MenuItem value={item.id} key={item.id}>
-                      {item.name}
-                    </MenuItem>
-                  ))}
-                </Select>
+                  onChange={(event, value, reason, details) => {
+                    if (!!value) {
+                      console.log(value)
+                      setDictionaryId(value)
+                      setCustomError({})
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="请选择一个物资名称及规格型号" />
+                  )}
+                  filterOptions={(options, state) => {
+                    if (String(state.inputValue) == "") return dictionaryList.map((item) => item.id)
+                    const arr = dictionaryList.filter((item) =>
+                      item.name.includes(String(state.inputValue)),
+                    )
+                    return arr.map((item) => item.id)
+                  }}
+                  renderOption={(props, option) => {
+                    const dictionaryItem = dictionaryList.find((ele) => ele.id == option)!
+                    return (
+                      <li {...props} key={option}>
+                        {dictionaryItem?.name}
+                      </li>
+                    )
+                  }}
+                  renderTags={(tagValue, getTagProps) => {
+                    return tagValue.map((option, index) => (
+                      <Chip
+                        {...getTagProps({ index })}
+                        key={option}
+                        label={dictionaryList[index].name}
+                      />
+                    ))
+                  }}
+                />
               </div>
             </div>
             <ErrorMessage
@@ -346,20 +371,32 @@ export default function AddOrEditMaterial(props: Props) {
             />
           </div>
 
+          {/*<OutlinedInput*/}
+          {/*  id="outlined-adornment-weight"*/}
+          {/*  endAdornment={<InputAdornment position="end">kg</InputAdornment>}*/}
+          {/*  aria-describedby="outlined-weight-helper-text"*/}
+          {/*  inputProps={{*/}
+          {/*    "aria-label": "weight",*/}
+          {/*  }}*/}
+          {/*/>*/}
+
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
               <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
                 到货数量:
               </InputLabel>
-              <TextField
-                variant="outlined"
+              <OutlinedInput
                 id="name"
                 size="small"
                 fullWidth
                 type="number"
+                placeholder="请输入到货数量"
+                endAdornment={
+                  <InputAdornment position="end">{findUnit(dictionaryClass)}</InputAdornment>
+                }
                 error={Boolean(errors.arrivaled_quantity)}
                 {...register("arrivaled_quantity", {
-                  required: "请输入到货数据",
+                  required: "请输入到货数量",
                   max: {
                     value: 999,
                     message: "数量为0-999",
@@ -374,7 +411,6 @@ export default function AddOrEditMaterial(props: Props) {
                     console.log(errors)
                   },
                 })}
-                label="到货数量"
                 autoComplete="off"
               />
             </div>

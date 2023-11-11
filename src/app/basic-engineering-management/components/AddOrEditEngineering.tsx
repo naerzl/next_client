@@ -13,11 +13,14 @@ import {
 import { TypeEBSDataList } from "@/app/gantt/types"
 import { TypeApiGetEBSParams } from "@/app/ebs-data/types"
 import {
+  reqGetEngineeringListing,
   reqPostEngineeringListing,
   reqPutEngineeringListing,
 } from "@/app/basic-engineering-management/api"
 import { reqGetEBS, reqGetEBSSystem } from "@/app/ebs-data/api"
 import { LayoutContext } from "@/components/LayoutContext"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import dayjs from "dayjs"
 
 type AllSelectType = {
   ebs_id: number | null
@@ -55,6 +58,13 @@ export default function AddOrEditEngineering(props: Props) {
     reset()
   }
 
+  const { trigger: getEngineeringListingApi, isMutating } = useSWRMutation(
+    "/engineering-listing",
+    reqGetEngineeringListing,
+  )
+
+  const { showConfirmationDialog } = useConfirmationDialog()
+
   React.useEffect(() => {
     if (editItem) {
       const { km: sKm, m: sM } = findKmAndM(editItem.start_mileage + "")
@@ -75,6 +85,20 @@ export default function AddOrEditEngineering(props: Props) {
       })
     }
   }, [editItem])
+
+  const [engineeringList, setEngineeringList] = React.useState<EngineeringListing[]>([])
+
+  const getEngineeringListingDataList = async () => {
+    const res = await getEngineeringListingApi({
+      project_id: PROJECT_ID,
+    })
+
+    setEngineeringList(res)
+  }
+
+  React.useEffect(() => {
+    getEngineeringListingDataList()
+  }, [])
 
   const {
     handleSubmit,
@@ -102,6 +126,33 @@ export default function AddOrEditEngineering(props: Props) {
     reqPutEngineeringListing,
   )
 
+  const handleSubmitFormCB = async (
+    values: PostEngineeringListingParams & {
+      start_mileage1: number
+      start_mileage2: number
+      end_mileage1: number
+      end_mileage2: number
+    },
+  ) => {
+    const params = {} as PostEngineeringListingParams & PutEngineeringListingParams
+    params.project_id = PROJECT_ID
+    Object.assign(params, allSelectValue)
+    params.start_mileage = values.start_mileage1 * 1000 + Number(values.start_mileage2) + ""
+    params.end_mileage = values.end_mileage1 * 1000 + Number(values.end_mileage2) + ""
+    params.name = values.name
+
+    if (Boolean(editItem)) {
+      delete params["ebs_id"]
+      params.id = editItem!.id
+      await putEngineeringListingApi(params)
+    } else {
+      await postEngineeringListingApi(params)
+    }
+    message.success("操作成功")
+    handleClose()
+    getDataList()
+  }
+
   const { run: onSubmit }: { run: SubmitHandler<PostEngineeringListingParams> } = useDebounce(
     async (
       values: PostEngineeringListingParams & {
@@ -113,23 +164,13 @@ export default function AddOrEditEngineering(props: Props) {
     ) => {
       if (!allSelectValue.ebs_id) return message.error("请选择EBS")
 
-      const params = {} as PostEngineeringListingParams & PutEngineeringListingParams
-      params.project_id = PROJECT_ID
-      Object.assign(params, allSelectValue)
-      params.start_mileage = values.start_mileage1 * 1000 + Number(values.start_mileage2) + ""
-      params.end_mileage = values.end_mileage1 * 1000 + Number(values.end_mileage2) + ""
-      params.name = values.name
+      const flagSome = engineeringList.some((item) => item.name.includes(values.name))
 
-      if (Boolean(editItem)) {
-        delete params["ebs_id"]
-        params.id = editItem!.id
-        await putEngineeringListingApi(params)
-      } else {
-        await postEngineeringListingApi(params)
-      }
-      message.success("操作成功")
-      handleClose()
-      getDataList()
+      flagSome
+        ? showConfirmationDialog("该工程名已存在，确认添加？", () => {
+            handleSubmitFormCB(values)
+          })
+        : handleSubmitFormCB(values)
     },
   )
 
@@ -165,13 +206,13 @@ export default function AddOrEditEngineering(props: Props) {
     <Drawer open={open} onClose={handleClose} anchor="right">
       <div className="w-[500px] p-10">
         <header className="text-3xl text-[#44566C] mb-8">
-          {!!editItem ? "修改工程" : "添加工程"}
+          {!!editItem ? "修改构筑物" : "添加构筑物"}
         </header>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
-              <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
-                工程:
+              <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5">
+                <span className="text-railway_error mr-0.5">*</span>构筑物名称:
               </InputLabel>
               <TextField
                 variant="outlined"
@@ -180,12 +221,12 @@ export default function AddOrEditEngineering(props: Props) {
                 fullWidth
                 error={Boolean(errors.name)}
                 {...register("name", {
-                  required: "请输入领用数据",
+                  required: "请输入构筑物名称",
                   onBlur() {
                     trigger("name")
                   },
                 })}
-                label="工程"
+                label="请输入构筑物名称"
                 autoComplete="off"
               />
             </div>
@@ -200,11 +241,8 @@ export default function AddOrEditEngineering(props: Props) {
 
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
-              <InputLabel
-                htmlFor="certificate_number"
-                className="mr-3 w-full text-left mb-2.5"
-                required>
-                选择专业:
+              <InputLabel htmlFor="certificate_number" className="mr-3 w-full text-left mb-2.5">
+                <span className="text-railway_error mr-0.5">*</span>专业名称:
               </InputLabel>
               {Boolean(editItem) ? (
                 <div>{editItem?.ebs.name}</div>
@@ -235,8 +273,8 @@ export default function AddOrEditEngineering(props: Props) {
 
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
-              <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
-                是否高速:
+              <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5">
+                <span className="text-railway_error mr-0.5">*</span>是否高速:
               </InputLabel>
               <Switch
                 checked={allSelectValue.is_highspeed == 1}
@@ -257,8 +295,8 @@ export default function AddOrEditEngineering(props: Props) {
 
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
-              <InputLabel htmlFor="start_mileage" className="mr-3 w-full text-left mb-2.5" required>
-                开始里程:
+              <InputLabel htmlFor="start_mileage" className="mr-3 w-full text-left mb-2.5">
+                <span className="text-railway_error mr-0.5">*</span>开始里程:
               </InputLabel>
               <div className="flex w-full items-center gap-x-2">
                 <div className="text-[#666666]">DK</div>
@@ -283,7 +321,7 @@ export default function AddOrEditEngineering(props: Props) {
                       trigger("start_mileage1")
                     },
                   })}
-                  label="千米"
+                  label="km"
                   autoComplete="off"
                 />
                 <div className="text-[#666666]">+</div>
@@ -308,24 +346,17 @@ export default function AddOrEditEngineering(props: Props) {
                       trigger("start_mileage2")
                     },
                   })}
-                  label="米"
+                  label="m"
                   autoComplete="off"
                 />
               </div>
             </div>
-            <ErrorMessage
-              errors={errors}
-              name="start_mileage"
-              render={({ message }) => (
-                <p className="text-railway_error text-sm absolute">{message}</p>
-              )}
-            />
           </div>
 
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
-              <InputLabel htmlFor="end_mileage" className="mr-3 w-full text-left mb-2.5" required>
-                结束里程:
+              <InputLabel htmlFor="end_mileage" className="mr-3 w-full text-left mb-2.5">
+                <span className="text-railway_error mr-0.5">*</span>结束里程:
               </InputLabel>
               <div className="flex w-full items-center gap-x-2">
                 <div className="text-[#666666]">DK</div>
@@ -350,7 +381,7 @@ export default function AddOrEditEngineering(props: Props) {
                       trigger("end_mileage1")
                     },
                   })}
-                  label="千米"
+                  label="km"
                   autoComplete="off"
                 />
                 <div className="text-[#666666]">+</div>
@@ -375,18 +406,11 @@ export default function AddOrEditEngineering(props: Props) {
                       trigger("end_mileage2")
                     },
                   })}
-                  label="米"
+                  label="m"
                   autoComplete="off"
                 />
               </div>
             </div>
-            <ErrorMessage
-              errors={errors}
-              name="end_mileage"
-              render={({ message }) => (
-                <p className="text-railway_error text-sm absolute">{message}</p>
-              )}
-            />
           </div>
 
           <div className="flex justify-end gap-2">

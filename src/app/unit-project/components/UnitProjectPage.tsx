@@ -18,6 +18,8 @@ import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { LayoutContext } from "@/components/LayoutContext"
+import { dateToUTCCustom } from "@/libs/methods"
+import Tooltip from "@mui/material/Tooltip"
 
 const renderTableTd = (arr: any[], type: "name" | "ebs"): string => {
   switch (type) {
@@ -57,16 +59,25 @@ export default function UnitProjectPage() {
   // 表格配置列
   const columns = [
     {
+      title: "创建时间",
+      dataIndex: "create_at",
+      key: "create_at",
+    },
+    {
       title: "单位工程名称",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "基础工程",
+      title: "关联构筑物",
       dataIndex: "subpart_name",
       key: "subpart_name",
     },
-
+    {
+      title: "创建人",
+      dataIndex: "creator",
+      key: "creator",
+    },
     {
       width: "400px",
       title: "操作",
@@ -109,7 +120,7 @@ export default function UnitProjectPage() {
         <div>
           <InputBase
             className="w-[18.125rem] h-10 border  px-2 shadow bg-white"
-            placeholder="搜索模板名称"
+            placeholder="请输入单位工程名称"
             onBlur={(event) => {
               handleClickSearch(event.target.value)
             }}
@@ -128,9 +139,9 @@ export default function UnitProjectPage() {
           />
         </div>
       </header>
-      <div className="bg-white border custom-scroll-bar shadow-sm min-h-[570px]">
+      <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-y-auto">
         <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
-          <TableHead sx={{ position: "sticky", top: "64px", zIndex: 5 }}>
+          <TableHead sx={{ position: "sticky", top: "0px", zIndex: 5 }}>
             <TableRow>
               {columns.map((col) => (
                 <TableCell key={col.key} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
@@ -141,13 +152,26 @@ export default function UnitProjectPage() {
           </TableHead>
           <TableBody>
             {ctx.tableList.map((row) => (
-              <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-                <TableCell align="left">{row.name}</TableCell>
-                <TableCell align="left">
-                  {renderTableTd(row.engineering_listings, "name")}
+              <TableRow key={row.id}>
+                <TableCell align="left" className="min-w-[146px]">
+                  {dateToUTCCustom(row.create_at, "YYYY-MM-DD HH:mm")}
+                </TableCell>
+                <TableCell align="left" className="min-w-[146px]">
+                  {row.name}
+                </TableCell>
+                <TableCell
+                  align="left"
+                  className="w-2/5 text-ellipsis overflow-hidden"
+                  title={renderTableTd(row.engineering_listings, "name")}>
+                  <div className="w-[40rem] whitespace-nowrap text-ellipsis overflow-hidden">
+                    {renderTableTd(row.engineering_listings, "name")}
+                  </div>
+                </TableCell>
+                <TableCell align="left" className="min-w-[146px]">
+                  {row.creator}
                 </TableCell>
 
-                <TableCell align="left">
+                <TableCell align="left" className="min-w-[210px]">
                   <div className="flex justify-between">
                     <Button
                       variant="outlined"
@@ -173,6 +197,12 @@ export default function UnitProjectPage() {
             ))}
           </TableBody>
         </Table>
+        <div className="relative px-4 h-14 w-full overflow-hidden">
+          <div className="h-0.5 bg-[#8f8f8f] w-100 absolute  top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2"></div>
+          <h6 className="absolute  top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white w-28 h-8 text-[#545454] text-center leading-8 text-sm">
+            我是有底线的
+          </h6>
+        </div>
       </div>
     </>
   )

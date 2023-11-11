@@ -59,6 +59,7 @@ export interface TypeEBSDataList {
     scheduled_start_at: string
     status: string
   }
+  engineering_listing_id?: number
 }
 
 /*创建EBS结构 请求参数*/

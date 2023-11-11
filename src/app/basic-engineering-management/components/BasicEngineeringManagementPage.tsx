@@ -12,7 +12,8 @@ import TableHead from "@mui/material/TableHead"
 import TableRow from "@mui/material/TableRow"
 import TableCell from "@mui/material/TableCell"
 import TableBody from "@mui/material/TableBody"
-import { dateToYYYYMM } from "@/libs/methods"
+import TableFooter from "@mui/material/TableFooter"
+import { dateToUTCCustom, dateToYYYYMM } from "@/libs/methods"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import {
@@ -25,6 +26,7 @@ import AddOrEditEngineering from "@/app/basic-engineering-management/components/
 import { useRouter } from "next/navigation"
 import ConstructionIcon from "@mui/icons-material/Construction"
 import { LayoutContext } from "@/components/LayoutContext"
+import dayjs from "dayjs"
 
 export default function BasicEngineeringManagementPage() {
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
@@ -32,31 +34,34 @@ export default function BasicEngineeringManagementPage() {
   // 表格配置列
   const columns = [
     {
+      title: "创建时间",
+      key: "create_time",
+    },
+    {
       title: "专业名称",
-      dataIndex: "ebs_id",
       key: "ebs_id",
     },
     {
       title: "工程名称",
-      dataIndex: "name",
       key: "name",
     },
 
     {
       title: "开始里程",
-      dataIndex: "start_mileage",
       key: "start_mileage",
     },
 
     {
       title: "结束里程",
-      dataIndex: "end_mileage",
       key: "end_mileage",
     },
     {
       title: "是否高速",
-      dataIndex: "is_highspeed",
       key: "is_highspeed",
+    },
+    {
+      title: "创建人",
+      key: "create_by",
     },
     {
       title: "操作",
@@ -94,7 +99,11 @@ export default function BasicEngineeringManagementPage() {
 
   const getDataList = async () => {
     const res = await getEngineeringListingApi(swrState)
-    setEngineeringList(res)
+    const newArr = res.sort((a, b) => {
+      return dayjs(b.created_at).unix() - dayjs(a.created_at).unix()
+    })
+
+    setEngineeringList(newArr)
   }
 
   React.useEffect(() => {
@@ -145,9 +154,9 @@ export default function BasicEngineeringManagementPage() {
       {isMutating ? (
         <Loading />
       ) : (
-        <div className="bg-white border custom-scroll-bar shadow-sm min-h-[570px]">
+        <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-auto">
           <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
-            <TableHead sx={{ position: "sticky", top: "64px", zIndex: 5 }}>
+            <TableHead sx={{ position: "sticky", top: "0px", zIndex: 5 }}>
               <TableRow>
                 {columns.map((col, index) => (
                   <TableCell key={index} sx={{ width: col.key == "action" ? "340px" : "auto" }}>
@@ -159,11 +168,15 @@ export default function BasicEngineeringManagementPage() {
             <TableBody>
               {engineeringList.map((row) => (
                 <TableRow sx={{ "&:last-child td, &:last-child th": { border: 0 } }} key={row.id}>
+                  <TableCell align="left">
+                    {dateToUTCCustom(row.created_at, "YYYY-MM-DD HH:mm")}
+                  </TableCell>
                   <TableCell align="left">{row?.ebs?.name}</TableCell>
                   <TableCell align="left">{row.name}</TableCell>
                   <TableCell align="left">{row.start_mileage}</TableCell>
                   <TableCell align="left">{row.end_mileage}</TableCell>
                   <TableCell align="left">{row.is_highspeed == 1 ? "是" : "否"}</TableCell>
+                  <TableCell align="left">{row.creator}</TableCell>
 
                   <TableCell align="left">
                     <div className="flex justify-between">
@@ -198,7 +211,14 @@ export default function BasicEngineeringManagementPage() {
                 </TableRow>
               ))}
             </TableBody>
+            <TableFooter></TableFooter>
           </Table>
+          <div className="relative px-4 h-14 w-full overflow-hidden">
+            <div className="h-0.5 bg-[#8f8f8f] w-100 absolute  top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2"></div>
+            <h6 className="absolute  top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 bg-white w-28 h-8 text-[#545454] text-center leading-8 text-sm">
+              我是有底线的
+            </h6>
+          </div>
         </div>
       )}
       {drawerOpen && (
