@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic"
 
 const menuList: { [key: string]: any } = {
   commonLibrary: {
-    title: "工程结构",
+    title: "工程管理",
     icon: <HandymanOutlinedIcon />,
     children: {
       "basic-engineering-management": {

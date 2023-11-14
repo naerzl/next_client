@@ -237,7 +237,7 @@ export default function WorkingPointDetailPage() {
 
   return (
     <>
-      <Card sx={{ minWidth: 275, height: "100%" }}>
+      <Card sx={{ minWidth: 275, height: "100%", overflowY: "auto" }}>
         <CardContent className="flex">
           <div>
             <div className="w-[500px] p-10">
@@ -245,6 +245,62 @@ export default function WorkingPointDetailPage() {
                 {Boolean(searchParams.get("siId")) ? "编辑工点" : "添加工点"}
               </header>
               <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="mb-8">
+                  <div className="flex items-start flex-col">
+                    <InputLabel htmlFor="role_list" className="mr-3 w-full text-left mb-2.5">
+                      单位工程:
+                    </InputLabel>
+
+                    <Select
+                      id="h_subpart_code"
+                      fullWidth
+                      value={projectState}
+                      size="small"
+                      defaultValue={0}
+                      onChange={(event) => {
+                        setProjectState(+event.target.value)
+                      }}>
+                      <MenuItem value={0}>
+                        <i className="text-[#ababab]">请选择一个单位工程</i>
+                      </MenuItem>
+                      {projectSubSection.map((item) => (
+                        <MenuItem value={item.id} key={item.id}>
+                          {item.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+
+                {projectState > 0 && (
+                  <div className="mb-8">
+                    <div className="flex items-start flex-col">
+                      <InputLabel htmlFor="role_list" className="mr-3 w-full text-left mb-2.5">
+                        构筑物:
+                      </InputLabel>
+
+                      <Select
+                        id="h_subpart_code"
+                        fullWidth
+                        value={engineeringSelect}
+                        size="small"
+                        defaultValue={0}
+                        onChange={(event) => {
+                          setEngineeringSelect(+event.target.value)
+                        }}>
+                        <MenuItem value={0}>
+                          <i className="text-[#ababab]">请选择一个构筑物</i>
+                        </MenuItem>
+                        {engineeringList.map((item) => (
+                          <MenuItem value={item.id} key={item.id}>
+                            {item.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-8 relative">
                   <div className="flex items-start flex-col">
                     <InputLabel htmlFor="name" className="mr-3 w-full text-left mb-2.5" required>
@@ -278,62 +334,6 @@ export default function WorkingPointDetailPage() {
                     )}
                   />
                 </div>
-
-                <div className="mb-8">
-                  <div className="flex items-start flex-col">
-                    <InputLabel htmlFor="role_list" className="mr-3 w-full text-left mb-2.5">
-                      关联单位工程:
-                    </InputLabel>
-
-                    <Select
-                      id="h_subpart_code"
-                      fullWidth
-                      value={projectState}
-                      size="small"
-                      defaultValue={0}
-                      onChange={(event) => {
-                        setProjectState(+event.target.value)
-                      }}>
-                      <MenuItem value={0}>
-                        <i className="text-[#ababab]">请选择一个单位工程</i>
-                      </MenuItem>
-                      {projectSubSection.map((item) => (
-                        <MenuItem value={item.id} key={item.id}>
-                          {item.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
-
-                {projectState > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-start flex-col">
-                      <InputLabel htmlFor="role_list" className="mr-3 w-full text-left mb-2.5">
-                        关联构筑物:
-                      </InputLabel>
-
-                      <Select
-                        id="h_subpart_code"
-                        fullWidth
-                        value={engineeringSelect}
-                        size="small"
-                        defaultValue={0}
-                        onChange={(event) => {
-                          setEngineeringSelect(+event.target.value)
-                        }}>
-                        <MenuItem value={0}>
-                          <i className="text-[#ababab]">请选择一个构筑物</i>
-                        </MenuItem>
-                        {engineeringList.map((item) => (
-                          <MenuItem value={item.id} key={item.id}>
-                            {item.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-                )}
                 <div>
                   <Button onClick={handleCancel}>取消</Button>
                   <Button type="submit" variant="contained" className="bg-railway_blue">
@@ -343,7 +343,7 @@ export default function WorkingPointDetailPage() {
               </form>
             </div>
           </div>
-          <div className="mt-10 ml-10 flex-1">
+          <div className="mt-[8.5rem] ml-10 flex-1">
             {!!engineeringSelect && (
               <Accordion sx={{ width: "100%" }}>
                 <AccordionSummary

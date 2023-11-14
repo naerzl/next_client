@@ -21,6 +21,7 @@ import GanttContext from "@/app/gantt/context/ganttContext"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import { LayoutContext } from "@/components/LayoutContext"
+import { gantt } from "dhtmlx-gantt"
 
 // type GanttItemType = {
 //   id: number | string
@@ -245,8 +246,7 @@ const GanttPage = () => {
   ) => {
     try {
       let params = {} as TypeApiPutEBSParams
-      console.log(item.id)
-      params.id = item.id as number
+      params.id = item.id.split("-")[0] as number
       params.project_id = PROJECT_ID
       params.name = item.text
       params.period = Number(item.duration)
@@ -331,12 +331,19 @@ const GanttPage = () => {
       is_hidden: 0,
       code: item?.engineering_listings[0]?.ebs_code,
       engineering_listing_id: item?.engineering_listings[0]?.id,
+      project_si_id: item.id.substring(1),
+      project_sp_id: item.parent.substring(1),
     }).then(async (res) => {
       const renderArr = await getEBSChildrenCount(res, { ...item, code: item.ebs_code, level: 1 })
       const newArr = renderArr.map((el) => ({
         ...el,
         engineering_listing_id: item?.engineering_listings[0]?.id,
+        siId: item.id,
+        spId: item.parent,
+        customData: dayjs().format("YYYY-MM-DD"),
+        id: el.id + `-${item.id}`,
       }))
+      console.log(item.id)
       changeAndRenderGanttLists(newArr, "ebs", item.id)
     })
   }
@@ -383,13 +390,36 @@ const GanttPage = () => {
       project_id: PROJECT_ID,
       level: item.level + 1,
       engineering_listing_id: item.engineering_listing_id!,
+      project_sp_id: item.spId.substring(1),
+      project_si_id: item.siId.substring(1),
     } as TypeApiGetEBSParams
 
+    console.log(item)
+
     const res = await getEBSApi(getEBSParams)
-    const renderArr = await getEBSChildrenCount(res, item)
+    let newRes: TypeEBSDataList[] = []
+    if (item.is_can_select == 1) {
+      newRes = res.filter((ele) => {
+        if (ele.extend) {
+          if (item.is_loop == 1) return false
+          return (
+            +ele.extend.project_si_id == item.siId.substring(1) &&
+            ele.extend.project_sp_id == item.spId.substring(1)
+          )
+        }
+        return false
+      })
+      console.log(newRes, res)
+    } else {
+      newRes = res
+    }
+    const renderArr = await getEBSChildrenCount(newRes, item)
     const newArr = renderArr.map((el) => ({
       ...el,
       engineering_listing_id: item.engineering_listing_id,
+      siId: item.siId,
+      spId: item.spId,
+      id: el.id + `-${item.siId}`,
     }))
     changeAndRenderGanttLists(newArr, "ebs", item.id)
   }
@@ -520,7 +550,7 @@ const GanttPage = () => {
             />
           </div>
         </header>
-        <div className="gantt-container h-full">
+        <div className="gantt-container h-full overflow-y-auto">
           <Gantt
             ref={DOM_GANTT}
             // tasks={ganttData}

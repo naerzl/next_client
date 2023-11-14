@@ -16,13 +16,13 @@ import { LayoutContext } from "@/components/LayoutContext"
 // 表格每一列的字段
 const columns = [
   {
-    title: "EBS名称",
+    title: "工程结构名称",
     dataIndex: "name",
     key: "id",
   },
 
   {
-    title: "EBS编码",
+    title: "工程结构编码",
     dataIndex: "code",
     key: "id",
   },
@@ -206,10 +206,10 @@ export default function EBSDataPage(props: any) {
           </Typography>
         </Breadcrumbs>
       </div>
-      <div className="bg-white border ">
-        <div className="h-full">
-          <table className="w-full h-full border-spacing-0 border-separate">
-            <thead className="bg-[#fafafa] h-12 text-sm">
+      <div className="bg-white border flex-1 overflow-y-auto">
+        <div className="h-full overflow-y-auto">
+          <table className="w-full h-full border-spacing-0 border-separate overflow-y-auto">
+            <thead className="bg-[#fafafa] h-12 text-sm sticky top-0">
               <tr className="grid grid-cols-6 h-full">
                 {columns.map((col, index) => (
                   <th

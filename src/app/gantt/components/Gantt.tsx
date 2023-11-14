@@ -180,7 +180,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
 
     // 左边每一列配置
     gantt.config.columns = [
-      { name: "text", label: "EBS名称", tree: true, width: "*", resize: true, sort: false },
+      { name: "text", label: "工程结构名称", tree: true, width: "*", resize: true, sort: false },
       {
         name: "start_date",
         label: "开始时间",
@@ -247,7 +247,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
         task.text +
         "<br/><b>工期：</b> " +
         `${task.duration}天` +
-        "<br/><b>EBS编号：</b> " +
+        "<br/><b>工程结构编号：</b> " +
         `${task.code ?? ""}`
       )
     }
@@ -331,9 +331,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
 
     gantt.attachEvent("onContextMenu", function (taskId, linkId, event) {
       const element = event.target
-
-      console.log(gantt.getTaskByIndex(0))
-      console.log("You've clicked on the ", taskId, element)
       return true
     })
 
@@ -465,12 +462,11 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     //   { key: "#FF4500", label: "橙红色" },
     // ]
     //
-    // gantt.config.lightbox.sections = [
-    //   { name: "description", height: 38, map_to: "text", type: "textarea", focus: true },
-    //   { name: "priority", height: 30, map_to: "color", type: "select", options: colors },
-    //   { name: "textColor", height: 30, map_to: "textColor", type: "select", options: colors },
-    //   { name: "time", type: "duration", map_to: "auto" },
-    // ]
+    gantt.config.lightbox.sections = [
+      { name: "description", height: 38, map_to: "text", type: "textarea", focus: true },
+
+      { name: "time", type: "duration", map_to: "auto", time_format: ["%Y", "%m", "%d", "%H:%i"] },
+    ]
 
     // 初始化 zoom
     gantt.ext.zoom.init(zoomConfig)
@@ -491,8 +487,12 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
   const resetRenderGantt = (tasks: any) => {
     gantt.parse(tasks)
     gantt.sort((a, b) => {
-      return a.id - b.id
-    })
+      if (a.created_at) {
+        return dayjs(b.created_at).unix() - dayjs(a.created_at).unix()
+      } else {
+        return a.id.split("-")[0] - b.id.split("-")[0]
+      }
+    }, false)
   }
 
   const ganttClearAll = (flag = false) => {

@@ -366,7 +366,16 @@ export default function UnitProjectDetailPage() {
               </form>
             </div>
           </div>
-          <div className="mt-10 ml-10 flex-1 overflow-y-auto">
+          <div className="mt-[12.5rem] ml-10 flex-1 overflow-y-auto">
+            <div className="text-railway_gray mb-2">
+              {engineeringSelect.length > 0 && (
+                <>
+                  <span className="text-railway_error mr-0.5">*</span>
+                  关联工程结构
+                </>
+              )}
+            </div>
+
             {engineeringSelect.map((id, index) => {
               const item = engineeringList.find((item) => item.id == id)!
 
