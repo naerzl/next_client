@@ -369,7 +369,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     })
 
     gantt.attachEvent("onLightboxDelete", function (id, ...arg) {
-      console.log(arg)
       const task = gantt.getTask(id)
       console.log(task)
       return false

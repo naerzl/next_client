@@ -121,15 +121,15 @@ const changeEBSRes2GanttDate = (arr: TypeEBSDataList[], parent_id?: number) => {
     ganttItem.color = hex
     ganttItem.textColor = "#0162B1"
 
+    ganttItem.hasChild = true
     if (item.level == 1) {
-      ganttItem.hasChild = true
     } else {
       let count = 0
       for (const key in item.childrenCount) {
         // @ts-ignore
         count += item.childrenCount[key]
       }
-      ganttItem.hasChild = count > 0
+      // ganttItem.hasChild = count > 0
     }
 
     if (item.extend) {

@@ -2,11 +2,13 @@
 import React from "react"
 import * as XLSX from "xlsx"
 import { CompletionArchiveListFiles } from "@/app/completion-management/types"
-import { PROJECT_ID } from "@/libs/const"
 import useSWRMutation from "swr/mutation"
 import { reqGetCompletionArchiveObject } from "@/app/completion-management/api"
+import { LayoutContext } from "@/components/LayoutContext"
 
 export default function Numbers2HTML() {
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+
   const { trigger: getCompletionArchiveObjectApi } = useSWRMutation(
     "/completion-archive/object",
     reqGetCompletionArchiveObject,
