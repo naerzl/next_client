@@ -315,8 +315,8 @@ export default function WorkingPointDetailPage() {
                       {...register("name", {
                         required: "请输入工点名称",
                         maxLength: {
-                          value: 16,
-                          message: "文本最多16个",
+                          value: 30,
+                          message: "文本最多30个",
                         },
                         onBlur() {
                           trigger("name")

@@ -34,6 +34,7 @@ let updatedParentTasks: Task[] = []
 function updateParentTask(task: Task) {
   // 找到父级任务进行对象
   const parentTask = gantt.getTask(gantt.getParent(task.id))
+
   // 深拷贝一个父级任务
   const newParentTask = structuredClone(parentTask)
   if (dayjs(task.start_date).unix() < dayjs(parentTask.start_date).unix()) {
@@ -46,7 +47,7 @@ function updateParentTask(task: Task) {
 
   updatedParentTasks.push(newParentTask)
 
-  if (parentTask.parent == 0) return
+  if (String(parentTask.parent).startsWith("w") || String(parentTask.parent).startsWith("p")) return
 
   updateParentTask(newParentTask)
 }

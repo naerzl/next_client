@@ -78,15 +78,16 @@ export default function CompletionManagementPage() {
       return
     }
     setPDFUrl("")
-    const el = document.createElement("a")
-    el.style.display = "none"
-    el.setAttribute("target", "_blank")
-    el.setAttribute("download", "文件")
-    el.href = res.url
-    console.log(el)
-    document.body.appendChild(el)
-    el.click()
-    document.body.removeChild(el)
+
+    console.log(res)
+    // const el = document.createElement("a")
+    // el.style.display = "none"
+    // el.setAttribute("target", "_blank")
+    // el.setAttribute("download", "文件")
+    // el.href = res.url
+    // document.body.appendChild(el)
+    // el.click()
+    // document.body.removeChild(el)
   }
 
   const handleGetFile = () => {}

@@ -122,15 +122,6 @@ const changeEBSRes2GanttDate = (arr: TypeEBSDataList[], parent_id?: number) => {
     ganttItem.textColor = "#0162B1"
 
     ganttItem.hasChild = true
-    if (item.level == 1) {
-    } else {
-      let count = 0
-      for (const key in item.childrenCount) {
-        // @ts-ignore
-        count += item.childrenCount[key]
-      }
-      // ganttItem.hasChild = count > 0
-    }
 
     if (item.extend) {
       ganttItem.duration = Number(item.extend.period)
@@ -334,8 +325,7 @@ const GanttPage = () => {
       project_si_id: item.id.substring(1),
       project_sp_id: item.parent.substring(1),
     }).then(async (res) => {
-      const renderArr = await getEBSChildrenCount(res, { ...item, code: item.ebs_code, level: 1 })
-      const newArr = renderArr.map((el) => ({
+      const newArr = res.map((el) => ({
         ...el,
         engineering_listing_id: item?.engineering_listings[0]?.id,
         siId: item.id,
@@ -346,41 +336,6 @@ const GanttPage = () => {
       console.log(item.id)
       changeAndRenderGanttLists(newArr, "ebs", item.id)
     })
-  }
-
-  const getEBSChildrenCount = async (res: TypeEBSDataList[], item: TypeEBSDataList) => {
-    if (res && res.length > 0) {
-      const codeArr = res.map((item) => item.code)
-      // 获取子节点
-      const resCount = await getCodeCountApi({
-        code: JSON.stringify(codeArr),
-        level: item.level + 2,
-        is_hidden: 0,
-        project_id: PROJECT_ID,
-      })
-
-      let renderArr: any[]
-
-      if (Object.keys(resCount).length > 0) {
-        renderArr = res.map((item) => ({
-          ...item,
-          childrenCount: resCount[String(item.code) as any] || {
-            platform: 0,
-            system: 0,
-            userdefined: 0,
-            none: 0,
-          },
-        }))
-      } else {
-        renderArr = res.map((item) => ({
-          ...item,
-          childrenCount: { platform: 0, system: 0, userdefined: 0, none: 0 },
-        }))
-      }
-
-      return renderArr
-    }
-    return []
   }
 
   // 获取EBS树形结构的子集
@@ -413,8 +368,7 @@ const GanttPage = () => {
     } else {
       newRes = res
     }
-    const renderArr = await getEBSChildrenCount(newRes, item)
-    const newArr = renderArr.map((el) => ({
+    const newArr = newRes.map((el) => ({
       ...el,
       engineering_listing_id: item.engineering_listing_id,
       siId: item.siId,

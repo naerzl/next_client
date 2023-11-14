@@ -60,8 +60,8 @@ export const reqGetProcessForm = (
   }: FetchParams<{
     process_id: number
     project_id: number
-    project_sp_id: number
-    project_si_id: number
+    project_sp_id?: number
+    project_si_id?: number
   }>,
 ): Promise<ProcessFormListData[]> => fetcher({ url, arg })
 
@@ -79,8 +79,8 @@ export const reqGetBridgeBoredBasicData = (
   }: FetchParams<{
     ebs_id: number
     project_id: number
-    project_sp_id: number
-    project_si_id: number
+    project_sp_id?: number
+    project_si_id?: number
   }>,
 ): Promise<BridgeBoredBasicData[]> => fetcher({ url, arg })
 
@@ -110,8 +110,8 @@ export const reqGetRebarData = (
   }: FetchParams<{
     ebs_id: number
     project_id: number
-    project_sp_id: number
-    project_si_id: number
+    project_sp_id?: number
+    project_si_id?: number
   }>,
 ): Promise<RebarData[]> => fetcher({ url, arg })
 
@@ -137,8 +137,8 @@ export const reqGetConcreteData = (
   }: FetchParams<{
     ebs_id: number
     project_id: number
-    project_sp_id: number
-    project_si_id: number
+    project_sp_id?: number
+    project_si_id?: number
   }>,
 ): Promise<ConcreteData[]> => fetcher({ url, arg })
 

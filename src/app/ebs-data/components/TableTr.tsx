@@ -8,6 +8,7 @@ import useHooksConfirm from "@/hooks/useHooksConfirm"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import RefreshIcon from "@mui/icons-material/Refresh"
 import { LayoutContext } from "@/components/LayoutContext"
+import useDrawerProcess from "@/app/ebs-data/hooks/useDrawerProcess"
 
 interface Props {
   item: TypeEBSDataList
@@ -22,6 +23,7 @@ interface Props {
   handleAddCustomEBS: (item: TypeEBSDataList, type: Type_Is_system) => void
   handleEditCustomEBS: (item: TypeEBSDataList) => void
   isLastOne: boolean
+  handleOpenDrawerProcess: (item: TypeEBSDataList) => void
 }
 
 const EnumSubpartClass: { [key: string]: string } = {
@@ -44,6 +46,7 @@ function TableTr(props: Props) {
     handleAddCustomEBS,
     handleEditCustomEBS,
     isLastOne,
+    handleOpenDrawerProcess,
   } = props
 
   const searchParams = useSearchParams()
@@ -264,6 +267,16 @@ function TableTr(props: Props) {
     event.preventDefault()
   }
 
+  const handleCLickCell = () => {
+    if (item.name.includes("桩") && item.is_can_select != 1) {
+      handleOpenDrawerProcess(item)
+
+      ctx.changeEBSItem(
+        Object.assign(item, { engineering_listing_id: Number(searchParams.get("baseId")) }),
+      )
+    }
+  }
+
   const renderName = (): string => {
     let name = item.extend && item.extend.name ? item.extend.name : item.name
     if (item.is_loop) {
@@ -305,7 +318,10 @@ function TableTr(props: Props) {
 
             <span
               className="overflow-hidden text-ellipsis whitespace-nowrap w-full"
-              style={{ textIndent: 0 }}>
+              style={{ textIndent: 0 }}
+              onClick={() => {
+                handleCLickCell()
+              }}>
               {renderName()}
             </span>
           </div>

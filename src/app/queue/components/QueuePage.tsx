@@ -3,13 +3,6 @@ import React from "react"
 import { Breadcrumbs, Button } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
-import useSWRMutation from "swr/mutation"
-import { reqGetCompletionArchive } from "@/app/completion-management/api"
-import { PROJECT_ID } from "@/libs/const"
-import {
-  CompletionArchiveList,
-  CompletionArchiveListFiles,
-} from "@/app/completion-management/types"
 
 const PATH = "completion_archives/basic/"
 

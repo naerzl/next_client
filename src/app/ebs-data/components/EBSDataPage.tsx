@@ -12,6 +12,8 @@ import { Breadcrumbs } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import { LayoutContext } from "@/components/LayoutContext"
+import DrawerAndTabs from "@/app/ebs-data/components/DrawerAndTabs"
+import useDrawerProcess from "@/app/ebs-data/hooks/useDrawerProcess"
 
 // 表格每一列的字段
 const columns = [
@@ -56,6 +58,13 @@ export default function EBSDataPage(props: any) {
   const [tableData, setTableData] = React.useState<TypeEBSDataList[]>([])
 
   const searchParams = useSearchParams()
+
+  const {
+    item: editItem,
+    handleCloseDrawerProcess,
+    handleOpenDrawerProcess,
+    drawerProcessOpen,
+  } = useDrawerProcess()
 
   const {
     dialogOpen,
@@ -177,6 +186,7 @@ export default function EBSDataPage(props: any) {
         handleGetParentChildren={handleGetParentChildren}
         handleAddCustomEBS={handleAddCustomEBS}
         handleEditCustomEBS={handleEditCustomEBS}
+        handleOpenDrawerProcess={handleOpenDrawerProcess}
         handleAddEBS={handleAddEBS}>
         {!item.isCloseChildren &&
           item.children &&
@@ -186,8 +196,22 @@ export default function EBSDataPage(props: any) {
     ))
   }
 
+  const [dialogWithEBSItem, setDialogWithEBSItem] = React.useState<TypeEBSDataList>(
+    {} as TypeEBSDataList,
+  )
+
+  const changeDialogWithEBSItem = (item: TypeEBSDataList) => {
+    setDialogWithEBSItem(item)
+  }
+
   return (
-    <EBSDataContext.Provider value={{ handleExpandChange, tableData }}>
+    <EBSDataContext.Provider
+      value={{
+        handleExpandChange,
+        tableData,
+        ebsItem: dialogWithEBSItem,
+        changeEBSItem: changeDialogWithEBSItem,
+      }}>
       <h3 className="font-bold text-[1.875rem]">工程结构</h3>
       <div className="mb-9 mt-7">
         <Breadcrumbs aria-label="breadcrumb" separator=">">
@@ -235,6 +259,13 @@ export default function EBSDataPage(props: any) {
           )}
         </div>
       </div>
+      {drawerProcessOpen && (
+        <DrawerAndTabs
+          item={item}
+          open={drawerProcessOpen}
+          handleCloseDrawerProcess={handleCloseDrawerProcess}
+        />
+      )}
     </EBSDataContext.Provider>
   )
 }

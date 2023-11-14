@@ -60,8 +60,8 @@ export interface TypeEBSDataList {
 export interface TypeApiPostBridgeBoredBasicDataParams {
   project_id: number
   ebs_id: number
-  project_sp_id: number
-  project_si_id: number
+  project_sp_id?: number
+  project_si_id?: number
   pile_diameter: number
   pile_length: number
   pile_top_elevation: number
@@ -128,8 +128,8 @@ export interface RebarData {
 export interface TypePostRebarParams {
   project_id: number
   ebs_id: number
-  project_sp_id: number
-  project_si_id: number
+  project_sp_id?: number
+  project_si_id?: number
   rebar_no: string
   dictionary_id: number
   dictionary: {
@@ -176,8 +176,8 @@ export interface ConcreteData {
 export interface TypePostConcreteParams {
   project_id: number
   ebs_id: number
-  project_sp_id: number
-  project_si_id: number
+  project_sp_id?: number
+  project_si_id?: number
   dictionary_id: number
 }
 

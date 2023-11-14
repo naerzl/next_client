@@ -1,10 +1,9 @@
 "use clinet"
 import { Box, Divider, Drawer, IconButton, Tab, Tabs } from "@mui/material"
 import React from "react"
+import { TypeEBSDataList } from "@/app/ebs-data/types"
 import ProcessList from "./ProcessList"
 import DesignData from "./DesignData"
-import ganttContext from "@/app/gantt/context/ganttContext"
-import { TypeEBSDataList } from "@/app/gantt/types"
 
 type Props = {
   open: boolean
@@ -26,11 +25,9 @@ function a11yProps(index: number) {
 }
 
 export default function DrawerAndTabs(props: Props) {
-  const ctx = React.useContext(ganttContext)
   const { open, handleCloseDrawerProcess, item } = props
   const handleClose = () => {
     handleCloseDrawerProcess()
-    ctx.changeEBSItem({} as any)
   }
 
   const [value, setValue] = React.useState(0)
