@@ -9,18 +9,21 @@ import { Button, IconButton } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/DeleteOutlined"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import useSWR from "swr"
-import { reqDelConcreteData, reqGetConcreteData } from "@/app/ebs-data/api"
-import { BridgeBoredBasicData, ConcreteData } from "@/app/ebs-data/types"
+import {
+  reqDelAcousticTubeData,
+  reqGetAcousticTubeData,
+  reqGetDictionary,
+} from "@/app/ebs-data/api"
+import { AcousticTubeListData, DictionaryData } from "@/app/ebs-data/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
-import { Pile_Type_Enum, Drill_Mode_Enum } from "@/app/ebs-data/const"
-import useHooksConfirm from "@/hooks/useHooksConfirm"
 import useSWRMutation from "swr/mutation"
-import useAddConcreteWithDrawer from "../hooks/useAddConcreteWithDrawer"
-import AddConrete from "@/app/ebs-data/components/AddConrete"
-import dayjs from "dayjs"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import useAddAcousticTubeWithDrawer from "@/app/ebs-data/hooks/useAddAcousticTubeWithDrawer"
+import AddAcousticTube from "@/app/ebs-data/components/AddAcousticTube"
+import { ACOUSTIC_TUBE_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
+import { dateToYYYYMM } from "@/libs/methods"
 
 const columns = [
   {
@@ -36,12 +39,17 @@ const columns = [
     align: "left",
   },
   {
+    title: "数量",
+    dataIndex: "number",
+    key: "number",
+    align: "left",
+  },
+  {
     title: "创建时间",
     dataIndex: "created_at",
     key: "created_at",
     align: "left",
   },
-
   {
     width: "150px",
     title: "操作",
@@ -49,23 +57,15 @@ const columns = [
   },
 ]
 
-function renderCellType(item: BridgeBoredBasicData) {
-  return Pile_Type_Enum.find((el) => el.value == item.pile_type)?.label
-}
-
-function renderCellDrillMode(item: BridgeBoredBasicData) {
-  return Drill_Mode_Enum.find((el) => el.value == item.drill_mode)?.label
-}
-
-export default function ConcreteForm() {
+export default function AcousticTubeForm() {
   const ctx = React.useContext(ebsDataContext)
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { data: tableList, mutate: mutateTableList } = useSWR(
-    () => (ctx.ebsItem.id ? `/material-concrete?ebs_id=${ctx.ebsItem.id}` : null),
+    () => (ctx.ebsItem.id ? `/material-acoustic-tube?ebs_id=${ctx.ebsItem.id}` : null),
     (url: string) =>
-      reqGetConcreteData(url, {
+      reqGetAcousticTubeData(url, {
         arg: {
           ebs_id: ctx.ebsItem.id,
           project_id: PROJECT_ID,
@@ -79,29 +79,52 @@ export default function ConcreteForm() {
     },
   )
 
-  const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation(
-    "/material-concrete",
-    reqDelConcreteData,
+  const { trigger: delAcousticTubeDataApi } = useSWRMutation(
+    "/material-acoustic-tube",
+    reqDelAcousticTubeData,
   )
 
+  const { trigger: getDictionaryApi } = useSWRMutation("/dictionary", reqGetDictionary)
+
+  const [dictionaryList, setDictionaryList] = React.useState<DictionaryData[]>([])
+
+  const getDictionary = async () => {
+    const res = await getDictionaryApi({ class_id: ACOUSTIC_TUBE_DICTIONARY_CLASS_ID })
+    setDictionaryList(res || [])
+  }
+
+  React.useEffect(() => {
+    getDictionary()
+  }, [])
+
+  function findDictionaryName(value: number) {
+    const dictionaryItem = dictionaryList.find((item) => item.id == value)
+    return dictionaryItem ? dictionaryItem.name : ""
+  }
+
   const {
-    handleOpenAddConcreteWithDrawer,
-    handleCloseAddConcreteWithDrawer,
-    handleEditConcreteWithDrawer,
-    open: addConcreteOpen,
+    handleOpenAddAcousticTubeWithDrawer,
     editItem,
-  } = useAddConcreteWithDrawer()
+    open: addAcousticTubeOpen,
+    handleCloseAddAcousticTubeWithDrawer,
+    handleEditAcousticTubeWithDrawer,
+  } = useAddAcousticTubeWithDrawer()
 
   const { showConfirmationDialog } = useConfirmationDialog()
 
   const handleDelProcessWithSWR = (id: number) => {
-    showConfirmationDialog("确定要删除吗？", async () => {
-      await delBridgeBoredBasicDataApi({ id, project_id: PROJECT_ID })
+    showConfirmationDialog("确定删除吗？", async () => {
+      await delAcousticTubeDataApi({
+        id,
+        project_id: PROJECT_ID,
+        ebs_id: ctx.ebsItem.id,
+        engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+      })
       await mutateTableList(tableList?.filter((item) => item.id != id), false)
     })
   }
 
-  const handleAddOrEditBridgeCallBack = async (item: ConcreteData, isAdd: boolean) => {
+  const handleAddOrEditBridgeCallBack = async (item: AcousticTubeListData, isAdd: boolean) => {
     const newData = structuredClone(tableList)
     if (isAdd) {
       newData?.push(item)
@@ -120,9 +143,9 @@ export default function ConcreteForm() {
           className="bg-railway_blue"
           startIcon={<AddOutlinedIcon />}
           onClick={() => {
-            handleOpenAddConcreteWithDrawer()
+            handleOpenAddAcousticTubeWithDrawer()
           }}>
-          新建混凝土表
+          新建声测管数量表
         </Button>
       </div>
       <div style={{ width: "100%", height: "100%", paddingBottom: "38px" }}>
@@ -138,18 +161,23 @@ export default function ConcreteForm() {
           </TableHead>
           <TableBody>
             {tableList &&
-              tableList.map((row: ConcreteData, index: number) => (
+              tableList.map((row: AcousticTubeListData, index: number) => (
                 <TableRow key={row.id}>
-                  <TableCell align="left">{index + 1}</TableCell>
-                  <TableCell align="left">{row.dictionary.name}</TableCell>
-                  <TableCell align="left">
-                    {dayjs(row.created_at).format("YYYY-MM-DD HH:ss:mm")}
+                  <TableCell component="th" scope="row">
+                    {index + 1}
                   </TableCell>
+                  <TableCell component="th" scope="row">
+                    {findDictionaryName(row.dictionary_id)}
+                  </TableCell>
+                  <TableCell component="th" scope="row">
+                    {row.quantity / 1000}
+                  </TableCell>
+                  <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">
                     <div className="flex justify-start">
                       <IconButton
                         onClick={() => {
-                          handleEditConcreteWithDrawer(row)
+                          handleEditAcousticTubeWithDrawer(row)
                         }}>
                         <EditOutlinedIcon />
                       </IconButton>
@@ -166,13 +194,12 @@ export default function ConcreteForm() {
           </TableBody>
         </Table>
       </div>
-
-      {addConcreteOpen && (
-        <AddConrete
-          editItem={editItem}
-          open={addConcreteOpen}
-          handleCloseAddConcreteWithDrawer={handleCloseAddConcreteWithDrawer}
+      {addAcousticTubeOpen && (
+        <AddAcousticTube
+          open={addAcousticTubeOpen}
+          handleCloseAddBridgeWithDrawer={handleCloseAddAcousticTubeWithDrawer}
           cb={handleAddOrEditBridgeCallBack}
+          editItem={editItem}
         />
       )}
     </>

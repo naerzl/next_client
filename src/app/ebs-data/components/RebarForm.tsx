@@ -9,17 +9,18 @@ import { Button, IconButton } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/DeleteOutlined"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import useSWR from "swr"
-import { reqDelBridgeBoredBasicData, reqGetRebarData } from "@/app/ebs-data/api"
+import { reqDelRebarData, reqGetRebarData } from "@/app/ebs-data/api"
 import { RebarData } from "@/app/ebs-data/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import { Connect_method_enum } from "@/app/ebs-data/const"
-import useHooksConfirm from "@/hooks/useHooksConfirm"
 import useSWRMutation from "swr/mutation"
 import useAddRebarWithDrawer from "@/app/ebs-data/hooks/useAddRebarWithDrawer"
 import AddRebar from "@/app/ebs-data/components/AddRebar"
 import dayjs from "dayjs"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import { dateToYYYYMM } from "@/libs/methods"
 
 const columns = [
   {
@@ -104,10 +105,7 @@ export default function RebarForm() {
     },
   )
 
-  const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation(
-    "/material-rebar",
-    reqDelBridgeBoredBasicData,
-  )
+  const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation("/material-rebar", reqDelRebarData)
 
   const {
     handleEditRebarWithDrawer,
@@ -117,10 +115,10 @@ export default function RebarForm() {
     handleOpenAddRebarWithDrawer,
   } = useAddRebarWithDrawer()
 
-  const { handleConfirm } = useHooksConfirm()
+  const { showConfirmationDialog } = useConfirmationDialog()
 
   const handleDelProcessWithSWR = (id: number) => {
-    handleConfirm(async () => {
+    showConfirmationDialog("确定删除吗？", async () => {
       await delBridgeBoredBasicDataApi({ id, project_id: PROJECT_ID })
       await mutateTableList(tableList?.filter((item) => item.id != id), false)
     })
@@ -174,9 +172,7 @@ export default function RebarForm() {
                   <TableCell align="left">{row.dictionary.name}</TableCell>
                   <TableCell align="left">{row.number / 1000}</TableCell>
                   <TableCell align="left">{renderCellConnectMethod(row)}</TableCell>
-                  <TableCell align="left">
-                    {dayjs(row.created_at).format("YYYY-MM-DD HH:ss:mm")}
-                  </TableCell>
+                  <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">
                     <div className="flex justify-start">
                       <IconButton

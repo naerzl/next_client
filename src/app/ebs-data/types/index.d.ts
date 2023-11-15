@@ -94,6 +94,13 @@ export interface TypeApiPutEBSParams {
   engineering_listing_id?: number
 }
 
+export interface TypeApiPutEBSNameParams {
+  project_id: number
+  engineering_listing_id: number
+  ebs_id: number
+  name: string
+}
+
 /*获取EBS指定code 接口的相应数据*/
 export interface TypeApiGetCodeCountResponse {
   platform: number
@@ -277,4 +284,31 @@ export interface ProcessListData {
   percentage: number
   stage: number
   roles: ProcessRoleData[]
+}
+
+export interface AcousticTubeListData {
+  id: number
+  dictionary_id: number
+  quantity: number
+  created_at: string
+  creator: string
+  creator_unionid: string
+  updated_at: string
+}
+
+export interface TypePostAcousticTubeParams {
+  project_id: number
+  ebs_id: number
+  engineering_listing_id: number
+  dictionary_id: number
+  quantity: number
+}
+
+export interface TypePutAcousticTubeParams {
+  id: number
+  project_id: number
+  ebs_id: number
+  engineering_listing_id: number
+  dictionary_id: number
+  quantity: number
 }

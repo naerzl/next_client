@@ -14,7 +14,7 @@ import useDebounce from "@/hooks/useDebounce"
 import useSWRMutation from "swr/mutation"
 import { reqGetDictionary, reqPostRebarData, reqPutRebarData } from "@/app/ebs-data/api"
 import { DictionaryData, RebarData, TypePostRebarParams } from "@/app/ebs-data/types"
-import { Connect_method_enum } from "@/app/ebs-data/const"
+import { Connect_method_enum, REBAR_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 
@@ -48,7 +48,7 @@ export default function AddRebar(props: Props) {
   const [dictionaryList, setDictionaryList] = React.useState<DictionaryData[]>([])
 
   const getDictionary = async () => {
-    const res = await getDictionaryApi({})
+    const res = await getDictionaryApi({ class_id: REBAR_DICTIONARY_CLASS_ID })
     console.log(res)
     setDictionaryList(res || [])
   }

@@ -2,7 +2,13 @@ import React from "react"
 import { TypeEBSDataList } from "@/app/ebs-data/types"
 import useDebounce from "@/hooks/useDebounce"
 import useSWRMutation from "swr/mutation"
-import { reqGetEBS, reqPostEBS, reqPutEBS } from "@/app/ebs-data/api"
+import {
+  reqGetEBS,
+  reqPostEBS,
+  reqPutEBS,
+  reqPutEBSName,
+  reqPutEBSUndoHidden,
+} from "@/app/ebs-data/api"
 import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { Type_Is_system } from "@/app/ebs-data/components/TableTr"
 import {
@@ -53,8 +59,10 @@ export default function DialogEBS(props: Props) {
   const searchParams = useSearchParams()
 
   const { trigger: postEBSApi } = useSWRMutation("/ebs", reqPostEBS)
+  const { trigger: putEBSUndoHiddenApi } = useSWRMutation("/ebs/undo-hidden", reqPutEBSUndoHidden)
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
   const { trigger: putEBSApi } = useSWRMutation("/ebs", reqPutEBS)
+  const { trigger: putEBSNameApi } = useSWRMutation("/ebs/name", reqPutEBSName)
 
   const [length, setLength] = React.useState(1)
   const [lastOne, setLaseOne] = React.useState<TypeEBSDataList | null>(null)
@@ -123,18 +131,17 @@ export default function DialogEBS(props: Props) {
       if (!ebsNode) return
       const obj = deletedDataList.find((i) => i.name == ebsNode)
 
-      await postEBSApi({
-        ebs_id: item.id,
+      await putEBSUndoHiddenApi({
+        ebs_id: obj!.id,
         project_id: PROJECT_ID,
         engineering_listing_id: Number(searchParams.get("baseId")),
-        end_position: 1,
       })
       ctx.handleExpandChange(true, item)
     } else if (addType == "userdefined") {
       if (isEdit) {
-        await putEBSApi({
+        await putEBSNameApi({
           name: value.name,
-          id: item.id,
+          ebs_id: item.id,
           project_id: PROJECT_ID,
           engineering_listing_id: Number(searchParams.get("baseId")),
         })

@@ -20,6 +20,10 @@ import {
   ConcreteData,
   TypePutConcreteParams,
   DictionaryData,
+  AcousticTubeListData,
+  TypePostAcousticTubeParams,
+  TypePutAcousticTubeParams,
+  TypeApiPutEBSNameParams,
 } from "@/app/ebs-data/types"
 
 type SubpartClass = "field" | "subpart" | "subitem" | "examination"
@@ -45,6 +49,16 @@ export const reqPostEBS = (
 /*修改EBS结构*/
 export const reqPutEBS = (url: string, { arg }: FetchParams<TypeApiPutEBSParams>) =>
   fetcher({ url, arg, method: "put" })
+
+/*修改EBS结构*/
+export const reqPutEBSName = (url: string, { arg }: FetchParams<TypeApiPutEBSNameParams>) =>
+  fetcher({ url, arg, method: "put" })
+
+/*修改EBS结构*/
+export const reqPutEBSUndoHidden = (
+  url: string,
+  { arg }: FetchParams<{ project_id: number; engineering_listing_id: number; ebs_id: number }>,
+) => fetcher({ url, arg, method: "put" })
 
 /*删除EBS结构*/
 export const reqDeleteEBS = (
@@ -164,6 +178,76 @@ export const reqPutConcreteData = (url: string, { arg }: FetchParams<TypePutConc
 export const reqDelConcreteData = (
   url: string,
   { arg }: FetchParams<{ id: number; project_id: number }>,
+) => fetcher({ url, arg, method: "delete" })
+
+// 获取基础数据（钢筋）
+export const reqGetAcousticTubeData = (
+  url: string,
+  {
+    arg,
+  }: FetchParams<{
+    ebs_id: number
+    project_id: number
+    engineering_listing_id: number
+  }>,
+): Promise<AcousticTubeListData[]> => fetcher({ url, arg })
+
+// 添加基础数据（钢筋）
+export const reqPostAcousticTubeData = (
+  url: string,
+  { arg }: FetchParams<TypePostAcousticTubeParams>,
+) => fetcher({ url, arg, method: "post" })
+
+// 修改基础数据（钢筋）
+export const reqPutAcousticTubeData = (
+  url: string,
+  { arg }: FetchParams<TypePutAcousticTubeParams>,
+) => fetcher({ url, arg, method: "put" })
+
+// 删除基础数据（钢筋）
+export const reqDelAcousticTubeData = (
+  url: string,
+  {
+    arg,
+  }: FetchParams<{
+    project_id: number
+    ebs_id: number
+    engineering_listing_id: number
+    id: number
+  }>,
+) => fetcher({ url, arg, method: "delete" })
+
+// 获取基础数据（钢筋）
+export const reqGetSpacerData = (
+  url: string,
+  {
+    arg,
+  }: FetchParams<{
+    ebs_id: number
+    project_id: number
+    engineering_listing_id: number
+  }>,
+): Promise<AcousticTubeListData[]> => fetcher({ url, arg })
+
+// 添加基础数据（钢筋）
+export const reqPostSpacerData = (url: string, { arg }: FetchParams<TypePostAcousticTubeParams>) =>
+  fetcher({ url, arg, method: "post" })
+
+// 修改基础数据（钢筋）
+export const reqPutSpacerData = (url: string, { arg }: FetchParams<TypePutAcousticTubeParams>) =>
+  fetcher({ url, arg, method: "put" })
+
+// 删除基础数据（钢筋）
+export const reqDelSpacerData = (
+  url: string,
+  {
+    arg,
+  }: FetchParams<{
+    project_id: number
+    ebs_id: number
+    engineering_listing_id: number
+    id: number
+  }>,
 ) => fetcher({ url, arg, method: "delete" })
 
 // 获取字典

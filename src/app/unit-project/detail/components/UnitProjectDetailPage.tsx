@@ -120,7 +120,9 @@ export default function UnitProjectDetailPage() {
 
             return item.id
           })
+          console.log(relateTo.current)
           relateTo.current = selectArr.map(() => [])
+          isEdited.current = selectArr.map(() => 0)
 
           setEngineeringSelect(selectArr)
         }
@@ -144,6 +146,7 @@ export default function UnitProjectDetailPage() {
       return {
         engineering_listing_id: engId,
         ebs_ids: JSON.stringify(relateTo.current[index]),
+        is_edited: isEdited.current[index],
       }
     })
 
@@ -258,13 +261,14 @@ export default function UnitProjectDetailPage() {
   }
 
   const relateTo = React.useRef<any[][]>([])
-
+  const isEdited = React.useRef<number[]>([])
   const handleChangeCheckbox = async (checked: boolean, item: EngineeringListing) => {
     if (checked) {
       setEngineeringSelect((prevState) => [...prevState, item.id])
       const EBSData: any[] = await getEBSData(item.id)
       setEBSAll((prevState) => [...prevState, EBSData])
       relateTo.current = [...relateTo.current, []]
+      isEdited.current = [...isEdited.current, 0]
     } else {
       const index = engineeringSelect.indexOf(item.id)
       setEngineeringSelect((prevState) => prevState.filter((el) => el != item.id))
@@ -272,11 +276,14 @@ export default function UnitProjectDetailPage() {
       ebsArr.splice(index, 1)
       setEBSAll(ebsArr)
       relateTo.current.splice(index, 1)
+      isEdited.current.splice(index, 1)
     }
   }
 
   const handleChecked = (checkedValue: any[], checked: boolean, index: number) => {
+    console.log("tree触发了check")
     relateTo.current[index] = checkedValue
+    isEdited.current[index] = 1
   }
 
   return (

@@ -214,14 +214,14 @@ export default function memberDepartmentPage() {
           changeSideBarList,
           insertSideBarWithAddOrEdit,
         }}>
-        <h3 className="font-bold text-[1.875rem]">成员部门</h3>
+        <h3 className="font-bold text-[1.875rem]">成员列表</h3>
         <div className="mb-9 mt-7">
           <Breadcrumbs aria-label="breadcrumb" separator=">">
             <Link underline="hover" color="inherit" href="/dashboard">
               <i className="iconfont icon-homefill" style={{ fontSize: "14px" }}></i>
             </Link>
             <Typography color="text.primary" sx={{ fontSize: "14px" }}>
-              成员部门
+              成员列表
             </Typography>
           </Breadcrumbs>
         </div>
@@ -251,9 +251,9 @@ export default function memberDepartmentPage() {
           </div>
         </header>
         <div className="bg-white border custom-scroll-bar shadow-sm min-h-[570px] flex">
-          <aside className="w-60 h-full  mr-3 bg-white">
-            <SideBar />
-          </aside>
+          {/*<aside className="w-60 h-full  mr-3 bg-white ">*/}
+          {/*  <SideBar />*/}
+          {/*</aside>*/}
           <div className="flex-1 border-t border-l">
             <MemberDepartmentMain
               tableData={data?.items ? data.items : []}

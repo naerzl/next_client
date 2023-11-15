@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form"
 import useDebounce from "@/hooks/useDebounce"
 import { reqGetEBS } from "@/app/ebs-data/api"
 import Tree from "./Tree"
-import { TypeEBSDataList } from "@/app/ebs-data/types"
+import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
 import { TypePostProjectSubSectionParams } from "@/app/working-point/types"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -182,7 +182,7 @@ export default function WorkingPointDetailPage() {
     const obj = engineeringList.find((item) => item.id == engineering_listing_id)!
 
     params["engineering_listing_id"] = engineering_listing_id
-    params["project_sp_id"] = projectState
+    // params["project_sp_id"] = projectState
     params["code"] = obj?.ebs_code
 
     const res = await getEBSApi(params)
@@ -203,14 +203,19 @@ export default function WorkingPointDetailPage() {
     let arr: TypeEBSDataList[] = []
     // 展开
     if (type) {
-      arr = await getEBSApi({
+      const ebsParams = {
         project_id: PROJECT_ID,
         level: ebsItem.level + 1,
         code: ebsItem.code,
         is_hidden: 0,
         engineering_listing_id: engineeringSelect,
-        project_sp_id: String(projectState),
-      })
+        // project_sp_id: String(projectState),
+      } as TypeApiGetEBSParams
+      // if (searchParams.get("siId")) {
+      //   ebsParams.project_si_id = searchParams.get("siId")!
+      // }
+
+      arr = await getEBSApi(ebsParams)
 
       const indexArr = pos.split("-")
       const evalStr = `ebsAllValue[${indexArr.join("].children[")}]`

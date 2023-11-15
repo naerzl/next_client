@@ -91,7 +91,7 @@ const menuList: { [key: string]: any } = {
     children: {
       "member-department": {
         path: "/member-department",
-        title: "成员部门",
+        title: "成员列表",
         open: false,
       },
     },
