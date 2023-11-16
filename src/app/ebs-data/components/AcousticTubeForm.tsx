@@ -24,16 +24,11 @@ import useAddAcousticTubeWithDrawer from "@/app/ebs-data/hooks/useAddAcousticTub
 import AddAcousticTube from "@/app/ebs-data/components/AddAcousticTube"
 import { ACOUSTIC_TUBE_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
 import { dateToYYYYMM } from "@/libs/methods"
+import { renderProperty } from "@/app/ebs-data/const/method"
 
 const columns = [
   {
-    title: "序号",
-    dataIndex: "index",
-    key: "index",
-    align: "left",
-  },
-  {
-    title: "字典名称",
+    title: "规格型号",
     dataIndex: "dictionary_name",
     key: "dictionary_name",
     align: "left",
@@ -42,6 +37,12 @@ const columns = [
     title: "数量",
     dataIndex: "number",
     key: "number",
+    align: "left",
+  },
+  {
+    title: "单根长（m）",
+    dataIndex: "unit",
+    key: "unit",
     align: "left",
   },
   {
@@ -99,7 +100,7 @@ export default function AcousticTubeForm() {
 
   function findDictionaryName(value: number) {
     const dictionaryItem = dictionaryList.find((item) => item.id == value)
-    return dictionaryItem ? dictionaryItem.name : ""
+    return dictionaryItem ? renderProperty(dictionaryItem.properties) : ""
   }
 
   const {
@@ -145,7 +146,7 @@ export default function AcousticTubeForm() {
           onClick={() => {
             handleOpenAddAcousticTubeWithDrawer()
           }}>
-          新建声测管数量表
+          新建声测管数量
         </Button>
       </div>
       <div style={{ width: "100%", height: "100%", paddingBottom: "38px" }}>
@@ -164,13 +165,13 @@ export default function AcousticTubeForm() {
               tableList.map((row: AcousticTubeListData, index: number) => (
                 <TableRow key={row.id}>
                   <TableCell component="th" scope="row">
-                    {index + 1}
-                  </TableCell>
-                  <TableCell component="th" scope="row">
                     {findDictionaryName(row.dictionary_id)}
                   </TableCell>
                   <TableCell component="th" scope="row">
                     {row.quantity / 1000}
+                  </TableCell>
+                  <TableCell component="th" scope="row">
+                    {row.length ? row.length / 1000 : ""}
                   </TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">

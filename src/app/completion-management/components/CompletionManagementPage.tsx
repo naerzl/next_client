@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { Breadcrumbs, Button } from "@mui/material"
+import { Breadcrumbs } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import useSWRMutation from "swr/mutation"
@@ -13,6 +13,9 @@ import {
   CompletionArchiveListFiles,
 } from "@/app/completion-management/types"
 import { LayoutContext } from "@/components/LayoutContext"
+import CustomXLSX from "./CustomXLSX"
+import CustomDocx from "./CustomDocx"
+import CustomPDF from "./CustomPDF"
 
 const PATH = "completion_archives/basic/"
 
@@ -42,14 +45,10 @@ export default function CompletionManagementPage() {
     try {
       setDirLoading(true)
       const res = await getCompletionArchiveApi({ project_id: PROJECT_ID, path })
-      setCompletionArchiveList(
-        res.dir && res.files
-          ? res
-          : {
-              dir: [],
-              files: [],
-            },
-      )
+      setCompletionArchiveList({
+        dir: res.dir ? res.dir : [],
+        files: res.files ? res.files : [],
+      })
     } finally {
       setTimeout(() => {
         setDirLoading(false)
@@ -67,33 +66,37 @@ export default function CompletionManagementPage() {
 
     const path = pathArr.slice(0, pathArr.length - 2).join("/")
     setCurrentPath(path + "/")
+    setFileUrl("")
   }
 
-  const [pdfUrl, setPDFUrl] = React.useState("")
+  const [fileUrl, setFileUrl] = React.useState("")
 
   const handleReview = async (item: CompletionArchiveListFiles) => {
-    const res = await getCompletionArchiveObjectApi({ project_id: PROJECT_ID, path: item.key })
-    if (res.url.includes("pdf")) {
-      setPDFUrl(res.url)
-      return
+    setFileUrl(item.key)
+    if (fileUrl == item.key) {
+      const res = await getCompletionArchiveObjectApi({ project_id: PROJECT_ID, path: item.key })
+      const el = document.createElement("a")
+      el.style.display = "none"
+      el.setAttribute("target", "_blank")
+      el.setAttribute("download", "文件")
+      el.href = res.url
+      document.body.appendChild(el)
+      el.click()
+      document.body.removeChild(el)
     }
-    setPDFUrl("")
-
-    console.log(res)
-    // const el = document.createElement("a")
-    // el.style.display = "none"
-    // el.setAttribute("target", "_blank")
-    // el.setAttribute("download", "文件")
-    // el.href = res.url
-    // document.body.appendChild(el)
-    // el.click()
-    // document.body.removeChild(el)
   }
 
-  const handleGetFile = () => {}
+  const getCurrentDirName = () => {
+    const currentPathArr = currentPath.split("/")
+    if (currentPathArr.length > 3) {
+      return currentPathArr[currentPathArr.length - 2]
+    }
+    return ""
+  }
 
   const renderPath = (path: string) => {
-    const pathArr = path.split("/")
+    const newPath = path.replace(PATH, "")
+    const pathArr = newPath.split("/")
 
     const handleClick = (index: number) => {
       console.log()
@@ -120,9 +123,6 @@ export default function CompletionManagementPage() {
     })
   }
 
-  const preViewPath =
-    "https://zctc.obs.cn-north-9.myhuaweicloud.com:443/completion_archives/basic/2.%E5%8D%95%E4%BD%8D%E5%B7%A5%E7%A8%8B%E6%96%87%E4%BB%B6/48.%E5%8D%95%E4%BD%8D%E5%B7%A5%E7%A8%8B%E8%B4%A8%E9%87%8F%E9%AA%8C%E6%94%B6%E8%AE%B0%E5%BD%95%E8%A1%A8/%E5%8D%95%E4%BD%8D%E5%B7%A5%E7%A8%8B%E7%94%B3%E8%AF%B7%E8%A1%A8.xlsx?AWSAccessKeyId=6KXPFE0WUFEJGZPCSAAP&Expires=1699005776&Signature=IIL7BYnOG4dVsn22Cyk%2BBW5Nifg%3D"
-
   return (
     <>
       <h3 className="font-bold text-[1.875rem]">竣工资料</h3>
@@ -140,8 +140,8 @@ export default function CompletionManagementPage() {
         <div className="flex">{renderPath(currentPath)}</div>
         <div></div>
       </header>
-      <div className="bg-white border custom-scroll-bar shadow-sm flex-1 flex gap-x-3 overflow-y-auto h-[584px]">
-        <div className="flex-1 overflow-y-auto">
+      <div className="bg-white border custom-scroll-bar shadow-sm flex-1 flex gap-x-3 overflow-y-auto h-[584px] ">
+        <div className="flex-1 overflow-y-auto border-r">
           {dirLoading ? (
             <div className=" flex items-center justify-center w-full h-full">
               <div className="loader"></div>
@@ -155,6 +155,7 @@ export default function CompletionManagementPage() {
                   onClick={() => {
                     handleReturn()
                   }}></i>
+                <span>文件夹名称</span>
               </li>
               {completionArchiveList.dir.length > 0 ? (
                 completionArchiveList.dir.map((item) => (
@@ -163,6 +164,7 @@ export default function CompletionManagementPage() {
                     className="border-b h-9 flex items-center gap-x-2 pl-3 cursor-pointer "
                     onClick={() => {
                       setCurrentPath(item)
+                      setFileUrl("")
                     }}>
                     <i className="iconfont icon-wenjianjia text-[#ffca28] text-xl"></i>
                     <span
@@ -188,7 +190,10 @@ export default function CompletionManagementPage() {
               <div className="loader"></div>
             </div>
           ) : (
-            <ul className="h-full">
+            <ul>
+              <li className="border-b h-9 flex items-center gap-x-2 pl-3 sticky top-0 bg-white">
+                文件名称
+              </li>
               {completionArchiveList.files.length > 1 ? (
                 completionArchiveList.files.slice(1).map((item, index) => (
                   <li
@@ -203,6 +208,9 @@ export default function CompletionManagementPage() {
 
                     {item.key.endsWith("pdf") && (
                       <i className="iconfont icon-format-pdf text-[#ef4a4a] text-xl"></i>
+                    )}
+                    {item.key.includes("doc") && (
+                      <i className="iconfont icon-file-word text-[#0071ce] text-xl"></i>
                     )}
                     <span
                       className="overflow-hidden text-ellipsis whitespace-nowrap w-[375px]"
@@ -222,23 +230,9 @@ export default function CompletionManagementPage() {
           )}
         </div>
         <div className="flex-[2] overflow-y-auto">
-          {/*<iframe*/}
-          {/*  // src="http://192.168.2.17:3002/"*/}
-          {/*  src={preViewPath}*/}
-          {/*  className="w-full h-full"*/}
-          {/*  sandbox="allow-scripts allow-top-navigation allow-same-origin allow-popups"*/}
-          {/*/>*/}
-
-          {pdfUrl && (
-            <embed
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-              type="application/pdf"
-              src={pdfUrl}
-            />
-          )}
+          {fileUrl.includes(".docx") && <CustomDocx fileUrl={fileUrl} />}
+          {fileUrl.includes(".xlsx") && <CustomXLSX fileUrl={fileUrl} />}
+          {fileUrl.includes(".pdf") && <CustomPDF fileUrl={fileUrl} />}
         </div>
       </div>
     </>

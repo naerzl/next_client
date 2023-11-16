@@ -9,10 +9,10 @@ import { Button, IconButton } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/DeleteOutlined"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import useSWR from "swr"
-import { reqDelRebarData, reqGetRebarData } from "@/app/ebs-data/api"
-import { RebarData } from "@/app/ebs-data/types"
+import { reqDelRebarData, reqGetDictionary, reqGetRebarData } from "@/app/ebs-data/api"
+import { DictionaryData, RebarData } from "@/app/ebs-data/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
-import { Connect_method_enum } from "@/app/ebs-data/const"
+import { Connect_method_enum, REBAR_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
 import useSWRMutation from "swr/mutation"
 import useAddRebarWithDrawer from "@/app/ebs-data/hooks/useAddRebarWithDrawer"
 import AddRebar from "@/app/ebs-data/components/AddRebar"
@@ -21,14 +21,9 @@ import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import { dateToYYYYMM } from "@/libs/methods"
+import { renderProperty } from "@/app/ebs-data/const/method"
 
 const columns = [
-  {
-    title: "序号",
-    dataIndex: "index",
-    key: "index",
-    align: "left",
-  },
   {
     title: "钢筋编号",
     dataIndex: "rebar_no",
@@ -36,35 +31,30 @@ const columns = [
     align: "left",
   },
   {
-    title: "单位长",
+    title: "规格型号",
     dataIndex: "unit_length",
     key: "unit_length",
     align: "left",
   },
   {
-    title: "单位重",
+    title: "单位重（kg/m）",
     dataIndex: "unit_weight",
     key: "unit_weight",
     align: "left",
   },
   {
-    title: "字典名称",
+    title: "根数",
     dataIndex: "dictionary_name",
     key: "dictionary_name",
     align: "left",
   },
   {
-    title: "数量",
+    title: "单根长（m）",
     dataIndex: "number",
     key: "number",
     align: "left",
   },
-  {
-    title: "连接方式",
-    dataIndex: "connect_method",
-    key: "connect_method",
-    align: "left",
-  },
+
   {
     title: "创建时间",
     dataIndex: "created_at",
@@ -88,22 +78,22 @@ export default function RebarForm() {
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
-  const { data: tableList, mutate: mutateTableList } = useSWR(
-    () => (ctx.ebsItem.id ? `/material-rebar?ebs_id=${ctx.ebsItem.id}` : null),
-    (url: string) =>
-      reqGetRebarData(url, {
-        arg: {
-          ebs_id: ctx.ebsItem.id,
-          project_id: PROJECT_ID,
-          engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
-        },
-      }),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    },
-  )
+  const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation("/material-rebar", reqGetRebarData)
+
+  const [tableList, setTableList] = React.useState<RebarData[]>([])
+
+  const getRebarListData = async () => {
+    const res = await getBridgeBoredBasicDataApi({
+      ebs_id: ctx.ebsItem.id,
+      project_id: PROJECT_ID,
+      engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+    })
+    setTableList(res || [])
+  }
+
+  React.useEffect(() => {
+    getRebarListData()
+  }, [])
 
   const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation("/material-rebar", reqDelRebarData)
 
@@ -120,7 +110,7 @@ export default function RebarForm() {
   const handleDelProcessWithSWR = (id: number) => {
     showConfirmationDialog("确定删除吗？", async () => {
       await delBridgeBoredBasicDataApi({ id, project_id: PROJECT_ID })
-      await mutateTableList(tableList?.filter((item) => item.id != id), false)
+      getRebarListData()
     })
   }
 
@@ -132,7 +122,7 @@ export default function RebarForm() {
       const index = newData!.findIndex((el) => item.id == el.id)
       newData![index] = item
     }
-    await mutateTableList(newData, false)
+    getRebarListData()
   }
 
   return (
@@ -145,7 +135,7 @@ export default function RebarForm() {
           onClick={() => {
             handleOpenAddRebarWithDrawer()
           }}>
-          新建钢筋数量表
+          新建钢筋数量
         </Button>
       </div>
       <div style={{ width: "100%", height: "100%", paddingBottom: "38px" }}>
@@ -163,15 +153,11 @@ export default function RebarForm() {
             {tableList &&
               tableList.map((row: RebarData, index: number) => (
                 <TableRow key={row.id}>
-                  <TableCell component="th" scope="row">
-                    {index + 1}
-                  </TableCell>
                   <TableCell align="left">{row.rebar_no}</TableCell>
-                  <TableCell align="left">{row.unit_length / 1000}</TableCell>
+                  <TableCell align="left">{renderProperty(row.dictionary.properties)}</TableCell>
                   <TableCell align="left">{row.unit_weight / 1000}</TableCell>
-                  <TableCell align="left">{row.dictionary.name}</TableCell>
                   <TableCell align="left">{row.number / 1000}</TableCell>
-                  <TableCell align="left">{renderCellConnectMethod(row)}</TableCell>
+                  <TableCell align="left">{row.unit_length / 1000}</TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">
                     <div className="flex justify-start">

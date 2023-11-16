@@ -27,10 +27,7 @@ type Props = {
 }
 
 type IForm = {
-  rebar_no: string
-  unit_length: number
-  unit_weight: number
-  number: number
+  quantity: number
 }
 export default function AddConrete(props: Props) {
   const { open, handleCloseAddConcreteWithDrawer, cb, editItem } = props
@@ -56,8 +53,6 @@ export default function AddConrete(props: Props) {
     getDictionary()
   }, [])
 
-  const { handleSubmit } = useForm<IForm>({})
-
   const [dictionaryId, setDictionaryId] = React.useState<number>(0)
 
   const { trigger: postConcreteDataApi } = useSWRMutation("/material-concrete", reqPostConcreteData)
@@ -66,6 +61,7 @@ export default function AddConrete(props: Props) {
 
   const handleSetFormValue = (item: ConcreteData) => {
     setDictionaryId(item.dictionary_id)
+    setValue("quantity", item.quantity / 1000)
   }
 
   React.useEffect(() => {
@@ -74,11 +70,19 @@ export default function AddConrete(props: Props) {
     }
   }, [editItem])
 
+  const {
+    handleSubmit,
+    formState: { errors },
+    register,
+    setValue,
+  } = useForm<IForm>({})
+
   const { run: onSubmit }: { run: SubmitHandler<IForm> } = useDebounce(async (values: IForm) => {
     let params = {
       engineering_listing_id: ctx.ebsItem.engineering_listing_id,
       project_id: PROJECT_ID,
       dictionary_id: dictionaryId,
+      quantity: Number(Number(values.quantity).toFixed(3)) * 1000,
     } as TypePostConcreteParams & { id: number; dictionary: any }
 
     if (Boolean(editItem)) {
@@ -109,8 +113,8 @@ export default function AddConrete(props: Props) {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
-                <InputLabel htmlFor="drill_mode" className="mr-3 w-20 text-left mb-2.5" required>
-                  字典:
+                <InputLabel htmlFor="drill_mode" className="mr-3  text-left mb-2.5" required>
+                  混凝土规格型号:
                 </InputLabel>
                 <Select
                   MenuProps={{ sx: { zIndex: 1602 } }}
@@ -129,6 +133,33 @@ export default function AddConrete(props: Props) {
                   ))}
                 </Select>
               </div>
+            </div>
+
+            <div className="mb-8 relative">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="liner_number" className="mr-3  text-left mb-2.5" required>
+                  方量（m³）:
+                </InputLabel>
+                <TextField
+                  variant="outlined"
+                  id="liner_number"
+                  size="small"
+                  fullWidth
+                  error={Boolean(errors.quantity)}
+                  {...register("quantity", {
+                    required: "请输入方量（m³）",
+                  })}
+                  placeholder="请输入方量（m³）"
+                  className="flex-1"
+                />
+              </div>
+              <ErrorMessage
+                errors={errors}
+                name="quantity"
+                render={({ message }) => (
+                  <p className="text-railway_error text-sm absolute">{message}</p>
+                )}
+              />
             </div>
 
             <DialogActions>

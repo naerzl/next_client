@@ -12,7 +12,7 @@ export const Pile_Type_Enum = [
 export const Drill_Mode_Enum = [
   {
     value: "MANUAL_HOLE_DIGGING",
-    label: "人工挖空",
+    label: "人工挖孔",
   },
   {
     value: "DRY_CONSTRUCTION_DRILL",

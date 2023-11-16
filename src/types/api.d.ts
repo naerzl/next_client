@@ -1,4 +1,5 @@
 declare module "react-file-viewer"
+declare module "react-office-viewer"
 
 export interface FetchParams<T> {
   arg: T

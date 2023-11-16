@@ -1,5 +1,5 @@
 import React from "react"
-import { ConcreteData } from "@/app/gantt/types"
+import { ConcreteData } from "@/app/ebs-data/types"
 
 const useAddConcreteWithDrawer = () => {
   const [open, setOpen] = React.useState(false)

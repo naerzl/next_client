@@ -8,25 +8,25 @@ import { Button, IconButton } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/DeleteOutlined"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import useSWR from "swr"
-import { reqDelBridgeBoredBasicData, reqGetBridgeBoredBasicData } from "@/app/ebs-data/api"
+import {
+  reqDelBridgeBoredBasicData,
+  reqGetBridgeBoredBasicData,
+  reqGetDictionary,
+} from "@/app/ebs-data/api"
 import { BridgeBoredBasicData } from "@/app/ebs-data/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import useAddBridgeBoredWithDrawer from "@/app/ebs-data/hooks/useAddBridgeBoredWithDrawer"
 import AddBridge from "./AddBridge"
-import { Pile_Type_Enum, Drill_Mode_Enum } from "@/app/ebs-data/const"
+import { Pile_Type_Enum, Drill_Mode_Enum, BASIC_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
 import useHooksConfirm from "@/hooks/useHooksConfirm"
 import useSWRMutation from "swr/mutation"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import { DictionaryData } from "@/app/gantt/types"
+import { renderProperty } from "@/app/ebs-data/const/method"
 
 const columns = [
-  {
-    title: "序号",
-    dataIndex: "index",
-    key: "index",
-    align: "left",
-  },
   {
     title: "桩径",
     dataIndex: "pile_diameter",
@@ -40,7 +40,7 @@ const columns = [
     align: "left",
   },
   {
-    title: "桩顶标高",
+    title: "桩顶标高(m)",
     dataIndex: "pile_top_elevation",
     key: "pile_top_elevation",
     align: "left",
@@ -58,13 +58,13 @@ const columns = [
     align: "left",
   },
   {
-    title: "钢筋笼长度",
+    title: "钢筋笼长度(m)",
     dataIndex: "rebar_cage_length",
     key: "rebar_cage_length",
     align: "left",
   },
   {
-    title: "垫块字典ID",
+    title: "垫块规格型号",
     dataIndex: "liner_dictionary_id",
     key: "liner_dictionary_id",
     align: "left",
@@ -96,27 +96,65 @@ export default function BaseForm() {
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
-  const { data: tableList, mutate: mutateTableList } = useSWR(
-    () => (ctx.ebsItem.id ? `/bridge-bored-basic-datum?ebs_id=${ctx.ebsItem.id}` : null),
-    (url: string) =>
-      reqGetBridgeBoredBasicData(url, {
-        arg: {
-          ebs_id: ctx.ebsItem.id,
-          project_id: PROJECT_ID,
-          engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
-        },
-      }),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    },
+  // const { data: tableList, mutate: mutateTableList } = useSWR(
+  //   () => (ctx.ebsItem.id ? `/bridge-bored-basic-datum?ebs_id=${ctx.ebsItem.id}` : null),
+  //   (url: string) =>
+  //     reqGetBridgeBoredBasicData(url, {
+  //       arg: {
+  //         ebs_id: ctx.ebsItem.id,
+  //         project_id: PROJECT_ID,
+  //         engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+  //       },
+  //     }),
+  //   {
+  //     revalidateIfStale: false,
+  //     revalidateOnFocus: false,
+  //     revalidateOnReconnect: false,
+  //   },
+  // )
+
+  const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation(
+    "/bridge-bored-basic-datum",
+    reqGetBridgeBoredBasicData,
   )
 
   const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation(
     "/bridge-bored-basic-datum",
     reqDelBridgeBoredBasicData,
   )
+
+  const [tableList, setTableList] = React.useState<BridgeBoredBasicData[]>([])
+
+  const getBaseFormListData = async () => {
+    const res = await getBridgeBoredBasicDataApi({
+      ebs_id: ctx.ebsItem.id,
+      project_id: PROJECT_ID,
+      engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+    })
+    setTableList(res || [])
+  }
+
+  React.useEffect(() => {
+    getBaseFormListData()
+  }, [])
+
+  const { trigger: getDictionaryApi } = useSWRMutation("/dictionary", reqGetDictionary)
+
+  const [dictionaryListOptions, setDictionaryListOptions] = React.useState<DictionaryData[]>([])
+
+  const getDictionary = async () => {
+    const res = await getDictionaryApi({ class_id: BASIC_DICTIONARY_CLASS_ID })
+    setDictionaryListOptions(res || [])
+  }
+
+  function findDictionaryItem(id: number): string {
+    const item = dictionaryListOptions.find((item) => item.id == id)
+    return item ? item.properties : "[]"
+  }
+
+  React.useEffect(() => {
+    getDictionary()
+  }, [])
 
   const {
     handleEditBridgeWithDrawer,
@@ -131,7 +169,7 @@ export default function BaseForm() {
   const handleDelProcessWithSWR = (id: number) => {
     showConfirmationDialog("确定要删除吗？", async () => {
       await delBridgeBoredBasicDataApi({ id, project_id: PROJECT_ID })
-      await mutateTableList(tableList?.filter((item) => item.id != id), false)
+      getBaseFormListData()
     })
   }
 
@@ -143,7 +181,7 @@ export default function BaseForm() {
       const index = newData!.findIndex((el) => item.id == el.id)
       newData![index] = item
     }
-    await mutateTableList(newData, false)
+    getBaseFormListData()
   }
 
   return (
@@ -174,16 +212,15 @@ export default function BaseForm() {
             {tableList &&
               tableList.map((row: BridgeBoredBasicData, index: number) => (
                 <TableRow key={row.id}>
-                  <TableCell component="th" scope="row">
-                    {index + 1}
-                  </TableCell>
                   <TableCell align="left">{row.pile_diameter / 1000}</TableCell>
                   <TableCell align="left">{row.pile_length / 1000}</TableCell>
                   <TableCell align="left">{row.pile_top_elevation / 1000}</TableCell>
                   <TableCell align="left">{renderCellType(row)}</TableCell>
                   <TableCell align="left">{renderCellDrillMode(row)}</TableCell>
                   <TableCell align="left">{row.rebar_cage_length / 1000}</TableCell>
-                  <TableCell align="left">{row.liner_dictionary_id}</TableCell>
+                  <TableCell align="left">
+                    {renderProperty(findDictionaryItem(row.liner_dictionary_id))}
+                  </TableCell>
                   <TableCell align="left">{row.liner_number / 1000}</TableCell>
                   <TableCell align="left">
                     <div className="flex justify-start">

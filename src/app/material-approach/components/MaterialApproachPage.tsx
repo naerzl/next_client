@@ -288,13 +288,13 @@ export default function MaterialApproachPage() {
           </Button>
         </div>
         <div>
-          <Button
-            className="bg-railway_blue text-white"
-            onClick={() => {
-              handleAddMaterial()
-            }}>
-            添加
-          </Button>
+          {/*<Button*/}
+          {/*  className="bg-railway_blue text-white"*/}
+          {/*  onClick={() => {*/}
+          {/*    handleAddMaterial()*/}
+          {/*  }}>*/}
+          {/*  添加*/}
+          {/*</Button>*/}
         </div>
       </header>
       {isMutating ? (

@@ -191,11 +191,8 @@ export default function AddBridge(props: Props) {
 
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
-                <InputLabel
-                  htmlFor="pile_top_elevation"
-                  className="mr-3 w-20 text-left mb-2.5"
-                  required>
-                  桩顶标高:
+                <InputLabel htmlFor="pile_top_elevation" className="mr-3 text-left mb-2.5" required>
+                  桩顶标高（m）:
                 </InputLabel>
                 <TextField
                   variant="outlined"
@@ -204,9 +201,9 @@ export default function AddBridge(props: Props) {
                   fullWidth
                   error={Boolean(errors.pile_top_elevation)}
                   {...register("pile_top_elevation", {
-                    required: "请输入桩顶标高",
+                    required: "请输入桩顶标高（m）",
                   })}
-                  placeholder="请输入桩顶标高"
+                  placeholder="请输入桩顶标高（m）"
                   className="flex-1"
                 />
               </div>
@@ -273,7 +270,7 @@ export default function AddBridge(props: Props) {
                   htmlFor="rebar_cage_length"
                   className="mr-3 w-full text-left mb-2.5"
                   required>
-                  钢筋笼长度:
+                  钢筋笼长度（m）:
                 </InputLabel>
                 <TextField
                   variant="outlined"
@@ -282,9 +279,9 @@ export default function AddBridge(props: Props) {
                   fullWidth
                   error={Boolean(errors.rebar_cage_length)}
                   {...register("rebar_cage_length", {
-                    required: "请输入钢筋笼长度",
+                    required: "请输入钢筋笼长度（m）",
                   })}
-                  placeholder="请输入钢筋笼长度"
+                  placeholder="请输入钢筋笼长度（m）"
                   className="flex-1"
                 />
               </div>
@@ -303,20 +300,8 @@ export default function AddBridge(props: Props) {
                   htmlFor="liner_dictionary_id"
                   className="mr-3 w-full text-left mb-2.5"
                   required>
-                  垫块字典:
+                  垫块规格型号:
                 </InputLabel>
-                {/*<TextField*/}
-                {/*  variant="outlined"*/}
-                {/*  id="liner_dictionary_id"*/}
-                {/*  size="small"*/}
-                {/*  fullWidth*/}
-                {/*  error={Boolean(errors.liner_dictionary_id)}*/}
-                {/*  {...register("liner_dictionary_id", {*/}
-                {/*    required: "请输入钢筋笼长度",*/}
-                {/*  })}*/}
-                {/*  placeholder="请输入钢筋笼长度"*/}
-                {/*  className="flex-1"*/}
-                {/*/>*/}
                 <Select
                   MenuProps={{ sx: { zIndex: 1602 } }}
                   sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
@@ -355,9 +340,9 @@ export default function AddBridge(props: Props) {
                   fullWidth
                   error={Boolean(errors.liner_number)}
                   {...register("liner_number", {
-                    required: "请输入钢筋笼长度",
+                    required: "请输入垫块数量",
                   })}
-                  placeholder="请输入钢筋笼长度"
+                  placeholder="请输入垫块数量"
                   className="flex-1"
                 />
               </div>

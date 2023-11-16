@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "//at.alicdn.com/t/c/font_4191244_vszylck1a6b.css";
+@import "//at.alicdn.com/t/c/font_4191244_6n5y6dfwdiy.css";
 
 body,
 html {
@@ -96,5 +96,14 @@ html {
 .no-border-select{
   .MuiOutlinedInput-notchedOutline{
     border:none !important;
+  }
+}
+
+.custom_XLSX{
+  table{
+    width: 100%;
+  }
+  td[data-t]{
+    border: 1px solid #303133;
   }
 }

@@ -60,6 +60,7 @@ export interface TypeEBSDataList {
     status: string
   }
   engineering_listing_id?: number
+  parent_is_loop?: boolean
 }
 
 /*创建EBS结构 请求参数*/
@@ -235,6 +236,7 @@ export interface ConcreteData {
   creator: string
   created_at: string
   updated_at: string
+  quantity: number
 }
 
 export interface TypePostConcreteParams {
@@ -244,12 +246,14 @@ export interface TypePostConcreteParams {
   project_sp_id?: number
   project_si_id?: number
   dictionary_id: number
+  quantity: number
 }
 
 export interface TypePutConcreteParams {
   id: number
   project_id: number
   dictionary_id: number
+  quantity: number
 }
 
 export interface DictionaryData {
@@ -294,6 +298,7 @@ export interface AcousticTubeListData {
   creator: string
   creator_unionid: string
   updated_at: string
+  length?: number
 }
 
 export interface TypePostAcousticTubeParams {
@@ -302,6 +307,7 @@ export interface TypePostAcousticTubeParams {
   engineering_listing_id: number
   dictionary_id: number
   quantity: number
+  length?: number
 }
 
 export interface TypePutAcousticTubeParams {
@@ -311,4 +317,5 @@ export interface TypePutAcousticTubeParams {
   engineering_listing_id: number
   dictionary_id: number
   quantity: number
+  length?: number
 }

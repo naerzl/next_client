@@ -25,8 +25,8 @@ export default function DesignData() {
         <Tab label="基数数据表" />
         <Tab label="钢筋数量表" />
         <Tab label="混凝土表" />
-        <Tab label="声测管" />
-        <Tab label="垫块" />
+        <Tab label="声测管表" />
+        {/*<Tab label="垫块" />*/}
       </Tabs>
       <TabPanel value={value} index={0}>
         <BaseForm />
@@ -40,9 +40,9 @@ export default function DesignData() {
       <TabPanel value={value} index={3}>
         <AcousticTubeForm />
       </TabPanel>
-      <TabPanel value={value} index={4}>
-        <SpacerForm />
-      </TabPanel>
+      {/*<TabPanel value={value} index={4}>*/}
+      {/*  <SpacerForm />*/}
+      {/*</TabPanel>*/}
     </div>
   )
 }

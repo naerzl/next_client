@@ -21,18 +21,19 @@ import dayjs from "dayjs"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import { renderProperty } from "@/app/ebs-data/const/method"
 
 const columns = [
   {
-    title: "序号",
-    dataIndex: "index",
-    key: "index",
+    title: "混凝土型号",
+    dataIndex: "dictionary_name",
+    key: "dictionary_name",
     align: "left",
   },
   {
-    title: "字典名称",
-    dataIndex: "dictionary_name",
-    key: "dictionary_name",
+    title: "方量（m³）",
+    dataIndex: "方量",
+    key: "方量",
     align: "left",
   },
   {
@@ -62,27 +63,30 @@ export default function ConcreteForm() {
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
-  const { data: tableList, mutate: mutateTableList } = useSWR(
-    () => (ctx.ebsItem.id ? `/material-concrete?ebs_id=${ctx.ebsItem.id}` : null),
-    (url: string) =>
-      reqGetConcreteData(url, {
-        arg: {
-          ebs_id: ctx.ebsItem.id,
-          project_id: PROJECT_ID,
-          engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
-        },
-      }),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    },
+  const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation(
+    "/material-concrete",
+    reqGetConcreteData,
   )
 
   const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation(
     "/material-concrete",
     reqDelConcreteData,
   )
+
+  const [tableList, setTableList] = React.useState<ConcreteData[]>([])
+
+  const getConcreteListData = async () => {
+    const res = await getBridgeBoredBasicDataApi({
+      ebs_id: ctx.ebsItem.id,
+      project_id: PROJECT_ID,
+      engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+    })
+
+    setTableList(res)
+  }
+  React.useEffect(() => {
+    getConcreteListData()
+  }, [])
 
   const {
     handleOpenAddConcreteWithDrawer,
@@ -97,7 +101,7 @@ export default function ConcreteForm() {
   const handleDelProcessWithSWR = (id: number) => {
     showConfirmationDialog("确定要删除吗？", async () => {
       await delBridgeBoredBasicDataApi({ id, project_id: PROJECT_ID })
-      await mutateTableList(tableList?.filter((item) => item.id != id), false)
+      getConcreteListData()
     })
   }
 
@@ -109,7 +113,7 @@ export default function ConcreteForm() {
       const index = newData!.findIndex((el) => item.id == el.id)
       newData![index] = item
     }
-    await mutateTableList(newData, false)
+    getConcreteListData()
   }
 
   return (
@@ -122,15 +126,15 @@ export default function ConcreteForm() {
           onClick={() => {
             handleOpenAddConcreteWithDrawer()
           }}>
-          新建混凝土表
+          新建混凝土
         </Button>
       </div>
       <div style={{ width: "100%", height: "100%", paddingBottom: "38px" }}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
           <TableHead>
             <TableRow>
-              {columns.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.key == "action" ? "150px" : "auto" }}>
+              {columns.map((col, index) => (
+                <TableCell key={index} sx={{ width: col.key == "action" ? "150px" : "auto" }}>
                   {col.title}
                 </TableCell>
               ))}
@@ -140,8 +144,8 @@ export default function ConcreteForm() {
             {tableList &&
               tableList.map((row: ConcreteData, index: number) => (
                 <TableRow key={row.id}>
-                  <TableCell align="left">{index + 1}</TableCell>
-                  <TableCell align="left">{row.dictionary.name}</TableCell>
+                  <TableCell align="left">{renderProperty(row.dictionary.properties)}</TableCell>
+                  <TableCell align="left">{row.quantity ? row.quantity / 1000 : ""}</TableCell>
                   <TableCell align="left">
                     {dayjs(row.created_at).format("YYYY-MM-DD HH:ss:mm")}
                   </TableCell>

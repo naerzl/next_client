@@ -133,7 +133,11 @@ export default function EBSDataPage(props: any) {
         engineering_listing_id: Number(searchParams.get("baseId")),
       })
 
-      renderTreeArr(res, record.key as string)
+      const newArr = res.map((item) => {
+        return { ...item, parent_is_loop: record.is_loop == 1 || record.parent_is_loop }
+      })
+
+      renderTreeArr(newArr, record.key as string)
       return res.length
     } else {
       renderTreeArrOfCloseChildren(record.key as string)

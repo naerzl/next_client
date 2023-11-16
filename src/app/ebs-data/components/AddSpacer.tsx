@@ -102,6 +102,7 @@ export default function AddSpacer(props: Props) {
       quantity: values.quantity * 1000,
     } as TypePostAcousticTubeParams & { id: number }
 
+    console.log(params)
     if (Boolean(editItem)) {
       params.id = editItem!.id
       await putRebarDataApi(Object.assign(params))
@@ -127,7 +128,7 @@ export default function AddSpacer(props: Props) {
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
                 <InputLabel htmlFor="drill_mode" className="mr-3 w-20 text-left mb-2.5" required>
-                  字典:
+                  规格型号:
                 </InputLabel>
                 <Select
                   MenuProps={{ sx: { zIndex: 1602 } }}

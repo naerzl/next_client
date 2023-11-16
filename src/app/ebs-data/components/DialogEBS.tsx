@@ -81,7 +81,8 @@ export default function DialogEBS(props: Props) {
     if (type == "label") {
       return title
     } else {
-      return `请输入结束${titleType}号，最大数字为10`
+      // return `请输入结束${titleType}号，最大数字为10`
+      return "需分批添加，每次不超过10个"
     }
   }
   const getEBSData = async () => {

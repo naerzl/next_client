@@ -32,6 +32,7 @@ type Props = {
 
 type IForm = {
   quantity: number
+  length: number
 }
 export default function AddAcousticTube(props: Props) {
   const { open, handleCloseAddBridgeWithDrawer, cb, editItem } = props
@@ -73,7 +74,7 @@ export default function AddAcousticTube(props: Props) {
 
   const handleSetFormValue = (item: AcousticTubeListData) => {
     setValue("quantity", item.quantity / 1000)
-
+    setValue("length", Number(item.length) / 1000)
     setDictionaryId(item.dictionary_id)
   }
 
@@ -89,7 +90,8 @@ export default function AddAcousticTube(props: Props) {
       engineering_listing_id: ctx.ebsItem.engineering_listing_id,
       dictionary_id: dictionaryId as number,
       ebs_id: ctx.ebsItem.id,
-      quantity: values.quantity * 1000,
+      quantity: Number(Number(values.quantity).toFixed(3)) * 1000,
+      length: Number(Number(values.length).toFixed(3)) * 1000,
     } as TypePostAcousticTubeParams & { id: number }
 
     if (Boolean(editItem)) {
@@ -117,7 +119,7 @@ export default function AddAcousticTube(props: Props) {
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
                 <InputLabel htmlFor="drill_mode" className="mr-3 w-20 text-left mb-2.5" required>
-                  字典:
+                  规格型号:
                 </InputLabel>
                 <Select
                   MenuProps={{ sx: { zIndex: 1602 } }}
@@ -159,6 +161,33 @@ export default function AddAcousticTube(props: Props) {
               <ErrorMessage
                 errors={errors}
                 name="quantity"
+                render={({ message }) => (
+                  <p className="text-railway_error text-sm absolute">{message}</p>
+                )}
+              />
+            </div>
+
+            <div className="mb-8 relative">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="number" className="mr-3 w-full text-left mb-2.5" required>
+                  单根长（m）:
+                </InputLabel>
+                <TextField
+                  variant="outlined"
+                  id="number"
+                  size="small"
+                  fullWidth
+                  error={Boolean(errors.length)}
+                  {...register("length", {
+                    required: "请输入单根长（m）",
+                  })}
+                  placeholder="请输入单根长（m）"
+                  className="flex-1"
+                />
+              </div>
+              <ErrorMessage
+                errors={errors}
+                name="length"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}

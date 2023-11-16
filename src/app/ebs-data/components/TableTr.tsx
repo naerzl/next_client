@@ -268,7 +268,7 @@ function TableTr(props: Props) {
   }
 
   const handleCLickCell = () => {
-    if (item.name.includes("桩") && item.is_can_select != 1) {
+    if (item.name.includes("#桩") && item.is_can_select != 1 && item.is_loop != 1) {
       handleOpenDrawerProcess(item)
 
       ctx.changeEBSItem(
@@ -328,7 +328,7 @@ function TableTr(props: Props) {
 
           {
             <div className="text-[#6d6e6f] flex gap-x-2.5 w-[6.25rem] justify-end">
-              {item.is_can_select == 1 && (
+              {item.is_can_select == 1 && !item.parent_is_loop && (
                 <i
                   className="iconfont icon-appstoreadd w-4 aspect-square"
                   title="添加"

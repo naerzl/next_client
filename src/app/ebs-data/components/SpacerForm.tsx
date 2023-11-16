@@ -20,16 +20,11 @@ import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import useAddAcousticTubeWithDrawer from "@/app/ebs-data/hooks/useAddAcousticTubeWithDrawer"
 import AddSpacer from "@/app/ebs-data/components/AddSpacer"
 import { dateToYYYYMM } from "@/libs/methods"
+import { renderProperty } from "@/app/ebs-data/const/method"
 
 const columns = [
   {
-    title: "序号",
-    dataIndex: "index",
-    key: "index",
-    align: "left",
-  },
-  {
-    title: "字典名称",
+    title: "规格型号",
     dataIndex: "dictionary_name",
     key: "dictionary_name",
     align: "left",
@@ -58,28 +53,28 @@ export default function SpacerForm() {
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
-  const { data: tableList, mutate: mutateTableList } = useSWR(
-    () => (ctx.ebsItem.id ? `/material-spacer?ebs_id=${ctx.ebsItem.id}` : null),
-    (url: string) =>
-      reqGetSpacerData(url, {
-        arg: {
-          ebs_id: ctx.ebsItem.id,
-          project_id: PROJECT_ID,
-          engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
-        },
-      }),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    },
-  )
+  const { trigger: getAcousticTubeDataApi } = useSWRMutation("/material-spacer", reqGetSpacerData)
 
   const { trigger: delAcousticTubeDataApi } = useSWRMutation("/material-spacer", reqDelSpacerData)
 
   const { trigger: getDictionaryApi } = useSWRMutation("/dictionary", reqGetDictionary)
 
   const [dictionaryList, setDictionaryList] = React.useState<DictionaryData[]>([])
+
+  const [tableList, setTableList] = React.useState<AcousticTubeListData[]>([])
+
+  const getSpacerListData = async () => {
+    const res = await getAcousticTubeDataApi({
+      ebs_id: ctx.ebsItem.id,
+      project_id: PROJECT_ID,
+      engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+    })
+    setTableList(res)
+  }
+
+  React.useEffect(() => {
+    getSpacerListData()
+  }, [])
 
   const getDictionary = async () => {
     const res = await getDictionaryApi({ class_id: SPACER_DICTIONARY_CLASS_ID })
@@ -92,7 +87,8 @@ export default function SpacerForm() {
 
   function findDictionaryName(value: number) {
     const dictionaryItem = dictionaryList.find((item) => item.id == value)
-    return dictionaryItem ? dictionaryItem.name : ""
+    console.log(dictionaryItem, dictionaryList, value)
+    return dictionaryItem ? renderProperty(dictionaryItem.properties) : ""
   }
 
   const {
@@ -113,7 +109,7 @@ export default function SpacerForm() {
         ebs_id: ctx.ebsItem.id,
         engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
       })
-      await mutateTableList(tableList?.filter((item) => item.id != id), false)
+      getSpacerListData()
     })
   }
 
@@ -125,7 +121,7 @@ export default function SpacerForm() {
       const index = newData!.findIndex((el) => item.id == el.id)
       newData![index] = item
     }
-    await mutateTableList(newData, false)
+    getSpacerListData()
   }
 
   return (
@@ -156,9 +152,6 @@ export default function SpacerForm() {
             {tableList &&
               tableList.map((row: AcousticTubeListData, index: number) => (
                 <TableRow key={row.id}>
-                  <TableCell component="th" scope="row">
-                    {index + 1}
-                  </TableCell>
                   <TableCell component="th" scope="row">
                     {findDictionaryName(row.dictionary_id)}
                   </TableCell>
