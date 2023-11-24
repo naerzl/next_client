@@ -8,4 +8,5 @@ export default function Page() {
 
 export const metadata: Metadata = {
   title: "基础工程管理",
+  description: "版本为1.1",
 }

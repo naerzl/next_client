@@ -22,6 +22,8 @@ import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import { renderProperty } from "@/app/ebs-data/const/method"
+import { dateToYYYYMM, displayWithPermission } from "@/libs/methods"
+import permissionJson from "@/config/permission.json"
 
 const columns = [
   {
@@ -61,7 +63,7 @@ function renderCellDrillMode(item: BridgeBoredBasicData) {
 export default function ConcreteForm() {
   const ctx = React.useContext(ebsDataContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation(
     "/material-concrete",
@@ -120,6 +122,7 @@ export default function ConcreteForm() {
     <>
       <div className="flex justify-end">
         <Button
+          style={displayWithPermission(permissionTagList, permissionJson.structure_member_write)}
           variant="contained"
           className="bg-railway_blue"
           startIcon={<AddOutlinedIcon />}
@@ -146,18 +149,24 @@ export default function ConcreteForm() {
                 <TableRow key={row.id}>
                   <TableCell align="left">{renderProperty(row.dictionary.properties)}</TableCell>
                   <TableCell align="left">{row.quantity ? row.quantity / 1000 : ""}</TableCell>
-                  <TableCell align="left">
-                    {dayjs(row.created_at).format("YYYY-MM-DD HH:ss:mm")}
-                  </TableCell>
+                  <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">
                     <div className="flex justify-start">
                       <IconButton
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_update,
+                        )}
                         onClick={() => {
                           handleEditConcreteWithDrawer(row)
                         }}>
                         <EditOutlinedIcon />
                       </IconButton>
                       <IconButton
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_delete,
+                        )}
                         onClick={() => {
                           handleDelProcessWithSWR(row.id)
                         }}>

@@ -4,7 +4,7 @@ import Toolbar from "@mui/material/Toolbar"
 import { Button } from "@mui/material"
 import { removeCookie } from "@/libs/cookies"
 import { useRouter } from "next/navigation"
-import { OAUTH2_ACCESS_TOKEN } from "@/libs/const"
+import { OAUTH2_ACCESS_TOKEN, OAUTH2_PROJECT_ID } from "@/libs/const"
 
 // interface Props {
 //   // eslint-disable-next-line no-unused-vars
@@ -17,6 +17,7 @@ function Nav() {
 
   const handleLogout = () => {
     // 清楚cookie 跳到官网
+    removeCookie(OAUTH2_PROJECT_ID)
     removeCookie(OAUTH2_ACCESS_TOKEN)
     localStorage.removeItem(OAUTH2_ACCESS_TOKEN)
     router.push("/" as string)

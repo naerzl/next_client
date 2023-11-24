@@ -1,8 +1,8 @@
 import { fetcher } from "@/libs/fetch"
 import { FetchParams } from "@/types/api"
-import { ReqGetTestListResponse } from "@/app/test/types"
+import { ReqGetTestListParams, ReqGetTestListResponse } from "@/app/test/types"
 
 export const reqGetMaterialTest = (
   url: string,
-  { arg }: FetchParams<{ page?: number; limit?: number }>,
+  { arg }: FetchParams<ReqGetTestListParams>,
 ): Promise<ReqGetTestListResponse> => fetcher({ url, arg })

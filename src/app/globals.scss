@@ -107,3 +107,25 @@ html {
     border: 1px solid #303133;
   }
 }
+
+.doc{
+  #pdf-download{
+    display: none;
+  }
+}
+
+input.custom::-webkit-outer-spin-button,
+input.custom::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+/* 在Firefox浏览器下 */
+input.custom[type="number"]{
+  -moz-appearance: textfield;
+}
+
+#react-doc-viewer{
+  height: 100%;
+  #pdf-controls{
+    background-color: #fff;
+  }
+}

@@ -1,13 +1,15 @@
 import { BaseApiPager } from "@/types/api"
 
 export interface GetMaterialApproachParams {
-  page: number
-  limit: number
+  page?: number
+  limit?: number
   project_id: number
   has_test?: boolean
   name?: string
   manufacturer?: string
   status?: string
+  created_between?: string
+  creator?: string
 }
 
 export interface GetMaterialApproachResponse {
@@ -26,6 +28,7 @@ export interface MaterialApproachData {
   status: string
   handling_suggestions: string
   desc: string
+  class: string
   supplier: string
   storage_location: string
   entrust_number: string

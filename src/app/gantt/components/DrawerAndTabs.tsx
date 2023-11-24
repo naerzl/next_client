@@ -50,13 +50,10 @@ export default function DrawerAndTabs(props: Props) {
             onChange={handleChange}
             aria-label="Vertical tabs example"
             sx={{ borderRight: 1, borderColor: "divider" }}>
-            <Tab label="设计数据" {...a11yProps(0)} />
-            <Tab label="工序列表" {...a11yProps(1)} />
+            <Tab label="工序列表" {...a11yProps(0)} />
           </Tabs>
+
           <TabPanel value={value} index={0}>
-            {value == 0 && <DesignData />}
-          </TabPanel>
-          <TabPanel value={value} index={1}>
             <ProcessList />
           </TabPanel>
         </Box>

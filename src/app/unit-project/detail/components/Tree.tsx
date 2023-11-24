@@ -24,7 +24,12 @@ const findCheckedId = (arr: TypeEBSDataList[], spID: number): number[] => {
   let checkArr: number[] = []
 
   arr.forEach((item) => {
-    if (item.extend && item.extend.project_sp_id == spID && item.is_can_select == 0) {
+    if (
+      item.extend &&
+      item.extend.project_sp_id == spID &&
+      item.is_can_select == 0 &&
+      item.name.includes("#墩")
+    ) {
       checkArr.push(item.id)
     }
     if (item.children && item.children.length > 0) {
@@ -176,6 +181,7 @@ export default function Tree(props: Props) {
             <div className="flex">
               {IS_EDIT
                 ? item.class == "none" &&
+                  item.name.includes("#墩") &&
                   item.extend &&
                   (item.extend.project_sp_id == +searchParams.get("spId")! ||
                     item.extend.project_sp_id == null) &&
@@ -193,6 +199,7 @@ export default function Tree(props: Props) {
                       }}></i>
                   ))
                 : item.class == "none" &&
+                  item.name.includes("#墩") &&
                   (!item.extend || item?.extend.project_sp_id == null) &&
                   (checked.includes(item.id) ? (
                     <i
@@ -243,7 +250,7 @@ export default function Tree(props: Props) {
 
             <span>{renderName(item)}</span>
           </li>
-          {ArrToTree(item.children, str)}
+          {!item.name.includes("#墩") && ArrToTree(item.children, str)}
         </ul>
       )
     })

@@ -22,6 +22,11 @@ import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import { LayoutContext } from "@/components/LayoutContext"
 import { gantt } from "dhtmlx-gantt"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
+import * as fastq from "fastq"
+import type { queueAsPromised } from "fastq"
+import { VariantType, useSnackbar } from "notistack"
 
 // type GanttItemType = {
 //   id: number | string
@@ -58,7 +63,7 @@ const changeWorkingRes2GanttDate = (arr: any[], parent_id?: number) => {
     // 初始化gantt图需要的对象
     const ganttItem = {} as any
     ganttItem.id = "w" + item.id
-    ganttItem.text = item.name
+    ganttItem.text = item.extend && item.extend.name ? item.extend.name : item.name
     ganttItem.parent = parent_id
     ganttItem.hasChild = true
     ganttItem.color = getHexColor(`rgba(${61 + 10}, ${185 + 10}, ${211 - 10},1)`)
@@ -116,7 +121,7 @@ const changeEBSRes2GanttDate = (arr: TypeEBSDataList[], parent_id?: number) => {
   return arr.map((item) => {
     const ganttItem = {} as any
     ganttItem.id = item.id
-    ganttItem.text = item.name
+    ganttItem.text = item.extend && item.extend.name ? item.extend.name : item.name
     ganttItem.parent = parent_id
     ganttItem.color = hex
     ganttItem.textColor = "#0162B1"
@@ -154,19 +159,13 @@ const changeRes2GanttData = (
 }
 
 const GanttPage = () => {
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const { trigger: putEBSApi } = useSWRMutation("/ebs", reqPutEBS)
 
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
-  const { trigger: getCodeCountApi } = useSWRMutation("/ebs/code-count", reqGetCodeCount)
-
-  const params = {
-    project_id: PROJECT_ID,
-    level: 1,
-    is_hidden: 0,
-  } as TypeApiGetEBSParams
+  const { enqueueSnackbar } = useSnackbar()
 
   // gantt组件DOM
   const DOM_GANTT = React.useRef<{
@@ -242,7 +241,9 @@ const GanttPage = () => {
       params.name = item.text
       params.period = Number(item.duration)
       params.engineering_listing_id = item.engineering_listing_id!
-      params.scheduled_start_at = dayjs(item.start_date).format("YYYY-MM-DD")
+      params.scheduled_start_at = item.start_date
+        ? dayjs(item.start_date).format("YYYY-MM-DD")
+        : dayjs(new Date()).format("YYYY-MM-DD")
       params.project_sp_id = +String(projectTask.id).replace(/[a-zA-Z]/, "")
       params.project_si_id = +String(workingTask.id).replace(/[a-zA-Z]/, "")
       return await putEBSApi(params)
@@ -251,29 +252,45 @@ const GanttPage = () => {
     }
   }
 
+  type TaskAsync = {
+    item: TypeEBSDataList
+    projectTask: TypeProjectSubSectionData
+    workingTask: TypeProjectSubSectionData
+  }
+  async function asyncWorker(arg: TaskAsync): Promise<void> {
+    const { item, projectTask, workingTask } = arg
+    // No need for a try-catch block, fastq handles errors automatically
+    return await editOneGanttItem(item, projectTask, workingTask)
+  }
+
+  const q: queueAsPromised<TaskAsync> = fastq.promise(asyncWorker, 1)
+
   const handleEditGanttItem = async (
     item: TypeEBSDataList,
     projectTask: TypeProjectSubSectionData,
     workingTask: TypeProjectSubSectionData,
   ) => {
-    const res = await editOneGanttItem(item, projectTask, workingTask)
-
-    let objKey = ""
-    for (const key in allEBSApiParams.current) {
-      if (item.code.startsWith(key)) {
-        objKey = key
-        break
-      }
-    }
-    if (!!objKey) {
-      allEBSApiParams.current[objKey].forEach((str) => {
-        const apiParams = parseQueryString(str)
-        getEBSApi(apiParams as TypeApiGetEBSParams).then((res) => {
-          const ganttList = changeRes2GanttData(res || [], "ebs")
-          DOM_GANTT.current?.resetRenderGantt({ data: ganttList })
+    q.push({ item, projectTask, workingTask })
+      .then(() => {
+        enqueueSnackbar("操作成功", {
+          autoHideDuration: 3000,
+          variant: "success",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
         })
       })
-    }
+      .catch((err) => {
+        console.error(err, "捕获错误")
+        enqueueSnackbar("操作失败，将为您重新加载页面", {
+          autoHideDuration: 3000,
+          variant: "error",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
+        })
+        setTimeout(() => {
+          location.reload()
+        }, 800)
+      })
+
+    // const res = await editOneGanttItem(item, projectTask, workingTask)
   }
 
   const saveGetEBSApiParams = (params: TypeApiGetEBSParams, item: TypeEBSDataList) => {
@@ -333,7 +350,6 @@ const GanttPage = () => {
         customData: dayjs().format("YYYY-MM-DD"),
         id: el.id + `-${item.id}`,
       }))
-      console.log(item.id)
       changeAndRenderGanttLists(newArr, "ebs", item.id)
     })
   }
@@ -352,9 +368,23 @@ const GanttPage = () => {
     console.log(item)
 
     const res = await getEBSApi(getEBSParams)
-    let newRes: TypeEBSDataList[] = []
+    let is_loop_id = 0
+    const newArr = res.map((el) => {
+      if (item.is_can_select == 1) {
+        if (el.is_loop == 1) is_loop_id = el.id
+      }
+      return {
+        ...el,
+        engineering_listing_id: item.engineering_listing_id,
+        siId: item.siId,
+        spId: item.spId,
+        id: el.id + `-${item.siId}`,
+        is_loop_id,
+      }
+    })
+    let newRes: any[] = []
     if (item.is_can_select == 1) {
-      newRes = res.filter((ele) => {
+      newRes = newArr.filter((ele) => {
         if (ele.extend) {
           if (item.is_loop == 1) return false
           return (
@@ -364,18 +394,12 @@ const GanttPage = () => {
         }
         return false
       })
-      console.log(newRes, res)
+      console.log(newRes, newArr)
     } else {
-      newRes = res
+      newRes = newArr
     }
-    const newArr = newRes.map((el) => ({
-      ...el,
-      engineering_listing_id: item.engineering_listing_id,
-      siId: item.siId,
-      spId: item.spId,
-      id: el.id + `-${item.siId}`,
-    }))
-    changeAndRenderGanttLists(newArr, "ebs", item.id)
+
+    changeAndRenderGanttLists(newRes, "ebs", item.id)
   }
 
   const getSubGanttList = async (item: any) => {
@@ -392,9 +416,7 @@ const GanttPage = () => {
     }
   }
 
-  const logDataUpdate = (type: any, action: Action, item: any, id: any) => {
-    // console.log(data)
-  }
+  const logDataUpdate = (type: any, action: Action, item: any, id: any) => {}
 
   const [selectValue, setSelectValue] = React.useState("all")
 
@@ -419,6 +441,10 @@ const GanttPage = () => {
     setEBSItem(item)
   }
 
+  if (!permissionTagList.includes(permissionJson.construction_plan_member_read)) {
+    return <NoPermission />
+  }
+
   return (
     <GanttContext.Provider value={{ ebsItem, changeEBSItem }}>
       <h3 className="font-bold text-[1.875rem]">施工计划</h3>
@@ -434,7 +460,7 @@ const GanttPage = () => {
       </div>
 
       <div
-        className="flex w-full flex-col flex-1"
+        className="flex w-full flex-col flex-1 overflow-hidden"
         id="gantt_cover"
         style={{ backgroundColor: "#fff" }}>
         <div id="menuObj"></div>

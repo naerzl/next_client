@@ -24,3 +24,9 @@ export interface ReqGetTestListResponse {
   items: TestDataList[]
   pager: BaseApiPager
 }
+
+export interface ReqGetTestListParams {
+  page?: number
+  limit?: number
+  project_id: number
+}

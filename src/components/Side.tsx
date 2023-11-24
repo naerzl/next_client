@@ -24,24 +24,29 @@ import { usePathname, useRouter } from "next/navigation"
 import { reqGetCurrentProject } from "@/app/member-department/api"
 import { ReqGetProjectCurrentResponse } from "@/app/member-department/types"
 import { LayoutContext } from "@/components/LayoutContext"
+import { reqPutProjectChangeDefault } from "@/app/api"
 export const dynamic = "force-dynamic"
 
 const menuList: { [key: string]: any } = {
   commonLibrary: {
     title: "工程管理",
     icon: <HandymanOutlinedIcon />,
+    permissionTag: "project_management_module_read",
     children: {
       "basic-engineering-management": {
         path: "/basic-engineering-management",
         title: "构筑物",
+        permissionTag: "structure_member_read",
       },
       "unit-project": {
         path: "/unit-project",
         title: "单位工程",
+        permissionTag: "unit_project_member_read",
       },
       "working-point": {
         path: "/working-point",
         title: "工点数据",
+        permissionTag: "station_data_member_read",
       },
     },
   },
@@ -49,49 +54,59 @@ const menuList: { [key: string]: any } = {
   materialManagement: {
     title: "物资管理",
     icon: <HiveOutlinedIcon />,
+    permissionTag: "material_management_module_read",
     children: {
       "material-approach": {
         path: "/material-approach",
         title: "物资进场",
+        permissionTag: "material_approach_member_read",
       },
       "material-processing": {
         path: "/material-processing",
         title: "物资加工",
+        permissionTag: "material_processing_member_read",
       },
       "material-receipt": {
         path: "/material-receipt",
         title: "物资领用",
+        permissionTag: "receipt_of_materials_member_read",
       },
     },
   },
   testManagement: {
     title: "试验管理",
     icon: <SpeedOutlinedIcon />,
+    permissionTag: "test_management_module_read",
     children: {
       test: {
         path: "/test",
         title: "试验列表",
+        permissionTag: "test_list_member_read",
       },
     },
   },
   dataTemplate: {
     title: "功能模块",
     icon: <TuneOutlinedIcon />,
+    permissionTag: "function_module_module_read",
     children: {
       gantt: {
         path: "/gantt",
         title: "施工计划",
+        permissionTag: "construction_plan_member_read",
       },
     },
   },
   userManagement: {
     title: "用户管理",
     icon: <SupervisedUserCircleOutlinedIcon />,
+    permissionTag: "user_management_module_read",
     open: false,
     children: {
       "member-department": {
         path: "/member-department",
         title: "成员列表",
+        permissionTag: "member_management_member_read",
         open: false,
       },
     },
@@ -99,27 +114,32 @@ const menuList: { [key: string]: any } = {
   completionManagement: {
     title: "竣工管理",
     icon: <EventAvailableOutlinedIcon />,
+    permissionTag: "completion_management_module_read",
     open: false,
     children: {
       "completion-management": {
         path: "/completion-management",
         title: "竣工资料",
         open: false,
+        permissionTag: "completion_data_member_read",
       },
     },
   },
-  queue: {
-    title: "导出管理",
-    icon: <OutboxIcon />,
-    open: false,
-    children: {
-      queue: {
-        path: "/queue",
-        title: "导出任务",
-        open: false,
-      },
-    },
-  },
+  // queue: {
+  //   title: "导出管理",
+  //   icon: <OutboxIcon />,
+  //   open: false,
+
+  // permissionTag: "export_management_module_read",
+  //   children: {
+  //     queue: {
+  //       path: "/queue",
+  //       title: "导出任务",
+  // permissionTag: "export_task_member_read",
+  //       open: false,
+  //     },
+  //   },
+  // },
 }
 
 function side() {
@@ -131,6 +151,12 @@ function side() {
   const ctxLayout = React.useContext(LayoutContext)
 
   const [openList, setOpen] = React.useState<string[]>([])
+
+  React.useEffect(() => {}, [])
+
+  function displayWithPermission(tag: string) {
+    return ctxLayout.permissionTagList.includes(tag) ? {} : { display: "none" }
+  }
 
   // 处理展开合并方法
   const handleClickOpen = (key: string) => {
@@ -165,33 +191,24 @@ function side() {
     router.push(path)
   }
 
-  const [projectList, setProjectList] = React.useState<ReqGetProjectCurrentResponse[]>([])
-  const [currentProject, setCurrentProject] = React.useState<number>(0)
+  const [currentProject, setCurrentProject] = React.useState<number>(ctxLayout.projectId)
 
-  React.useEffect(() => {
-    console.log(pathName)
-    if (!pathName.startsWith("/auth2") && pathName != "/") {
-      reqGetCurrentProject("/project/current").then((res) => {
-        setProjectList(res ?? [])
-        const obj = res.find((item) => item.is_default == 1)
-        if (obj) {
-          console.log(obj)
-          setCurrentProject(obj.project.id)
-          ctxLayout.changeProject(obj.project.id)
-        } else {
-          setCurrentProject(res[0].project.id)
-          ctxLayout.changeProject(res[0].project.id)
-          console.log(ctxLayout.projectId)
-        }
-      })
-    }
-  }, [pathName])
-
-  const handleChangeCurrentProject = (event: SelectChangeEvent<number>) => {
-    const obj = projectList.find((item) => item.project.id == event.target.value)
+  const handleChangeCurrentProject = async (event: SelectChangeEvent<number>) => {
+    const obj = ctxLayout.projectList.find((item) => {
+      if (item.project) {
+        return item.project?.id == event.target.value
+      } else {
+        return false
+      }
+    })
     if (obj) {
-      ctxLayout.changeProject(obj.project.id)
-      setCurrentProject(obj.project.id)
+      ctxLayout.changeProject(obj.project?.id)
+      setCurrentProject(obj.project?.id)
+      await reqPutProjectChangeDefault("/project/change-default", {
+        arg: { project_id: obj.project?.id },
+      })
+      router.push("/dashboard")
+      ctxLayout.getProjectList()
     }
   }
 
@@ -222,9 +239,9 @@ function side() {
                 <MenuItem disabled>
                   <i className="text-[#ababab]">请选择一个项目</i>
                 </MenuItem>
-                {projectList.map((item, index) => (
-                  <MenuItem key={index} value={item.project.id}>
-                    {item.project.name}
+                {ctxLayout.projectList.map((item, index) => (
+                  <MenuItem key={index} value={item.project?.id}>
+                    {item.project?.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -232,7 +249,7 @@ function side() {
           </ListSubheader>
         }>
         {Object.keys(menuList).map((key, index) => (
-          <div key={index}>
+          <div key={index} style={displayWithPermission(menuList[key].permissionTag)}>
             <ListItemButton
               sx={{ color: "#44566c" }}
               onClick={() => {
@@ -250,6 +267,7 @@ function side() {
                 {Object.keys(menuList[key].children).map((k, i) => (
                   <ListItemButton
                     key={i}
+                    style={displayWithPermission(menuList[key].children[k].permissionTag)}
                     sx={
                       pathName.startsWith(menuList[key].children[k].path)
                         ? { bgcolor: "#eef0f1" }

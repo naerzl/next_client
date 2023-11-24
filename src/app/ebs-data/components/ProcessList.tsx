@@ -13,6 +13,7 @@ import useDialogProcessForm from "@/app/ebs-data/hooks/useDialogProcessForm"
 import DialogProcessForm from "@/app/ebs-data/components/DialogProcessForm"
 import { ProcessListData } from "@/app/ebs-data/types"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
+import useSWRMutation from "swr/mutation"
 
 const stageEnum = [
   {
@@ -34,12 +35,6 @@ function renderTableCellStage(item: ProcessListData) {
 }
 
 const columns = [
-  {
-    title: "序号",
-    dataIndex: "index",
-    key: "index",
-    align: "left",
-  },
   {
     title: "工序名称",
     dataIndex: "name",
@@ -67,7 +62,7 @@ const columns = [
 
   {
     width: "150px",
-    title: "操作",
+    title: "查看",
     key: "action",
   },
 ]
@@ -75,15 +70,19 @@ const columns = [
 export default function ProcessList() {
   const ctx = React.useContext(ebsDataContext)
 
-  const { data: tableList, mutate: mutateTableList } = useSWR(
-    () => (ctx.ebsItem.id ? `/process?ebs_id=${ctx.ebsItem.id}` : null),
-    (url: string) => reqGetProcess(url, { arg: { ebs_id: ctx.ebsItem.id } }),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    },
-  )
+  const { trigger: getProcessApi } = useSWRMutation("/process", reqGetProcess)
+
+  const [tableList, setTableList] = React.useState<ProcessListData[]>([])
+
+  const getProcessListData = async () => {
+    // const res = await getProcessApi({ ebs_id: ctx.ebsItem.is_loop_id })
+    const res = await getProcessApi({ ebs_id: 1848 })
+    setTableList(res)
+  }
+
+  React.useEffect(() => {
+    getProcessListData()
+  }, [])
 
   const { handleOpenDialogAddForm, handleCloseDialogAddForm, dialogAddFormOpen, formItem } =
     useDialogProcessForm()
@@ -110,9 +109,6 @@ export default function ProcessList() {
             {tableList &&
               tableList.map((row, index) => (
                 <TableRow key={row.id}>
-                  <TableCell component="th" scope="row">
-                    {index + 1}
-                  </TableCell>
                   <TableCell align="left">{row.name}</TableCell>
                   <TableCell align="left">{row.percentage}</TableCell>
                   <TableCell align="left">{renderTableCellStage(row)}</TableCell>

@@ -4,7 +4,11 @@ import ConfirmationDialog from "./ConfirmationDialog"
 
 type ConfirmationDialogContextType = {
   // eslint-disable-next-line no-unused-vars
-  showConfirmationDialog: (text: string, onConfirmCallback: () => void) => void
+  showConfirmationDialog: (
+    text: any,
+    onConfirmCallback: () => void,
+    onCancelCallBack?: () => void,
+  ) => void
   hideConfirmationDialog: () => void
 }
 
@@ -26,10 +30,15 @@ type ConfirmationDialogProviderProps = {
 
 export const ConfirmationDialogProvider = ({ children }: ConfirmationDialogProviderProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const [confirmationText, setConfirmationText] = useState("")
+  const [confirmationText, setConfirmationText] = useState<any>("")
   const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null)
+  const [onCancel, setOnCancel] = useState<() => void | null>(() => {})
 
-  const showConfirmationDialog = (text: string, onConfirmCallback: () => void) => {
+  const showConfirmationDialog = (
+    text: string,
+    onConfirmCallback: () => void,
+    onCancelCallBack?: () => void,
+  ) => {
     setIsOpen(true)
     setConfirmationText(text)
     setOnConfirm(() => {
@@ -38,10 +47,28 @@ export const ConfirmationDialogProvider = ({ children }: ConfirmationDialogProvi
         setIsOpen(false)
       }
     })
+    if (onCancelCallBack) {
+      setOnCancel(() => {
+        return () => {
+          onCancelCallBack()
+        }
+      })
+    }
+    window.onkeydown = (ev) => {
+      if (ev.code == "Enter") {
+        onConfirmCallback()
+        setIsOpen(false)
+      }
+    }
   }
+
+  React.useEffect(() => {
+    if (!isOpen) window.onkeydown = null
+  }, [isOpen])
 
   const hideConfirmationDialog = () => {
     setIsOpen(false)
+    onCancel && onCancel()
     setConfirmationText("")
     setOnConfirm(null)
   }

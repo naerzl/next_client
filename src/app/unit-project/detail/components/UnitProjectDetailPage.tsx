@@ -29,6 +29,10 @@ import UnitProjectContext from "@/app/unit-project/context/unitProjectContext"
 import { useRouter, useSearchParams } from "next/navigation"
 import { LayoutContext } from "@/components/LayoutContext"
 import { message } from "antd"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
+import { reqGetProjectSubSection } from "@/app/working-point/api"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 
 type IForm = {
   name: string
@@ -57,7 +61,7 @@ const changeTreeArr = (arr: TypeEBSDataList[], indexStr = "", flag: boolean): Ty
 export default function UnitProjectDetailPage() {
   const ctx = React.useContext(UnitProjectContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const router = useRouter()
 
@@ -89,6 +93,12 @@ export default function UnitProjectDetailPage() {
   const { trigger: getEngineeringListingApi } = useSWRMutation(
     "/engineering-listing",
     reqGetEngineeringListing,
+  )
+
+  // 获取表格数据SWR请求
+  const { trigger: getProjectSubSectionApi } = useSWRMutation(
+    "/project-subsection",
+    reqGetProjectSubSection,
   )
 
   const [engineeringList, setEngineeringList] = React.useState<EngineeringListing[]>([])
@@ -143,11 +153,19 @@ export default function UnitProjectDetailPage() {
     params.project_id = PROJECT_ID
 
     let related = engineeringSelect.map((engId, index) => {
-      return {
+      let obj = {
         engineering_listing_id: engId,
         ebs_ids: JSON.stringify(relateTo.current[index]),
         is_edited: isEdited.current[index],
       }
+
+      if (isCanSelect.code) {
+        Object.assign(obj, {
+          parent_code: isCanSelect.code,
+          parent_level: isCanSelect.level,
+        })
+      }
+      return obj
     })
 
     params.related_to = JSON.stringify(related)
@@ -216,6 +234,7 @@ export default function UnitProjectDetailPage() {
     return []
   }
 
+  const [isCanSelect, setIsCanSelect] = React.useState<TypeEBSDataList>({} as TypeEBSDataList)
   const getSubEBSData = async (
     ebsItem: TypeEBSDataList,
     pos: string,
@@ -225,6 +244,7 @@ export default function UnitProjectDetailPage() {
   ) => {
     const ebsAllValue = structuredClone(ebsAll)
     const treeValue = structuredClone(ebsAll[i])
+    if (ebsItem.is_can_select == 1) setIsCanSelect(ebsItem)
 
     let arr: TypeEBSDataList[] = []
     // 展开
@@ -240,7 +260,7 @@ export default function UnitProjectDetailPage() {
 
       const res = await getEBSApi(params)
 
-      arr = res
+      arr = res.map((item) => ({ ...item, parent_id: ebsItem.id }))
       const indexArr = pos.split("-")
       const evalStr = `treeValue[${indexArr.join("].children[")}]`
 
@@ -260,8 +280,11 @@ export default function UnitProjectDetailPage() {
     return arr.length
   }
 
+  const { showConfirmationDialog } = useConfirmationDialog()
+
   const relateTo = React.useRef<any[][]>([])
   const isEdited = React.useRef<number[]>([])
+
   const handleChangeCheckbox = async (checked: boolean, item: EngineeringListing) => {
     if (checked) {
       setEngineeringSelect((prevState) => [...prevState, item.id])
@@ -269,14 +292,35 @@ export default function UnitProjectDetailPage() {
       setEBSAll((prevState) => [...prevState, EBSData])
       relateTo.current = [...relateTo.current, []]
       isEdited.current = [...isEdited.current, 0]
+      //   取消勾选构筑物
     } else {
-      const index = engineeringSelect.indexOf(item.id)
-      setEngineeringSelect((prevState) => prevState.filter((el) => el != item.id))
-      const ebsArr = structuredClone(ebsAll)
-      ebsArr.splice(index, 1)
-      setEBSAll(ebsArr)
-      relateTo.current.splice(index, 1)
-      isEdited.current.splice(index, 1)
+      //操作
+      const handle = () => {
+        const index = engineeringSelect.indexOf(item.id)
+        setEngineeringSelect((prevState) => prevState.filter((el) => el != item.id))
+        const ebsArr = structuredClone(ebsAll)
+        ebsArr.splice(index, 1)
+        setEBSAll(ebsArr)
+        relateTo.current.splice(index, 1)
+        isEdited.current.splice(index, 1)
+      }
+
+      if (searchParams.get("spId")) {
+        //  获取工点列表
+        const res = await getProjectSubSectionApi({
+          is_subset: 1,
+          project_id: PROJECT_ID,
+          parent_id: +searchParams.get("spId")!,
+        })
+        if (!isCanSelect.code) {
+          showConfirmationDialog("该单位工程已关联工点数据，确认取消关联构筑物吗？", () => {})
+          return
+        } else {
+          handle()
+        }
+      } else {
+        handle()
+      }
     }
   }
 
@@ -284,6 +328,10 @@ export default function UnitProjectDetailPage() {
     console.log("tree触发了check")
     relateTo.current[index] = checkedValue
     isEdited.current[index] = 1
+  }
+
+  if (!permissionTagList.includes(permissionJson.unit_project_member_write)) {
+    return <NoPermission />
   }
 
   return (
@@ -348,6 +396,7 @@ export default function UnitProjectDetailPage() {
                         <Checkbox
                           className="cursor-pointer"
                           checked={engineeringSelect.indexOf(item.id) > -1}
+                          disabled={!!searchParams.get("spId")}
                           onChange={(_, checked) => {
                             handleChangeCheckbox(checked, item)
                           }}

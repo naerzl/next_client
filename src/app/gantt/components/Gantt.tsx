@@ -7,10 +7,13 @@ import "./Gantt.scss"
 import dayjs from "dayjs"
 import ganttContext from "@/app/gantt/context/ganttContext"
 import { message } from "antd"
-import useSWRMutation from "swr/mutation"
-import { reqPostEBS, reqGetEBS } from "@/app/ebs-data/api"
 import { PILE_CODE } from "@/app/gantt/const"
+import { dateToUTCCustom, dateToYYYYMM } from "@/libs/methods"
+import permissionJson from "@/config/permission.json"
 import { LayoutContext } from "@/components/LayoutContext"
+import useSWRMutation from "swr/mutation"
+import { reqGetProcess } from "@/app/gantt/api"
+import { ProcessListData } from "@/app/gantt/types"
 
 type Props = {
   tasks?: any
@@ -34,9 +37,17 @@ let updatedParentTasks: Task[] = []
 function updateParentTask(task: Task) {
   // 找到父级任务进行对象
   const parentTask = gantt.getTask(gantt.getParent(task.id))
+  console.log(parentTask)
 
+  if (String(parentTask.id).startsWith("w") || String(parentTask.id).startsWith("p")) return
   // 深拷贝一个父级任务
   const newParentTask = structuredClone(parentTask)
+
+  if (!parentTask.duration) {
+    newParentTask.start_date = task.start_date
+    newParentTask.end_date = task.end_date
+  }
+
   if (dayjs(task.start_date).unix() < dayjs(parentTask.start_date).unix()) {
     newParentTask.start_date = task.start_date
   }
@@ -46,8 +57,6 @@ function updateParentTask(task: Task) {
   }
 
   updatedParentTasks.push(newParentTask)
-
-  if (String(parentTask.parent).startsWith("w") || String(parentTask.parent).startsWith("p")) return
 
   updateParentTask(newParentTask)
 }
@@ -93,11 +102,6 @@ function updateChildrenTask(task: Task, duration?: number) {
 
       updatedChildrenTasks.push(...newChildTasksList.filter((item) => item.duration != 0))
 
-      // gantt.parse({ data: newChildTasksList })
-      // gantt.sort((a, b) => {
-      //   return a.id - b.id
-      // })
-
       childTasksIdList.forEach((taskId) => {
         updateChildrenTask(gantt.getTask(taskId), duration)
       })
@@ -108,17 +112,17 @@ function updateChildrenTask(task: Task, duration?: number) {
 const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
   const { zoom, onDataUpdated, editGanttItem, getSubGanttList, handleOpenDrawerProcess } = props
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { trigger: getProcessApi } = useSWRMutation("/process", reqGetProcess)
 
-  const { trigger: postEBSApi } = useSWRMutation("/ebs", reqPostEBS)
-  //
   const GANTT_DOM = useRef<HTMLDivElement | null>(null)
 
   const ctx = React.useContext(ganttContext)
 
+  const { permissionTagList } = React.useContext(LayoutContext)
+
   function initGanttDataProcessor() {
     gantt.createDataProcessor((type: any, action: any, item: any, id: any) => {
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolve) => {
         if (onDataUpdated) {
           onDataUpdated(type, action, item, id)
         }
@@ -178,6 +182,11 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     gantt.config.deepcopy_on_parse = true // 让gantt.parse()使用数据源的深拷贝对象 操作不会影响到源对象
     gantt.config.initial_scroll = false // 设置是否最初滚动日程表区域以显示最早的任务
     gantt.config.min_duration = 0 // 设置最小工期
+    gantt.config.buttons_right = []
+    if (!permissionTagList.includes(permissionJson.construction_plan_member_update)) {
+      gantt.config.readonly = true
+    }
+    gantt.config.undo = true
 
     // 左边每一列配置
     gantt.config.columns = [
@@ -190,45 +199,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
         resize: true,
       },
       { name: "duration", label: "工期", align: "center", max_width: 40, resize: true },
-      // { name: "aaa", label: "负责人", align: "center", max_width: 80, resize: true, sort: false },
-      // {
-      //   name: "is_loop",
-      //   label: "操作",
-      //   max_width: 50,
-      //   align: "center",
-      //   resize: true,
-      //   sort: false,
-      //   onrender(task: Task, node: HTMLElement): any {
-      //     const div = document.createElement("div")
-      //     div.className = "h-full aspect-square cursor-pointer"
-      //     div.innerHTML = "<i class='iconfont icon-copy'></i>"
-      //     div.onclick = async function () {
-      //       const topLevelParentId = getGanttTopLevelParentId(task.id)
-      //       const topTask = gantt.getTask(topLevelParentId)
-      //       const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
-      //       const parentItem = gantt.getTask(gantt.getParent(task.id))
-      //       const res = await postEBSApi({
-      //         is_copy: 1,
-      //         ebs_id: +task.id,
-      //         project_id: PROJECT_ID,
-      //         class: task.class,
-      //         next_ebs_id: +String(parentItem.id).replace(/[a-zA-Z]/, ""),
-      //         project_sp_id: +String(topTask.id).replace(/[a-zA-Z]/, ""),
-      //         project_si_id: +String(secondTask.id).replace(/[a-zA-Z]/, ""),
-      //       })
-      //       // gantt.copy()
-      //       const newTask = structuredClone(task)
-      //       newTask.id = res.id
-      //       newTask.code = res.code
-      //       resetRenderGantt({ data: [newTask] })
-      //     }
-      //     node.innerHTML = ""
-      //     if (task.is_loop && task.is_loop == "yes") {
-      //       node.appendChild(div)
-      //     }
-      //     return
-      //   },
-      // },
     ]
 
     // 将外部组件呈现到 DOM 中
@@ -270,16 +240,17 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
 
     gantt.attachEvent("onBeforeTaskUpdate", function (taskId, task) {
       const parentTask = gantt.getTask(gantt.getParent(taskId))
-
       if (task.duration == beforeDragTask.current.duration) {
         return true
       } else {
-        if (dayjs(task.start_date).unix() < dayjs(parentTask.start_date).unix()) {
+        if (
+          dayjs(task.start_date).unix() < dayjs(parentTask.start_date).unix() &&
+          parseInt(String(parentTask.id)) >= 0
+        ) {
           resetRenderGantt({ data: [beforeDragTask.current] })
           return false
         }
       }
-
       return true
     })
 
@@ -287,8 +258,9 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       const topLevelParentId = getGanttTopLevelParentId(id)
       const topTask = gantt.getTask(topLevelParentId)
       const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
+      console.log(task)
       try {
-        await editGanttItem(task, topTask, secondTask)
+        editGanttItem(task, topTask, secondTask)
         updateParentTask(task)
         resetRenderGantt({ data: updatedParentTasks })
         updatedParentTasks = []
@@ -301,7 +273,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
             : undefined,
         )
 
-        console.log(updatedChildrenTasks)
         resetRenderGantt({ data: updatedChildrenTasks })
         updatedChildrenTasks = []
       } catch (e) {
@@ -315,6 +286,29 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       return Number(task.$level) > 1
     })
 
+    gantt.attachEvent("onLightboxSave", function (id, task: Task) {
+      const parentTask = gantt.getTask(gantt.getParent(id))
+      // console.log(task)
+      // if (task.start_date == null) {
+      //   task.start_date = new Date(dateToUTCCustom(new Date(), "YYYY-MM-DD"))
+      //   task.end_date = new Date(dateToUTCCustom(new Date(), "YYYY-MM-DD"))
+      //   task.duration = 0
+      // }
+      console.log(dayjs(parentTask.start_date).unix(), dayjs(task.start_date).unix())
+      console.log(dayjs(parentTask.end_date).unix(), dayjs(task.end_date).unix())
+      if (!parentTask.duration) return true
+      if (
+        dayjs(parentTask.start_date).unix() > dayjs(task.start_date).unix() ||
+        dayjs(parentTask.end_date).unix() < dayjs(task.end_date).unix()
+      ) {
+        message.destroy()
+        message.error("设置任务需要在上一个时间范围内")
+        return false
+      }
+
+      return true
+    })
+
     gantt.attachEvent("onBeforeTaskDrag", function (id) {
       const task = gantt.getTask(id)
       beforeDragTask.current = structuredClone(task)
@@ -325,13 +319,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     // 监听侧边树形数据展开事件
     gantt.attachEvent("onTaskOpened", function (taskId) {
       const ganttItem = gantt.getTask(taskId)
-      console.log(ganttItem)
       ganttItem.hasChild && getSubGanttList(ganttItem)
-      return true
-    })
-
-    gantt.attachEvent("onContextMenu", function (taskId, linkId, event) {
-      const element = event.target
       return true
     })
 
@@ -344,36 +332,31 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     })
 
     gantt.attachEvent("onTaskClick", function (taskId, e) {
-      if (/^-?\d+$/.test(taskId)) {
+      if (/^\d/.test(taskId)) {
         if (e.target.className.includes("gantt_task_content")) {
           const task = gantt.getTask(taskId)
           const someOne = PILE_CODE.some((code) => task.code != code && task.code.startsWith(code))
-          console.log(someOne, task.class)
-          if (someOne && task.class == "none") {
+
+          console.log(someOne, task)
+          if (task.class == "none" && task.name.includes("#桩")) {
             const topLevelParentId = getGanttTopLevelParentId(taskId)
             const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
-            const newTask = structuredClone(task)
+            const newTask: any = structuredClone(task)
             newTask.project_sp_id = topLevelParentId
             newTask.project_si_id = secondTask.id
 
             ctx.changeEBSItem(newTask as any)
-
             handleOpenDrawerProcess(newTask)
           }
         }
 
         if (e.target.className.includes("iconfont")) {
-          message.info("点击了复制")
         }
       }
       return true
     })
 
-    gantt.attachEvent("onLightboxDelete", function (id, ...arg) {
-      const task = gantt.getTask(id)
-      console.log(task)
-      return false
-    })
+    gantt.attachEvent("onGanttReady", function () {})
 
     function is_selected_column(column_date: any) {
       return !!(selected_column && column_date.valueOf() == selected_column.valueOf())
@@ -395,20 +378,31 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       )
     }
 
+    gantt.templates.task_date = function (date) {
+      return dateToUTCCustom(date, "YYYY年MM月DD日")
+    }
+    gantt.templates.lightbox_header = function (start_date, end_date, task) {
+      return (
+        gantt.templates.task_time(task.start_date!, task.end_date!, task) +
+        "&nbsp;" +
+        (gantt.templates.task_text(task.start_date!, task.end_date!, task) || "").substring(0, 70)
+      )
+    }
+
     //缩放
     const zoomConfig = {
       levels: [
         {
           name: "day", //日
           min_column_width: 80,
-          scales: [{ unit: "day", step: 1, format: "%M %d" }],
+          scales: [{ unit: "day", step: 1, format: "%m-%d" }],
         },
         {
           name: "week",
           min_column_width: 80,
           scales: [
-            { unit: "week", step: 1, format: "第%W周" },
-            { unit: "day", step: 1, format: "%M %d" },
+            { unit: "week", format: "第%W周" },
+            { unit: "day", step: 1, format: "%m-%d" },
           ],
         },
         {
@@ -416,7 +410,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
           min_column_width: 120,
           scales: [
             { unit: "month", format: "%M" },
-            { unit: "day", step: 1, format: "%M %d日" },
+            { unit: "day", step: 1, format: "%d" },
           ],
         },
         {
@@ -447,25 +441,18 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     gantt.ext.fullscreen.getFullscreenElement = function () {
       return document.getElementById("gantt_cover") as HTMLElement
     }
-    // gantt.locale.labels.section_priority = "Color"
-    // gantt.locale.labels.section_textColor = "Text Color"
-    //
-    // let colors = [
-    //   { key: "", label: "Default" },
-    //   { key: "#4B0082", label: "Indigo" },
-    //   { key: "#FFFFF0", label: "Ivory" },
-    //   { key: "#F0E68C", label: "Khaki" },
-    //   { key: "#B0C4DE", label: "LightSteelBlue" },
-    //   { key: "#32CD32", label: "青柠绿" },
-    //   { key: "#7B68EE", label: "中板岩蓝" },
-    //   { key: "#FFA500", label: "橙色" },
-    //   { key: "#FF4500", label: "橙红色" },
-    // ]
-    //
+
+    // gantt.locale.labels.time_enable_button = "安排计划"
+    // gantt.locale.labels.time_disable_button = "取消计划"
     gantt.config.lightbox.sections = [
       { name: "description", height: 38, map_to: "text", type: "textarea", focus: true },
 
-      { name: "time", type: "duration", map_to: "auto", time_format: ["%Y", "%m", "%d", "%H:%i"] },
+      {
+        name: "time",
+        type: "duration",
+        map_to: "auto",
+        time_format: ["%Y", "%m", "%d"],
+      },
     ]
 
     // 初始化 zoom
@@ -490,7 +477,13 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       if (a.created_at) {
         return dayjs(b.created_at).unix() - dayjs(a.created_at).unix()
       } else {
-        return a.id.split("-")[0] - b.id.split("-")[0]
+        if (typeof a.id == "string") {
+          return a.id.split("-")[0] - b.id.split("-")[0]
+        } else if (typeof a.id == "number") {
+          return a.id - b.id
+        } else {
+          return -1
+        }
       }
     }, false)
   }

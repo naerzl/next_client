@@ -22,12 +22,16 @@ import { reqGetEBS } from "@/app/ebs-data/api"
 import Tree from "./Tree"
 import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
-import { TypePostProjectSubSectionParams } from "@/app/working-point/types"
+import {
+  TypePostProjectSubSectionParams,
+  TypeProjectSubSectionData,
+} from "@/app/working-point/types"
 import { useRouter, useSearchParams } from "next/navigation"
 import { reqPostProjectSubSection, reqPutProjectSubSection } from "@/app/working-point/api"
 import WorkingPointContext from "@/app/working-point/context/workingPointContext"
 import { LayoutContext } from "@/components/LayoutContext"
 import { message } from "antd"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 
 type IForm = {
   name: string
@@ -113,6 +117,10 @@ export default function WorkingPointDetailPage() {
 
   const [projectState, setProjectState] = React.useState<number>(0)
 
+  const workingPointEditItem = React.useRef<TypeProjectSubSectionData>(
+    {} as TypeProjectSubSectionData,
+  )
+
   React.useEffect(() => {
     if (ctx.tableList.length > 0 && searchParams.get("siId")) {
       // 通过上下文 找到编辑的工点
@@ -120,6 +128,10 @@ export default function WorkingPointDetailPage() {
       // 找到编辑的对象
       if (_editItem) {
         setValue("name", _editItem.name)
+        isEdited.current = 0
+
+        workingPointEditItem.current = _editItem
+
         if (_editItem.parent_id) {
           setProjectState(+_editItem.parent_id)
         }
@@ -141,6 +153,8 @@ export default function WorkingPointDetailPage() {
   // 获取EBS结构数据
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
+  const { showConfirmationDialog } = useConfirmationDialog()
+
   // 提交表单事件（防抖）
   const { run: onSubmit } = useDebounce(async (value: any) => {
     if (!projectState) {
@@ -151,7 +165,12 @@ export default function WorkingPointDetailPage() {
 
     params.name = value.name
     params.project_id = PROJECT_ID
+    params.is_edited = isEdited.current
     params.ebs_ids = JSON.stringify(relateTo.current)
+    if (isCanSelect.code) {
+      params.parent_code = isCanSelect.code
+      params.parent_level = isCanSelect.level
+    }
     if (engineeringSelect) {
       params.engineering_listing_id = engineeringSelect
     }
@@ -159,17 +178,51 @@ export default function WorkingPointDetailPage() {
     if (projectState) {
     }
     if (searchParams.get("siId")) {
-      params.id = +searchParams.get("siId")!
-      await putProjectSubSectionApi(params)
+      // 判断名称和构筑物是否是有改变
+      let flag =
+        params.name != workingPointEditItem.current.name ||
+        params.engineering_listing_id != workingPointEditItem.current.engineering_listings?.[0]?.id
+
+      if (flag) {
+        showConfirmationDialog(
+          "保存后对应工点与施工计划数据也将被清空，确认保存？",
+          async () => {
+            params.id = +searchParams.get("siId")!
+            await putProjectSubSectionApi(params)
+            ctx.getProjectSubSection()
+            handleCancel()
+          },
+          () => {
+            if (workingPointEditItem.current) {
+              setValue("name", workingPointEditItem.current.name)
+              isEdited.current = 0
+
+              if (workingPointEditItem.current.parent_id) {
+                setProjectState(+workingPointEditItem.current.parent_id)
+              }
+              if (
+                workingPointEditItem.current.engineering_listings &&
+                workingPointEditItem.current.engineering_listings.length > 0
+              ) {
+                setEngineeringSelect(+workingPointEditItem.current.engineering_listings[0].id)
+              }
+            }
+          },
+        )
+      } else {
+        params.id = +searchParams.get("siId")!
+        await putProjectSubSectionApi(params)
+        ctx.getProjectSubSection()
+        handleCancel()
+      }
     } else {
       if (!params.parent_id || !params.engineering_listing_id) {
         return message.error("请选择单位工程和构筑物")
       }
       await postProjectSubSection(params)
+      ctx.getProjectSubSection()
+      handleCancel()
     }
-
-    ctx.getProjectSubSection()
-    handleCancel()
   })
 
   const [engineeringSelect, setEngineeringSelect] = React.useState<number>(0)
@@ -197,8 +250,11 @@ export default function WorkingPointDetailPage() {
     }
   }, [engineeringSelect, projectState, engineeringList])
 
+  const [isCanSelect, setIsCanSelect] = React.useState<TypeEBSDataList>({} as TypeEBSDataList)
+
   const getSubEBSData = async (ebsItem: TypeEBSDataList, pos: string, type: boolean) => {
     const ebsAllValue = structuredClone(ebsAll)
+    if (ebsItem.is_can_select == 1) setIsCanSelect(ebsItem)
 
     let arr: TypeEBSDataList[] = []
     // 展开
@@ -235,9 +291,21 @@ export default function WorkingPointDetailPage() {
   }
 
   const relateTo = React.useRef<any[]>([])
-
+  const isEdited = React.useRef<0 | 1>(0)
   const handleChecked = (checkedValue: any[], checked: boolean) => {
+    console.log("代码走了")
     relateTo.current = checkedValue
+    isEdited.current = 1
+  }
+
+  const handleChangeBasic = (value: any) => {
+    if (value <= 0 && Boolean(searchParams.get("siId") && !isCanSelect.code)) {
+      showConfirmationDialog("操作失败，请先把关联工程结构取消勾选", () => {})
+      return
+    }
+
+    setEngineeringSelect(value)
+    isEdited.current = 1
   }
 
   return (
@@ -262,6 +330,7 @@ export default function WorkingPointDetailPage() {
                       value={projectState}
                       size="small"
                       defaultValue={0}
+                      disabled={!!searchParams.get("siId")}
                       onChange={(event) => {
                         setProjectState(+event.target.value)
                       }}>
@@ -290,8 +359,9 @@ export default function WorkingPointDetailPage() {
                         value={engineeringSelect}
                         size="small"
                         defaultValue={0}
+                        disabled={!!searchParams.get("siId")}
                         onChange={(event) => {
-                          setEngineeringSelect(+event.target.value)
+                          handleChangeBasic(event.target.value)
                         }}>
                         <MenuItem value={0}>
                           <i className="text-[#ababab]">请选择一个构筑物</i>
@@ -349,6 +419,15 @@ export default function WorkingPointDetailPage() {
             </div>
           </div>
           <div className="mt-[8.5rem] ml-10 flex-1">
+            <div className="text-railway_gray mb-2">
+              {!!engineeringSelect && (
+                <>
+                  <span className="text-railway_error mr-0.5">*</span>
+                  关联工程结构
+                </>
+              )}
+            </div>
+
             {!!engineeringSelect && (
               <Accordion sx={{ width: "100%" }}>
                 <AccordionSummary

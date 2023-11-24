@@ -1,6 +1,3 @@
-declare module "react-file-viewer"
-declare module "react-office-viewer"
-
 export interface FetchParams<T> {
   arg: T
 }
@@ -10,4 +7,11 @@ export interface BaseApiPager {
   page: number
   limit: number
   count: number
+}
+
+export interface PermissionData {
+  id: number
+  name: string
+  permission: string
+  action: string
 }

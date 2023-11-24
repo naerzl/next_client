@@ -5,6 +5,8 @@ import { StatusCodes } from "http-status-codes"
 import { generateRandomString } from "./methods"
 import { message } from "antd"
 
+const ORIGIN_PATH = process.env.NEXT_PUBLIC_ORIGIN_PATH
+
 const whitelist = ["/user/existed"]
 // 拼接接口地址
 export const getV1BaseURL = (url: string): string => {
@@ -100,11 +102,15 @@ export async function fetcher<T>(params: FetcherOptions<T>) {
     // 补货到抛出的错误 重新初始化token 重新登录
     const res = await lrsOAuth2Instance.lrsOAuth2Initiate(getV1BaseURL("/initiate"), {
       state,
-      redirect_url: location.origin + "/auth2",
+      redirect_url: ORIGIN_PATH + "/auth2",
     })
     if (res.code === STATUS_SUCCESS) {
       // 存储当前的url地址
-      setCookie(OAUTH2_PATH_FROM as string, location.href)
+      // setCookie(OAUTH2_PATH_FROM as string, location.href) setCookie(
+      setCookie(
+        OAUTH2_PATH_FROM as string,
+        (process.env.NEXT_PUBLIC_ORIGIN_PATH + "/dashboard/") as string,
+      )
       // 跳转到登录页面的地址
       location.href = res.data.location
     }

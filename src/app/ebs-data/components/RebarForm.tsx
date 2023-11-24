@@ -20,8 +20,9 @@ import dayjs from "dayjs"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { dateToYYYYMM } from "@/libs/methods"
+import { dateToYYYYMM, displayWithPermission } from "@/libs/methods"
 import { renderProperty } from "@/app/ebs-data/const/method"
+import permissionJson from "@/config/permission.json"
 
 const columns = [
   {
@@ -76,7 +77,7 @@ function renderCellConnectMethod(item: RebarData) {
 export default function RebarForm() {
   const ctx = React.useContext(ebsDataContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation("/material-rebar", reqGetRebarData)
 
@@ -130,6 +131,7 @@ export default function RebarForm() {
       <div className="flex justify-end">
         <Button
           variant="contained"
+          style={displayWithPermission(permissionTagList, permissionJson.structure_member_write)}
           className="bg-railway_blue"
           startIcon={<AddOutlinedIcon />}
           onClick={() => {
@@ -162,12 +164,20 @@ export default function RebarForm() {
                   <TableCell align="left">
                     <div className="flex justify-start">
                       <IconButton
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_update,
+                        )}
                         onClick={() => {
                           handleEditRebarWithDrawer(row)
                         }}>
                         <EditOutlinedIcon />
                       </IconButton>
                       <IconButton
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_delete,
+                        )}
                         onClick={() => {
                           handleDelProcessWithSWR(row.id)
                         }}>

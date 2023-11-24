@@ -4,12 +4,10 @@ import Side from "@/components/Side"
 import React from "react"
 import Nav from "@/components/Nav"
 import { SWRConfig } from "swr"
-import { usePathname, useSelectedLayoutSegment } from "next/navigation"
+import { usePathname, useRouter, useSelectedLayoutSegment } from "next/navigation"
 import StyledComponentsRegistry from "@/libs/AntdRegistry"
 import "./globals.scss"
 import { ConfirmProvider } from "material-ui-confirm"
-import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined"
-import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined"
 import { generateRandomString } from "@/libs/methods"
 import { getV1BaseURL } from "@/libs/fetch"
 import { lrsOAuth2Instance } from "@/libs"
@@ -28,45 +26,21 @@ import { ConfirmationDialogProvider } from "@/components/ConfirmationDialogProvi
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { LayoutContext } from "@/components/LayoutContext"
+import { ReqGetProjectCurrentResponse } from "@/app/member-department/types"
+import { reqGetCurrentProject } from "@/app/member-department/api"
+import { reqGetPermission } from "@/app/api"
+import { PermissionData } from "@/types/api"
+import { message } from "antd"
+import { SnackbarProvider } from "notistack"
 
 const inter = Inter({ subsets: ["latin"] })
-
-const menuList = {
-  commonLibrary: {
-    title: "工程结构",
-    icon: <ArchiveOutlinedIcon />,
-    open: false,
-    children: {
-      "unit-project": {
-        path: "/unit-project",
-        title: "单位工程",
-        open: false,
-      },
-      "working-point": {
-        path: "/working-point",
-        title: "工点数据",
-        open: false,
-      },
-    },
-  },
-  dataTemplate: {
-    title: "功能模块",
-    icon: <TuneOutlinedIcon />,
-    open: false,
-    children: {
-      gantt: {
-        path: "/gantt",
-        title: "施工计划",
-        open: false,
-      },
-    },
-  },
-}
 
 export default function RootLayout({ children }: { children: React.ReactElement }) {
   const pathname = usePathname()
 
   const segment = useSelectedLayoutSegment()
+
+  const router = useRouter()
 
   const handleGoToLogin = async () => {
     const state = generateRandomString()
@@ -134,7 +108,106 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     setCookie(OAUTH2_PROJECT_ID, String(id))
   }
 
-  if ((!accessToken && segment && segment != "auth2") || waitToken) {
+  const [projectList, setProjectList] = React.useState<ReqGetProjectCurrentResponse[]>([])
+
+  const [waitWithProjectAndPermission, setWaitWithProjectAndPermission] = React.useState(false)
+
+  const [permission, setPermission] = React.useState<PermissionData[]>([])
+
+  const [permissionTagList, setPermissionTagList] = React.useState<string[]>([])
+  const getProjectList = async () => {
+    try {
+      setWaitWithProjectAndPermission(true)
+      const res = await reqGetCurrentProject("/project/current")
+      // 当前项目数据为null 跳转
+      if (!res) {
+        message.error("您未在项目内，5秒内将为您跳转至官网！")
+        await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(0)
+          }, 5000)
+        })
+
+        router.push(process.env.NEXT_PUBLIC_WEB_PATH as string)
+      }
+
+      // 筛选出项目不为null的
+      const newRes = res.filter((item) => item.project != null)
+      setProjectList(newRes ?? [])
+      const obj = newRes.find((item) => item.is_default == 1)
+
+      const noNullItem = newRes.find((item) => item.project != null)
+      // 如果所有的子项目为空
+      if (!noNullItem) {
+        message.error("您未在项目内，5秒内将为您跳转至官网！")
+        await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(0)
+          }, 5000)
+        })
+
+        router.push(process.env.NEXT_PUBLIC_WEB_PATH as string)
+      }
+      let _projectId = 1
+
+      if (obj) {
+        _projectId = obj.project.id
+      } else {
+        if (noNullItem) {
+          _projectId = noNullItem.project.id
+        } else {
+          message.error("您未在项目内，5秒内将为您跳转至官网！")
+          await new Promise((resolve, reject) => {
+            setTimeout(() => {
+              resolve(0)
+            }, 5000)
+          })
+
+          router.push(process.env.NEXT_PUBLIC_WEB_PATH as string)
+        }
+      }
+
+      changeProjectId(_projectId)
+
+      //  获取相关权限
+
+      const resPermission = await reqGetPermission("/permission", {
+        arg: { project_id: _projectId },
+      })
+
+      setPermission(resPermission)
+      setPermissionTagList(
+        resPermission.map((item) => {
+          const tag = item.permission + "_" + item.action
+          return tag.trim()
+        }),
+      )
+
+      return ""
+    } finally {
+      setWaitWithProjectAndPermission(false)
+    }
+  }
+
+  React.useEffect(() => {
+    if (!pathname.startsWith("/auth2") && pathname != "/" && projectList.length <= 0) {
+      getProjectList()
+    }
+  }, [pathname])
+
+  // React.useEffect(() => {
+  //   window.onresize = () => {
+  //     let res = window.innerWidth / (1920 / 16)
+  //     document.documentElement.style.fontSize = `${res}px`
+  //     console.log(window.innerWidth)
+  //   }
+  // }, [window.innerWidth])
+
+  if (
+    (!accessToken && segment && segment != "auth2") ||
+    waitToken ||
+    waitWithProjectAndPermission
+  ) {
     return (
       <html lang="en" id="_next">
         <meta name="version" content="1.0.0" />
@@ -151,35 +224,45 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     <html lang="en" id="_next">
       <meta name="version" content="1.0.0" />
       <body className={`${inter.className} flex`}>
-        <LayoutContext.Provider value={{ projectId, changeProject: changeProjectId }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <StyledComponentsRegistry>
-              <SWRConfig value={{ provider: () => new Map() }}>
-                <ConfirmProvider>
-                  <ConfirmationDialogProvider>
-                    {pathname != "/" ? (
-                      <>
-                        <aside className="h-full w-60  min-w-[15rem]">
-                          {/*<Side items={menus} onClick={whenMenuClick} />*/}
-                          <Side />
-                        </aside>
-                        <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem]">
-                          <Nav />
-                          <main
-                            className="px-7.5 py-12  flex flex-col flex-1"
-                            style={{ height: "calc(100vh - 64px)" }}>
-                            {children}
-                          </main>
-                        </div>
-                      </>
-                    ) : (
-                      <>{children}</>
-                    )}
-                  </ConfirmationDialogProvider>
-                </ConfirmProvider>
-              </SWRConfig>
-            </StyledComponentsRegistry>
-          </LocalizationProvider>
+        <LayoutContext.Provider
+          value={{
+            projectId,
+            changeProject: changeProjectId,
+            projectList,
+            permissionList: permission,
+            permissionTagList: permissionTagList,
+            getProjectList,
+          }}>
+          <SnackbarProvider maxSnack={5}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <StyledComponentsRegistry>
+                <SWRConfig value={{ provider: () => new Map() }}>
+                  <ConfirmProvider>
+                    <ConfirmationDialogProvider>
+                      {pathname != "/" ? (
+                        <>
+                          <aside className="h-full w-60  min-w-[15rem]">
+                            {/*<Side items={menus} onClick={whenMenuClick} />*/}
+                            <Side />
+                          </aside>
+                          <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem]">
+                            <Nav />
+                            <main
+                              className="px-7.5 py-12  flex flex-col flex-1"
+                              style={{ height: "calc(100vh - 64px)" }}>
+                              {children}
+                            </main>
+                          </div>
+                        </>
+                      ) : (
+                        <>{children}</>
+                      )}
+                    </ConfirmationDialogProvider>
+                  </ConfirmProvider>
+                </SWRConfig>
+              </StyledComponentsRegistry>
+            </LocalizationProvider>
+          </SnackbarProvider>
         </LayoutContext.Provider>
       </body>
     </html>

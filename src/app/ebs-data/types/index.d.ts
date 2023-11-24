@@ -61,6 +61,7 @@ export interface TypeEBSDataList {
   }
   engineering_listing_id?: number
   parent_is_loop?: boolean
+  is_loop_id: number
 }
 
 /*创建EBS结构 请求参数*/

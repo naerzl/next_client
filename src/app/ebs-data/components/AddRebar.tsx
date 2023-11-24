@@ -225,6 +225,7 @@ export default function AddRebar(props: Props) {
                   id="unit_weight"
                   size="small"
                   fullWidth
+                  disabled
                   error={Boolean(errors.unit_weight)}
                   {...register("unit_weight", {
                     required: "请输入单位重（kg/m）",

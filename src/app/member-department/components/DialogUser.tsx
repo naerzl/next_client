@@ -16,7 +16,12 @@ import { message, TreeSelect, TreeSelectProps } from "antd"
 import { ErrorMessage } from "@hookform/error-message"
 import { reqGetRole, reqGetUserExisted, reqPostUser, reqPutUser } from "@/app/member-department/api"
 import { REGEXP_MAIL, REGEXP_PHONE } from "@/libs/const"
-import { ReqPostUserParams, RolesListData, UserListData } from "@/app/member-department/types"
+import {
+  ReqGetUserListParams,
+  ReqPostUserParams,
+  RolesListData,
+  UserListData,
+} from "@/app/member-department/types"
 import { LayoutContext } from "@/components/LayoutContext"
 
 interface Props {
@@ -88,8 +93,8 @@ export default function dialogUser(props: Props) {
     params.name = values.name
     params.phone = values.phone
     params.mail = values.mail
-    const obj = select_option.find((i) => i.label == status)
-    params.status = obj ? obj.value : "normal"
+    // const obj = select_option.find((i) => i.label == status)
+    // params.status = obj ? obj.value : "normal"
     if (isEdit) {
       await putUserApi(Object.assign({ unionid: item.unionid } as any, params))
       const res = structuredClone(item)
@@ -184,12 +189,18 @@ export default function dialogUser(props: Props) {
 
   const { trigger: getUserExistedApi } = useSWRMutation("/user/existed", reqGetUserExisted)
 
+  const [havePhone, setHavePhone] = React.useState(false)
   const onPhoneChange = () => {
     let phone = getValues("phone")
     if (REGEXP_PHONE.test(phone)) {
-      // getUserExistedApi({ phone }).then((res) => {
-      //   setFormValue(res)
-      // })
+      getUserExistedApi({ phone })
+        .then((res) => {
+          setHavePhone(true)
+          setFormValue(res)
+        })
+        .catch(() => {
+          setHavePhone(false)
+        })
     }
   }
 
@@ -225,7 +236,7 @@ export default function dialogUser(props: Props) {
   return (
     <Drawer open={open} onClose={handleClose} anchor="right">
       <div className="w-[500px] p-10">
-        <header className="text-3xl text-[#44566C] mb-8">{isEdit ? "编辑用户" : "添加用户"}</header>
+        <header className="text-3xl text-[#44566C] mb-8">{isEdit ? "编辑成员" : "添加成员"}</header>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
@@ -250,7 +261,7 @@ export default function dialogUser(props: Props) {
                     trigger("phone")
                   },
                 })}
-                label="请输入手机号"
+                placeholder="请输入手机号"
                 autoComplete="off"
                 className="flex-1"
               />
@@ -286,7 +297,7 @@ export default function dialogUser(props: Props) {
                     trigger("name")
                   },
                 })}
-                label="请输入名称"
+                placeholder="请输入名称"
                 autoComplete="off"
               />
             </div>
@@ -299,38 +310,38 @@ export default function dialogUser(props: Props) {
             />
           </div>
 
-          <div className="mb-8">
-            <div className="flex items-start flex-col">
-              <InputLabel htmlFor="status" className="mr-3 w-20 text-left mb-2.5" required>
-                状态:
-              </InputLabel>
+          {/*<div className="mb-8">*/}
+          {/*  <div className="flex items-start flex-col">*/}
+          {/*    <InputLabel htmlFor="status" className="mr-3 w-20 text-left mb-2.5" required>*/}
+          {/*      状态:*/}
+          {/*    </InputLabel>*/}
 
-              <Autocomplete
-                disablePortal
-                id="h_subpart_code"
-                options={select_option.map((item) => item.label)}
-                fullWidth
-                value={status}
-                size="small"
-                onChange={(event, value, reason, details) => {
-                  setStatus(value ?? "")
-                }}
-                renderInput={(params) => <TextField {...params} label="请选择用户状态" />}
-                renderOption={(props, option) => {
-                  return (
-                    <li {...props} key={option}>
-                      {option}
-                    </li>
-                  )
-                }}
-                renderTags={(tagValue, getTagProps) => {
-                  return tagValue.map((option, index) => (
-                    <Chip {...getTagProps({ index })} key={option} label={option} />
-                  ))
-                }}
-              />
-            </div>
-          </div>
+          {/*    <Autocomplete*/}
+          {/*      disablePortal*/}
+          {/*      id="h_subpart_code"*/}
+          {/*      options={select_option.map((item) => item.label)}*/}
+          {/*      fullWidth*/}
+          {/*      value={status}*/}
+          {/*      size="small"*/}
+          {/*      onChange={(event, value, reason, details) => {*/}
+          {/*        setStatus(value ?? "")*/}
+          {/*      }}*/}
+          {/*      renderInput={(params) => <TextField {...params} label="请选择用户状态" />}*/}
+          {/*      renderOption={(props, option) => {*/}
+          {/*        return (*/}
+          {/*          <li {...props} key={option}>*/}
+          {/*            {option}*/}
+          {/*          </li>*/}
+          {/*        )*/}
+          {/*      }}*/}
+          {/*      renderTags={(tagValue, getTagProps) => {*/}
+          {/*        return tagValue.map((option, index) => (*/}
+          {/*          <Chip {...getTagProps({ index })} key={option} label={option} />*/}
+          {/*        ))*/}
+          {/*      }}*/}
+          {/*    />*/}
+          {/*  </div>*/}
+          {/*</div>*/}
 
           <div className="mb-8 relative">
             <div className="flex items-start flex-col">
@@ -342,6 +353,7 @@ export default function dialogUser(props: Props) {
                 id="mail"
                 size="small"
                 fullWidth
+                disabled={havePhone || isEdit}
                 error={Boolean(errors.mail)}
                 {...register("mail", {
                   pattern: { value: REGEXP_MAIL, message: "邮箱格式不正确" },
@@ -350,7 +362,7 @@ export default function dialogUser(props: Props) {
                     trigger("mail")
                   },
                 })}
-                label="请输入邮箱"
+                placeholder="请输入邮箱"
                 autoComplete="off"
                 className="flex-1"
               />
@@ -398,24 +410,24 @@ export default function dialogUser(props: Props) {
             </div>
           </div>
 
-          <div className="mb-8">
-            <div className="flex items-start flex-col">
-              <InputLabel htmlFor="section_list" className="mr-3 w-20 text-left mb-2.5">
-                部门:
-              </InputLabel>
-              <TreeSelect
-                placement="topLeft"
-                style={{ width: "100%" }}
-                value={sectionValue}
-                dropdownStyle={{ maxHeight: 400, overflow: "auto", zIndex: 2000 }}
-                placeholder="选择一个部门"
-                onSelect={handleSectionSelectChange}
-                loadData={onLoadData}
-                size="large"
-                treeData={sectionOption}
-              />
-            </div>
-          </div>
+          {/*<div className="mb-8">*/}
+          {/*  <div className="flex items-start flex-col">*/}
+          {/*    <InputLabel htmlFor="section_list" className="mr-3 w-20 text-left mb-2.5">*/}
+          {/*      部门:*/}
+          {/*    </InputLabel>*/}
+          {/*    <TreeSelect*/}
+          {/*      placement="topLeft"*/}
+          {/*      style={{ width: "100%" }}*/}
+          {/*      value={sectionValue}*/}
+          {/*      dropdownStyle={{ maxHeight: 400, overflow: "auto", zIndex: 2000 }}*/}
+          {/*      placeholder="选择一个部门"*/}
+          {/*      onSelect={handleSectionSelectChange}*/}
+          {/*      loadData={onLoadData}*/}
+          {/*      size="large"*/}
+          {/*      treeData={sectionOption}*/}
+          {/*    />*/}
+          {/*  </div>*/}
+          {/*</div>*/}
 
           <DialogActions>
             <Button onClick={handleClose}>取消</Button>

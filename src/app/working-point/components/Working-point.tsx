@@ -19,12 +19,14 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { TypeProjectSubSectionData } from "@/app/working-point/types"
 import { LayoutContext } from "@/components/LayoutContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { dateToUTCCustom } from "@/libs/methods"
+import { dateToUTCCustom, displayWithPermission } from "@/libs/methods"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
 
 export default function WorkingPoint() {
   const ctx = React.useContext(WorkingPointContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const router = useRouter()
 
@@ -87,6 +89,10 @@ export default function WorkingPoint() {
     ctx.changeEditItem(row)
   }
 
+  if (!permissionTagList.includes(permissionJson.station_data_member_read)) {
+    return <NoPermission />
+  }
+
   return (
     <>
       <h3 className="font-bold text-[1.875rem]">工点数据</h3>
@@ -103,6 +109,10 @@ export default function WorkingPoint() {
       <header className="flex justify-between mb-4">
         <div className="flex gap-2">
           <Button
+            style={displayWithPermission(
+              permissionTagList,
+              permissionJson.station_data_member_write,
+            )}
             className="bg-railway_blue text-white"
             onClick={() => {
               router.push("/working-point/detail")
@@ -157,6 +167,10 @@ export default function WorkingPoint() {
                 <TableCell align="left">
                   <div className="flex justify-between">
                     <Button
+                      style={displayWithPermission(
+                        permissionTagList,
+                        permissionJson.station_data_member_update,
+                      )}
                       variant="outlined"
                       onClick={() => {
                         handleClickEdit(row)
@@ -167,6 +181,10 @@ export default function WorkingPoint() {
                     <Button
                       variant="outlined"
                       color="error"
+                      style={displayWithPermission(
+                        permissionTagList,
+                        permissionJson.station_data_member_delete,
+                      )}
                       onClick={() => {
                         handleClickDelete(row.id)
                       }}

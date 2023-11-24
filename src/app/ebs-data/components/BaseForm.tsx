@@ -25,6 +25,8 @@ import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import { DictionaryData } from "@/app/gantt/types"
 import { renderProperty } from "@/app/ebs-data/const/method"
+import { displayWithPermission } from "@/libs/methods"
+import permissionJson from "@/config/permission.json"
 
 const columns = [
   {
@@ -94,24 +96,7 @@ function renderCellDrillMode(item: BridgeBoredBasicData) {
 export default function BaseForm() {
   const ctx = React.useContext(ebsDataContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
-
-  // const { data: tableList, mutate: mutateTableList } = useSWR(
-  //   () => (ctx.ebsItem.id ? `/bridge-bored-basic-datum?ebs_id=${ctx.ebsItem.id}` : null),
-  //   (url: string) =>
-  //     reqGetBridgeBoredBasicData(url, {
-  //       arg: {
-  //         ebs_id: ctx.ebsItem.id,
-  //         project_id: PROJECT_ID,
-  //         engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
-  //       },
-  //     }),
-  //   {
-  //     revalidateIfStale: false,
-  //     revalidateOnFocus: false,
-  //     revalidateOnReconnect: false,
-  //   },
-  // )
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation(
     "/bridge-bored-basic-datum",
@@ -191,6 +176,7 @@ export default function BaseForm() {
           variant="contained"
           className="bg-railway_blue"
           startIcon={<AddOutlinedIcon />}
+          style={displayWithPermission(permissionTagList, permissionJson.structure_member_write)}
           onClick={() => {
             handleOpenAddBridgeWithDrawer()
           }}>
@@ -225,12 +211,20 @@ export default function BaseForm() {
                   <TableCell align="left">
                     <div className="flex justify-start">
                       <IconButton
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_update,
+                        )}
                         onClick={() => {
                           handleEditBridgeWithDrawer(row)
                         }}>
                         <EditOutlinedIcon />
                       </IconButton>
                       <IconButton
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_delete,
+                        )}
                         onClick={() => {
                           handleDelProcessWithSWR(row.id)
                         }}>

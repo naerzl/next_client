@@ -18,7 +18,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ text, onConfirm
           <div className="h-14 mt-14 mb-7 text-center">
             <GppGoodIcon sx={{ color: "#09b66d", fontSize: "4.5rem" }} />
           </div>
-          <div className="text-center mb-[4.25rem]">{text}</div>
+          <div className="text-center mb-[4.25rem] px-3">{text}</div>
           <div className="confirmation-dialog-buttons h-14 bg-[#f8fafb] flex">
             <button onClick={onCancel} className="flex-1">
               取消

@@ -13,6 +13,8 @@ import EBSDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { Type_Is_system } from "@/app/ebs-data/components/TableTr"
 import {
   Autocomplete,
+  Backdrop,
+  Box,
   Button,
   Chip,
   DialogActions,
@@ -26,6 +28,8 @@ import { useForm } from "react-hook-form"
 import { useSearchParams } from "next/navigation"
 import { LayoutContext } from "@/components/LayoutContext"
 import Tooltip from "@mui/material/Tooltip"
+import LinearProgress, { LinearProgressProps } from "@mui/material/LinearProgress"
+import { message } from "antd"
 
 interface Props {
   open: boolean
@@ -76,7 +80,7 @@ export default function DialogEBS(props: Props) {
     if (lastOne) {
       titleType = titleEnum.find((str) => lastOne.name.includes(str))
       // title = lastOne.name.replace("N", "0") + `~结束${titleType}号`
-      title = `结束${titleType}号`
+      title = `${titleType}`
     }
     if (type == "label") {
       return title
@@ -93,11 +97,12 @@ export default function DialogEBS(props: Props) {
       is_hidden: 0,
       engineering_listing_id: Number(searchParams.get("baseId")),
     })
+
     if (res.length > 1) {
-      setLength(parseInt(res[res.length - 1].name) + 10)
+      setLength(parseInt(res[res.length - 1].name) + 30)
       setLaseOne(res[res.length - 1])
     } else {
-      setLength(10)
+      setLength(30)
       setLaseOne(res[res.length - 1])
     }
   }
@@ -126,6 +131,10 @@ export default function DialogEBS(props: Props) {
     setEBSNode(null)
   }
 
+  const [progress, setProgress] = React.useState(100)
+  const [start, setStart] = React.useState(0)
+  const [end, setEnd] = React.useState(10)
+
   // 提交表单事件（防抖）
   const { run: onFinish } = useDebounce(async (value: any) => {
     if (addType == "system") {
@@ -149,12 +158,35 @@ export default function DialogEBS(props: Props) {
         const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
         handleGetParentChildren(parentIndexArr as string[])
       } else {
-        await postEBSApi({
-          ebs_id: item.id,
-          project_id: PROJECT_ID,
-          engineering_listing_id: Number(searchParams.get("baseId")),
-          end_position: value.end_position,
-        })
+        if (+value.end_position < +value.start_position)
+          return message.error(`开始${findTitle("label")}号不可大于结束${findTitle("label")}号`)
+        let total = +value.end_position - value.start_position + 1
+        setEnd(total)
+
+        const getEBSPromise = async (num: number, end: number) => {
+          await postEBSApi({
+            ebs_id: item.id,
+            project_id: PROJECT_ID,
+            engineering_listing_id: Number(searchParams.get("baseId")),
+            end_position: num,
+          })
+
+          setStart(total - (end - num))
+          let process = 100 - ((end - num) / total) * 100
+          setProgress(process)
+          // setProgress()
+          if (num == end) return "ok"
+          return new Promise((resolve) => {
+            window.setTimeout(() => {
+              resolve(num)
+            }, 2000)
+          })
+        }
+
+        for (let i = +value.start_position; i <= +value.end_position; i++) {
+          await getEBSPromise(i, +value.end_position)
+        }
+
         ctx.handleExpandChange(true, item)
       }
     }
@@ -216,39 +248,82 @@ export default function DialogEBS(props: Props) {
   const CustomForm = () => (
     <form onSubmit={handleSubmit(onFinish)}>
       {addType == "userdefined" && !isEdit && (
-        <div className="mb-8">
-          <div className="flex items-start flex-col">
-            <InputLabel
-              htmlFor="end_position"
-              className="mr-3 mb-2.5 w-full text-left inline-block">
-              <span className="font-bold">{findTitle("label")}</span>
-              <Tooltip title="计算规则：输入数字为该工程结构的总数。">
-                <i className="iconfont icon-wenhao-xianxingyuankuang cursor-pointer"></i>
-              </Tooltip>
-            </InputLabel>
-            <TextField
-              id="end_position"
-              size="small"
-              fullWidth
-              placeholder={`${findTitle("placeholder")}号`}
-              error={Boolean(errors.end_position)}
-              variant="outlined"
-              className="flex-1"
-              {...register("end_position", {
-                required: `请输入${findTitle("placeholder")}号`,
-                max: { value: length, message: `最大为${length}` },
-                onBlur() {
-                  trigger("end_position")
-                },
-              })}
+        <>
+          <div className="mb-8">
+            <div className="flex items-start flex-col">
+              <InputLabel
+                htmlFor="start_position"
+                className="mr-3 mb-2.5 w-full text-left inline-block">
+                <span className="text-railway_error">*</span>
+                <span className="font-bold">开始{findTitle("label")}号</span>
+                <Tooltip title={`开始复制N#${findTitle("label")}工程结构的${findTitle("label")}号`}>
+                  <i className="iconfont icon-wenhao-xianxingyuankuang cursor-pointer"></i>
+                </Tooltip>
+              </InputLabel>
+              <TextField
+                id="start_position"
+                size="small"
+                fullWidth
+                placeholder={`请输入开始${findTitle("label")}号`}
+                error={Boolean(errors.start_position)}
+                variant="outlined"
+                className="flex-1"
+                {...register("start_position", {
+                  required: `请输入开始${findTitle("label")}号`,
+                  max: {
+                    value: parseInt(lastOne?.name!) >= 0 ? parseInt(lastOne?.name!) + 1 : 0,
+                    message: `最大为${
+                      parseInt(lastOne?.name!) >= 0 ? parseInt(lastOne?.name!) + 1 : 0
+                    }`,
+                  },
+                  onBlur() {
+                    trigger("start_position")
+                  },
+                })}
+              />
+            </div>
+            <ErrorMessage
+              errors={errors}
+              name="start_position"
+              render={({ message }) => <p className="text-railway_error text-sm">{message}</p>}
             />
           </div>
-          <ErrorMessage
-            errors={errors}
-            name="end_position"
-            render={({ message }) => <p className="text-railway_error text-sm">{message}</p>}
-          />
-        </div>
+
+          <div className="mb-8">
+            <div className="flex items-start flex-col">
+              <InputLabel
+                htmlFor="end_position"
+                className="mr-3 mb-2.5 w-full text-left inline-block">
+                <span className="text-railway_error">*</span>
+                <span className="font-bold">结束{findTitle("label")}号</span>
+                <Tooltip title="计算规则：输入数字为该工程结构的总数。">
+                  <i className="iconfont icon-wenhao-xianxingyuankuang cursor-pointer"></i>
+                </Tooltip>
+              </InputLabel>
+              <TextField
+                id="end_position"
+                size="small"
+                fullWidth
+                placeholder={`请输入结束${findTitle("label")}号`}
+                error={Boolean(errors.end_position)}
+                variant="outlined"
+                className="flex-1"
+                {...register("end_position", {
+                  required: `请输入结束${findTitle("label")}号`,
+                  max: { value: length, message: `最大为${length}` },
+                  onBlur() {
+                    trigger("end_position")
+                  },
+                })}
+              />
+            </div>
+            <ErrorMessage
+              errors={errors}
+              name="end_position"
+              render={({ message }) => <p className="text-railway_error text-sm">{message}</p>}
+            />
+          </div>
+        </>
       )}
 
       {addType == "userdefined" && isEdit && (
@@ -310,6 +385,23 @@ export default function DialogEBS(props: Props) {
           </header>
           {renderForm()}
         </div>
+
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={progress != 100}
+          onClick={() => {}}>
+          <Box sx={{ width: "50vw", height: "10vw" }}>
+            <LinearProgress
+              variant="determinate"
+              color="inherit"
+              sx={{ height: "10px" }}
+              value={progress}
+            />
+            <div className="w-full text-center mt-2 text-xl">
+              共需更新{end}个{findTitle("label")}，当前已更新数量：{start}。
+            </div>
+          </Box>
+        </Backdrop>
       </Drawer>
     </>
   )

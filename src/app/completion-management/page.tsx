@@ -1,13 +1,11 @@
 import React from "react"
 import { Metadata } from "next"
 import dynamic from "next/dynamic"
+// import CompletionManagementPage from "@/app/completion-management/components/CompletionManagementPage"
 
-const CompletionManagementPage = dynamic(
-  import("@/app/completion-management/components/CompletionManagementPage"),
-  {
-    ssr: false,
-  },
-)
+const CompletionManagementPage = dynamic(() => import("./components/CompletionManagementPage"), {
+  ssr: false,
+})
 export default function Page() {
   return <CompletionManagementPage />
 }

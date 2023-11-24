@@ -16,11 +16,14 @@ import { LayoutContext } from "@/components/LayoutContext"
 import CustomXLSX from "./CustomXLSX"
 import CustomDocx from "./CustomDocx"
 import CustomPDF from "./CustomPDF"
+import Tooltip from "@mui/material/Tooltip"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
 
 const PATH = "completion_archives/basic/"
 
 export default function CompletionManagementPage() {
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const { trigger: getCompletionArchiveApi } = useSWRMutation(
     "/completion-archive",
@@ -73,17 +76,29 @@ export default function CompletionManagementPage() {
 
   const handleReview = async (item: CompletionArchiveListFiles) => {
     setFileUrl(item.key)
-    if (fileUrl == item.key) {
-      const res = await getCompletionArchiveObjectApi({ project_id: PROJECT_ID, path: item.key })
-      const el = document.createElement("a")
-      el.style.display = "none"
-      el.setAttribute("target", "_blank")
-      el.setAttribute("download", "文件")
-      el.href = res.url
-      document.body.appendChild(el)
-      el.click()
-      document.body.removeChild(el)
-    }
+    // if (fileUrl == item.key) {
+    //   const res = await getCompletionArchiveObjectApi({ project_id: PROJECT_ID, path: item.key })
+    //   const el = document.createElement("a")
+    //   el.style.display = "none"
+    //   el.setAttribute("target", "_blank")
+    //   el.setAttribute("download", "文件")
+    //   el.href = res.url
+    //   document.body.appendChild(el)
+    //   el.click()
+    //   document.body.removeChild(el)
+    // }
+  }
+
+  const handleDoubleClick = async (item: CompletionArchiveListFiles) => {
+    const res = await getCompletionArchiveObjectApi({ project_id: PROJECT_ID, path: item.key })
+    const el = document.createElement("a")
+    el.style.display = "none"
+    el.setAttribute("target", "_blank")
+    el.setAttribute("download", "文件")
+    el.href = res.url
+    document.body.appendChild(el)
+    el.click()
+    document.body.removeChild(el)
   }
 
   const getCurrentDirName = () => {
@@ -101,7 +116,8 @@ export default function CompletionManagementPage() {
     const handleClick = (index: number) => {
       console.log()
       const selectPath = pathArr.slice(0, index + 1).join("/")
-      setCurrentPath(selectPath + "/")
+      setCurrentPath(PATH + selectPath + "/")
+      setFileUrl("")
     }
 
     return pathArr.map((str, index) => {
@@ -121,6 +137,10 @@ export default function CompletionManagementPage() {
         </span>
       )
     })
+  }
+
+  if (!permissionTagList.includes(permissionJson.completion_data_member_read)) {
+    return <NoPermission />
   }
 
   return (
@@ -192,7 +212,10 @@ export default function CompletionManagementPage() {
           ) : (
             <ul>
               <li className="border-b h-9 flex items-center gap-x-2 pl-3 sticky top-0 bg-white">
-                文件名称
+                <span>文件名称</span>
+                <Tooltip title="单击文件预览，双击文件下载">
+                  <i className="iconfont icon-wenhao-xianxingyuankuang cursor-pointer"></i>
+                </Tooltip>
               </li>
               {completionArchiveList.files.length > 1 ? (
                 completionArchiveList.files.slice(1).map((item, index) => (
@@ -201,6 +224,9 @@ export default function CompletionManagementPage() {
                     className="border-b h-9 flex items-center gap-x-2 pl-3 cursor-pointer "
                     onClick={() => {
                       handleReview(item)
+                    }}
+                    onDoubleClick={() => {
+                      handleDoubleClick(item)
                     }}>
                     {item.key.endsWith("xlsx") && (
                       <i className="iconfont icon-format-xlsx text-[#039e55] text-xl"></i>
@@ -229,7 +255,7 @@ export default function CompletionManagementPage() {
             </ul>
           )}
         </div>
-        <div className="flex-[2] overflow-y-auto">
+        <div className="flex-[2] overflow-y-auto doc">
           {fileUrl.includes(".docx") && <CustomDocx fileUrl={fileUrl} />}
           {fileUrl.includes(".xlsx") && <CustomXLSX fileUrl={fileUrl} />}
           {fileUrl.includes(".pdf") && <CustomPDF fileUrl={fileUrl} />}

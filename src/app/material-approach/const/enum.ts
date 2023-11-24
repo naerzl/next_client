@@ -9,7 +9,7 @@ export const PROCESSING_RESULT = [
   },
   {
     value: "inspected",
-    label: "已经报验",
+    label: "待试验",
   },
   {
     value: "qualified",

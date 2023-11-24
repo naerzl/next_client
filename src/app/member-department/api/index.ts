@@ -22,7 +22,7 @@ export const reqGetCurrentProject = (url: string): Promise<ReqGetProjectCurrentR
 export const reqGetUserList = (
   url: string,
   { arg }: FetchParams<ReqGetUserListParams>,
-): Promise<{ items: UserListData[] } & UserListDataPager> => fetcher({ url, arg })
+): Promise<{ items: UserListData[]; pager: UserListDataPager }> => fetcher({ url, arg })
 
 // 新增平台用户
 export const reqPostUser = (url: string, { arg }: FetchParams<ReqPostUserParams>) =>

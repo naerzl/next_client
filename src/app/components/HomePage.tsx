@@ -4,14 +4,16 @@ import Dots from "@/app/components/Dots"
 import { generateRandomString } from "@/libs/methods"
 import { lrsOAuth2Instance } from "@/libs/init_oauth"
 import { OAUTH2_ACCESS_TOKEN, OAUTH2_PATH_FROM, STATUS_SUCCESS } from "@/libs/const"
-import { getCookie, setCookie } from "@/libs/cookies"
+import { setCookie } from "@/libs/cookies"
 import { getV1BaseURL } from "@/libs/fetch"
 import { useRouter } from "next/navigation"
+
+const ORIGIN_PATH = process.env.NEXT_PUBLIC_ORIGIN_PATH
 
 const yuanStyle = {
   background: "linear-gradient(145deg, rgba(0,129,255,0.2) 0%, #22CCE2 83%)",
 }
-export default function HomePage(props: any) {
+export default function HomePage() {
   const router = useRouter()
 
   console.log(process.env.NEXT_PUBLIC_API_BASE_URL)
@@ -21,11 +23,14 @@ export default function HomePage(props: any) {
     // 补货到抛出的错误 重新初始化token 重新登录
     const res = await lrsOAuth2Instance.lrsOAuth2Initiate(getV1BaseURL("/initiate"), {
       state,
-      redirect_url: location.origin + "/auth2",
+      redirect_url: ORIGIN_PATH + "/auth2",
     })
     if (res.code === STATUS_SUCCESS) {
       // 存储当前的url地址
-      setCookie(OAUTH2_PATH_FROM as string, location.href)
+      setCookie(
+        OAUTH2_PATH_FROM as string,
+        (process.env.NEXT_PUBLIC_ORIGIN_PATH + "/dashboard/") as string,
+      )
       // 跳转到登录页面的地址
       location.href = res.data.location
     }

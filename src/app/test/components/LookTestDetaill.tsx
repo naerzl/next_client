@@ -1566,8 +1566,10 @@ export default function LookTestDetaill(props: Props) {
 
   return (
     <Drawer open={open} onClose={handleClose} anchor="right">
-      <div className="w-[700px] p-10">
-        <header className="text-3xl text-[#44566C] mb-8">{findTitle(editItem!.class)}</header>
+      <div className="w-[700px] p-10 relative">
+        <header className="text-3xl text-[#44566C] mb-8 sticky top-0 bg-white py-4">
+          {findTitle(editItem!.class)}
+        </header>
         <div>{renderDetail()}</div>
         <div>
           <Button onClick={handleClose}>关闭</Button>

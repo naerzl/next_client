@@ -14,6 +14,8 @@ import Typography from "@mui/material/Typography"
 import { LayoutContext } from "@/components/LayoutContext"
 import DrawerAndTabs from "@/app/ebs-data/components/DrawerAndTabs"
 import useDrawerProcess from "@/app/ebs-data/hooks/useDrawerProcess"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
 
 // 表格每一列的字段
 const columns = [
@@ -53,7 +55,7 @@ export default function EBSDataPage(props: any) {
   // 获取EBS结构数据
   const { trigger: getEBSApi, isMutating } = useSWRMutation("/ebs", reqGetEBS)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const [tableData, setTableData] = React.useState<TypeEBSDataList[]>([])
 
@@ -133,8 +135,13 @@ export default function EBSDataPage(props: any) {
         engineering_listing_id: Number(searchParams.get("baseId")),
       })
 
+      let is_loop_id = 0
       const newArr = res.map((item) => {
-        return { ...item, parent_is_loop: record.is_loop == 1 || record.parent_is_loop }
+        if (record.is_can_select == 1) {
+          if (item.is_loop == 1) is_loop_id = item.id
+        }
+
+        return { ...item, parent_is_loop: record.is_loop == 1 || record.parent_is_loop, is_loop_id }
       })
 
       renderTreeArr(newArr, record.key as string)
@@ -208,6 +215,10 @@ export default function EBSDataPage(props: any) {
     setDialogWithEBSItem(item)
   }
 
+  if (!permissionTagList.includes(permissionJson.structure_member_read)) {
+    return <NoPermission />
+  }
+
   return (
     <EBSDataContext.Provider
       value={{
@@ -230,7 +241,7 @@ export default function EBSDataPage(props: any) {
             构筑物
           </Link>
           <Typography color="text.primary" sx={{ fontSize: "14px" }}>
-            工程结构
+            工程结构:{searchParams.get("name")}
           </Typography>
         </Breadcrumbs>
       </div>

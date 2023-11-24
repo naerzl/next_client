@@ -18,8 +18,10 @@ import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { LayoutContext } from "@/components/LayoutContext"
-import { dateToUTCCustom } from "@/libs/methods"
+import { dateToUTCCustom, displayWithPermission } from "@/libs/methods"
 import Tooltip from "@mui/material/Tooltip"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
 
 const renderTableTd = (arr: any[], type: "name" | "ebs"): string => {
   switch (type) {
@@ -35,7 +37,7 @@ const renderTableTd = (arr: any[], type: "name" | "ebs"): string => {
 export default function UnitProjectPage() {
   const ctx = React.useContext(UnitProjectContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const router = useRouter()
 
@@ -93,6 +95,10 @@ export default function UnitProjectPage() {
     ctx.getProjectSubSection({ name: value, project_id: PROJECT_ID })
   }
 
+  if (!permissionTagList.includes(permissionJson.unit_project_member_read)) {
+    return <NoPermission />
+  }
+
   return (
     <>
       <h3 className="font-bold text-[1.875rem]">单位工程</h3>
@@ -109,6 +115,10 @@ export default function UnitProjectPage() {
       <header className="flex justify-between mb-4">
         <div className="flex gap-2">
           <Button
+            style={displayWithPermission(
+              permissionTagList,
+              permissionJson.unit_project_member_write,
+            )}
             className="bg-railway_blue text-white"
             onClick={() => {
               router.push("/unit-project/detail")
@@ -174,6 +184,10 @@ export default function UnitProjectPage() {
                 <TableCell align="left" className="min-w-[210px]">
                   <div className="flex justify-between">
                     <Button
+                      style={displayWithPermission(
+                        permissionTagList,
+                        permissionJson.unit_project_member_update,
+                      )}
                       variant="outlined"
                       onClick={() => {
                         router.push(`/unit-project/detail?spId=${row.id}`)
@@ -183,6 +197,10 @@ export default function UnitProjectPage() {
                       编辑
                     </Button>
                     <Button
+                      style={displayWithPermission(
+                        permissionTagList,
+                        permissionJson.unit_project_member_delete,
+                      )}
                       variant="outlined"
                       color="error"
                       onClick={() => {

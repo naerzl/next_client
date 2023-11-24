@@ -127,3 +127,7 @@ export function dateToUTCCustom(date: string | Date, type: string) {
   dayjs.extend(utc)
   return dayjs(date).tz("UTC").format(type)
 }
+
+export function displayWithPermission(arr: string[], tag: string) {
+  return arr.includes(tag) ? {} : { display: "none" }
+}

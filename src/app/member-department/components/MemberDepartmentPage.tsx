@@ -3,6 +3,7 @@ import React from "react"
 import {
   Breadcrumbs,
   Button,
+  InputBase,
   ListItemIcon,
   MenuItem,
   Select,
@@ -23,11 +24,13 @@ import {
 import { reqGetRole, reqGetUserList } from "@/app/member-department/api"
 import DialogUser from "@/app/member-department/components/DialogUser"
 import useSWRMutation from "swr/mutation"
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import DialogAuthSetting from "@/app/member-department/components/DialogAuthSetting"
 import useAuthSettingDialog from "@/app/member-department/hooks/useAuthSettingDialog"
 import { LayoutContext } from "@/components/LayoutContext"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
+import { displayWithPermission } from "@/libs/methods"
 
 type STATUS_TYPE = "normal" | "forbidden"
 
@@ -43,28 +46,31 @@ const select_option = [
 ]
 
 export default function memberDepartmentPage() {
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const params = {
-    status: "normal",
+    // status: "normal",
+    page: 1,
+    limit: 10,
     project_id: PROJECT_ID,
   } as ReqGetUserListParams
   // 获取表格数据的参数
   const [apiParams, setApiParams] = React.useState(params)
 
-  // 请求表格用户数据 （SWR）
-  const { data, mutate } = useSWR(
-    () =>
-      apiParams["status"]
-        ? `/user?status=${apiParams["status"]}$role_flag=${apiParams["role_flag"]}&page=${apiParams["page"]}&limit=${apiParams["limit"]}&project_id=${apiParams["project_id"]}`
-        : "/user",
-    (url) => reqGetUserList(url, { arg: apiParams }),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    },
-  )
+  const { trigger: getUserApi } = useSWRMutation("/user", reqGetUserList)
+
+  const [userList, setUserList] = React.useState<UserListData[]>([])
+  const [tablePaper, setTablePaper] = React.useState<UserListDataPager>({} as UserListDataPager)
+
+  const getUserListData = async () => {
+    const res = await getUserApi(apiParams)
+    setUserList(res.items)
+    setTablePaper(res.pager)
+  }
+
+  React.useEffect(() => {
+    getUserListData()
+  }, [apiParams])
 
   const { data: sideBarList, mutate: mutateSideBar } = useSWR(
     () => "/role",
@@ -75,6 +81,10 @@ export default function memberDepartmentPage() {
       revalidateOnReconnect: false,
     },
   )
+
+  const handleSetApiParams = (item: ReqGetUserListParams) => {
+    setApiParams(item)
+  }
 
   const { trigger: getRoleApi } = useSWRMutation("/role", reqGetRole)
 
@@ -92,9 +102,12 @@ export default function memberDepartmentPage() {
     setDialogOpen(false)
   }
 
+  const [searchParams, setSearchParams] = React.useState<ReqGetUserListParams>(
+    {} as ReqGetUserListParams,
+  )
   // 处理头部下拉框 值的改变
-  const handleChange = (event: SelectChangeEvent) => {
-    setApiParams((prevState) => ({ ...prevState, status: event.target.value as STATUS_TYPE }))
+  const handleSearchParamsChange = (value: string | number, type: keyof ReqGetUserListParams) => {
+    setSearchParams((prevState) => ({ ...prevState, [type]: value, page: 1, limit: 100 }))
   }
 
   // 处理编辑开始 （）
@@ -116,6 +129,10 @@ export default function memberDepartmentPage() {
   const changeCurrentRoleFlag = (currentId: string) => {
     setCurrentRoleFlag(currentId)
     setApiParams((prevState) => ({ ...prevState, role_flag: currentId }))
+  }
+
+  const handleSearchButtonClick = () => {
+    setApiParams((prevState) => ({ ...prevState, ...searchParams }))
   }
 
   const getSubClassList = async (id: number, indexStr: string) => {
@@ -179,21 +196,11 @@ export default function memberDepartmentPage() {
   }
 
   const handleDialogUserEndCb = async (item: UserListData, isAdd: boolean) => {
-    const newData = structuredClone(data)
-    console.log(newData)
-    if (isAdd) {
-      newData!.items.push(item)
-    } else {
-      const index = newData!.items.findIndex((el) => item.unionid == el.unionid)
-      newData!.items[index!] = item
-    }
-    await mutate(newData, false)
+    getUserListData()
   }
 
   const handleDelUserListSWR = async (uid: string) => {
-    const newData = structuredClone(data)
-    newData!.items = data!.items!.filter((item) => item.unionid != uid)
-    await mutate(newData, false)
+    getUserListData()
   }
 
   const handleTableCurrentPageNumberChange = (num: number) => {
@@ -202,6 +209,10 @@ export default function memberDepartmentPage() {
 
   const { dialogAuthSettingOpen, handleOpenDialogAuthSetting, handleCloseDialogAuthSetting } =
     useAuthSettingDialog()
+
+  if (!permissionTagList.includes(permissionJson.member_management_member_read)) {
+    return <NoPermission />
+  }
 
   return (
     <>
@@ -226,20 +237,55 @@ export default function memberDepartmentPage() {
           </Breadcrumbs>
         </div>
         <header className="flex justify-between mb-6">
-          <div>
-            <span>账号状态：</span>
+          <div className="flex gap-x-2 items-center">
+            {/*<span>账号状态：</span>*/}
+            {/*<Select value={apiParams.status} onChange={handleChange} size="small" className="w-32">*/}
+            {/*  <MenuItem value="">全部</MenuItem>*/}
+            {/*  {select_option.map((item) => (*/}
+            {/*    <MenuItem value={item.value} key={item.value}>*/}
+            {/*      <ListItemIcon>{item.label}</ListItemIcon>*/}
+            {/*    </MenuItem>*/}
+            {/*  ))}*/}
+            {/*</Select>*/}
+            <InputBase
+              className="w-[12rem] h-10 border  px-2 shadow bg-white"
+              placeholder="请输入姓名"
+              value={searchParams.name}
+              onChange={(event) => {
+                handleSearchParamsChange(event.target.value, "name")
+              }}
+            />
+            <InputBase
+              className="w-[12rem] h-10 border  px-2 shadow bg-white"
+              placeholder="请输入手机号"
+              value={searchParams.phone}
+              onChange={(event) => {
+                handleSearchParamsChange(event.target.value, "phone")
+              }}
+            />
+            <Button
+              className="bg-railway_blue text-white"
+              onClick={() => {
+                handleSearchButtonClick()
+              }}>
+              搜索
+            </Button>
           </div>
           <div>
+            {/*<Button*/}
+            {/*  variant="contained"*/}
+            {/*  startIcon={<SettingsOutlinedIcon />}*/}
+            {/*  className="bg-railway_blue mr-2.5"*/}
+            {/*  onClick={() => {*/}
+            {/*    handleOpenDialogAuthSetting()*/}
+            {/*  }}>*/}
+            {/*  权限设置*/}
+            {/*</Button>*/}
             <Button
-              variant="contained"
-              startIcon={<SettingsOutlinedIcon />}
-              className="bg-railway_blue mr-2.5"
-              onClick={() => {
-                handleOpenDialogAuthSetting()
-              }}>
-              权限设置
-            </Button>
-            <Button
+              style={displayWithPermission(
+                permissionTagList,
+                permissionJson.member_management_member_write,
+              )}
               variant="contained"
               className="bg-railway_blue"
               startIcon={<AddOutlinedIcon />}
@@ -250,16 +296,19 @@ export default function memberDepartmentPage() {
             </Button>
           </div>
         </header>
-        <div className="bg-white border custom-scroll-bar shadow-sm min-h-[570px] flex">
+        <div className="bg-white border custom-scroll-bar shadow-sm min-h-[570px] flex flex-1">
           {/*<aside className="w-60 h-full  mr-3 bg-white ">*/}
           {/*  <SideBar />*/}
           {/*</aside>*/}
           <div className="flex-1 border-t border-l">
             <MemberDepartmentMain
-              tableData={data?.items ? data.items : []}
+              tableData={userList}
               handleRowEditStart={handleRowEditStart}
               handleDelUserListSWR={handleDelUserListSWR}
               handleTableCurrentPageNumberChange={handleTableCurrentPageNumberChange}
+              tablePaper={tablePaper}
+              apiParams={apiParams}
+              handleSetApiParams={handleSetApiParams}
             />
           </div>
         </div>

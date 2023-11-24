@@ -9,6 +9,8 @@ import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import RefreshIcon from "@mui/icons-material/Refresh"
 import { LayoutContext } from "@/components/LayoutContext"
 import useDrawerProcess from "@/app/ebs-data/hooks/useDrawerProcess"
+import { displayWithPermission } from "@/libs/methods"
+import permissionJson from "@/config/permission.json"
 
 interface Props {
   item: TypeEBSDataList
@@ -37,7 +39,7 @@ export type Type_Is_system = "platform" | "system" | "userdefined"
 function TableTr(props: Props) {
   const ctx = React.useContext(EBSDataContext)
 
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const {
     item,
@@ -78,21 +80,28 @@ function TableTr(props: Props) {
     handleEditCustomEBS(item)
   }
 
+  const btn = React.createElement("button")
+
   // 处理单元格删除按钮
   const handleTdCellDelete = () => {
-    showConfirmationDialog("确认删除吗？", async () => {
-      await deleteEBSApi({
-        id: item.id,
-        project_id: PROJECT_ID,
-        engineering_listing_id: Number(searchParams.get("baseId")),
-      })
-      //   删除成功需要刷新父级节点下面的children
-      const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
+    showConfirmationDialog(
+      <div>
+        确认删除<span className="text-railway_error">{item.name}</span>吗？
+      </div>,
+      async () => {
+        await deleteEBSApi({
+          id: item.id,
+          project_id: PROJECT_ID,
+          engineering_listing_id: Number(searchParams.get("baseId")),
+        })
+        //   删除成功需要刷新父级节点下面的children
+        const parentIndexArr = item.key?.split("-").slice(0, item.key?.split("-").length - 1)
 
-      console.log(parentIndexArr)
-      //   获取父级节点的层级 拿到当前的层级删除最后一个 即是父级层级
-      handleGetParentChildren(parentIndexArr as string[])
-    })
+        console.log(parentIndexArr)
+        //   获取父级节点的层级 拿到当前的层级删除最后一个 即是父级层级
+        handleGetParentChildren(parentIndexArr as string[])
+      },
+    )
   }
 
   // 处理单元格添加自定义
@@ -328,10 +337,14 @@ function TableTr(props: Props) {
 
           {
             <div className="text-[#6d6e6f] flex gap-x-2.5 w-[6.25rem] justify-end">
-              {item.is_can_select == 1 && !item.parent_is_loop && (
+              {item.is_can_select == 1 && (
                 <i
                   className="iconfont icon-appstoreadd w-4 aspect-square"
                   title="添加"
+                  style={displayWithPermission(
+                    permissionTagList,
+                    permissionJson.structure_member_write,
+                  )}
                   onClick={() => {
                     handleTdCellAddCustom()
                   }}></i>
@@ -340,6 +353,10 @@ function TableTr(props: Props) {
                 <i
                   className="iconfont icon-jia w-4 aspect-square"
                   title="添加已删除EBS"
+                  style={displayWithPermission(
+                    permissionTagList,
+                    permissionJson.structure_member_write,
+                  )}
                   onClick={() => {
                     handleTdCellAdd()
                   }}></i>
@@ -349,6 +366,10 @@ function TableTr(props: Props) {
                 <i
                   className="iconfont icon-bianji w-4 aspect-square"
                   title="修改"
+                  style={displayWithPermission(
+                    permissionTagList,
+                    permissionJson.structure_member_update,
+                  )}
                   onClick={() => {
                     handleTdCellEdit()
                   }}></i>
@@ -358,6 +379,10 @@ function TableTr(props: Props) {
                 <i
                   className="iconfont icon-shanchu w-4 aspect-square"
                   title="删除"
+                  style={displayWithPermission(
+                    permissionTagList,
+                    permissionJson.structure_member_delete,
+                  )}
                   onClick={() => {
                     handleTdCellDelete()
                   }}></i>

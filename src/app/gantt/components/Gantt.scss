@@ -37,3 +37,7 @@
 .gantt_selected .gantt_task_cell.week_end {
   background-color: #f0e493;
 }
+
+.gantt_tooltip{
+  z-index: 999;
+}

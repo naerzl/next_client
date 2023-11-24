@@ -70,7 +70,7 @@ const columns = [
 ]
 
 const renderTableCellRole = (arr: ProcessRoleData[]) => {
-  return arr.map((item) => item.flag_name).join(",")
+  return arr?.map((item) => item.flag_name).join(",")
 }
 
 export default function DialogProcessForm(props: Props) {
@@ -103,7 +103,7 @@ export default function DialogProcessForm(props: Props) {
       <Dialog
         onClose={handleCloseDialogAddForm}
         open={open}
-        sx={{ zIndex: 1700 }}
+        sx={{ zIndex: 1700, ".MuiPaper-root": { maxWidth: "none" } }}
         className="custom">
         <DialogTitle>工序名称:{item.name}</DialogTitle>
         <div className="px-6">
@@ -132,7 +132,7 @@ export default function DialogProcessForm(props: Props) {
                       </TableCell>
                       <TableCell align="left">{row.name}</TableCell>
                       <TableCell align="left">{renderTableCellRole(row.roles)}</TableCell>
-                      <TableCell align="left">{row.desc}</TableCell>
+                      <TableCell align="left">{row.is_loop == 1 ? "是" : "否"}</TableCell>
                       <TableCell align="left">
                         <div className="flex justify-start"></div>
                       </TableCell>

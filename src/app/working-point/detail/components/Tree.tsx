@@ -21,7 +21,12 @@ const findCheckedId = (arr: TypeEBSDataList[], siID: number): number[] => {
   let checkArr: number[] = []
 
   arr.forEach((item) => {
-    if (item.extend && item.extend.project_si_id == siID && item.is_can_select == 0) {
+    if (
+      item.extend &&
+      item.extend.project_si_id == siID &&
+      item.is_can_select == 0 &&
+      item.name.includes("#墩")
+    ) {
       checkArr.push(item.id)
     }
     if (item.children && item.children.length > 0) {
@@ -41,17 +46,15 @@ export default function Tree(props: Props) {
 
   React.useEffect(() => {
     if (IS_EDIT && treeData) {
+      console.log(treeData)
       const editChecked = findCheckedId(treeData, +searchParams.get("siId")!)
+      console.log(editChecked)
       if (editChecked.length > 0) {
         setChecked(editChecked)
         onChecked?.(editChecked, true)
       }
     }
   }, [searchParams, treeData])
-
-  const handleSelectTree = async (event: React.SyntheticEvent, value: string) => {
-    console.log(event, value)
-  }
 
   const [expand, setExpand] = React.useState<string[]>([])
   const [emptyChildren, setEmptyChildren] = React.useState<String[]>([])
@@ -152,7 +155,10 @@ export default function Tree(props: Props) {
           <li
             className="flex items-center gap-x-2"
             style={
-              item.is_loop == 1
+              item.is_loop == 1 ||
+              (item.name.includes("#墩") &&
+                item.extend &&
+                item.extend.project_sp_id != projectState)
                 ? { display: "none", paddingLeft: str.split("-").length * 16 + "px" }
                 : { paddingLeft: str.split("-").length * 16 + "px" }
             }>
@@ -181,6 +187,7 @@ export default function Tree(props: Props) {
             <div className="flex">
               {IS_EDIT
                 ? item.class == "none" &&
+                  item.name.includes("#墩") &&
                   item.extend &&
                   (!item.extend.project_si_id ||
                     item.extend.project_si_id == +searchParams.get("siId")!) &&
@@ -199,6 +206,7 @@ export default function Tree(props: Props) {
                       }}></i>
                   ))
                 : item.extend &&
+                  item.name.includes("#墩") &&
                   item.extend.project_sp_id == projectState &&
                   !item.extend.project_si_id &&
                   (checked.includes(item.id) ? (
@@ -235,7 +243,7 @@ export default function Tree(props: Props) {
 
             <span>{renderName(item)}</span>
           </li>
-          {ArrToTree(item.children, str)}
+          {!item.name.includes("#墩") && ArrToTree(item.children, str)}
         </ul>
       )
     })

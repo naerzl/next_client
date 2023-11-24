@@ -13,7 +13,7 @@ import TableRow from "@mui/material/TableRow"
 import TableCell from "@mui/material/TableCell"
 import TableBody from "@mui/material/TableBody"
 import TableFooter from "@mui/material/TableFooter"
-import { dateToUTCCustom, dateToYYYYMM } from "@/libs/methods"
+import { dateToUTCCustom, dateToYYYYMM, displayWithPermission } from "@/libs/methods"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import {
@@ -27,47 +27,48 @@ import { useRouter } from "next/navigation"
 import ConstructionIcon from "@mui/icons-material/Construction"
 import { LayoutContext } from "@/components/LayoutContext"
 import dayjs from "dayjs"
+import NoPermission from "@/components/NoPermission"
+import permissionJson from "@/config/permission.json"
 
+// 表格配置列
+const columns = [
+  {
+    title: "创建时间",
+    key: "create_time",
+  },
+  {
+    title: "专业名称",
+    key: "ebs_id",
+  },
+  {
+    title: "工程名称",
+    key: "name",
+  },
+
+  {
+    title: "开始里程",
+    key: "start_mileage",
+  },
+
+  {
+    title: "结束里程",
+    key: "end_mileage",
+  },
+  {
+    title: "是否高速",
+    key: "is_highspeed",
+  },
+  {
+    title: "创建人",
+    key: "create_by",
+  },
+  {
+    title: "操作",
+    key: "action",
+  },
+]
 export default function BasicEngineeringManagementPage() {
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
-
-  // 表格配置列
-  const columns = [
-    {
-      title: "创建时间",
-      key: "create_time",
-    },
-    {
-      title: "专业名称",
-      key: "ebs_id",
-    },
-    {
-      title: "工程名称",
-      key: "name",
-    },
-
-    {
-      title: "开始里程",
-      key: "start_mileage",
-    },
-
-    {
-      title: "结束里程",
-      key: "end_mileage",
-    },
-    {
-      title: "是否高速",
-      key: "is_highspeed",
-    },
-    {
-      title: "创建人",
-      key: "create_by",
-    },
-    {
-      title: "操作",
-      key: "action",
-    },
-  ]
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const {
     drawerOpen,
@@ -124,8 +125,15 @@ export default function BasicEngineeringManagementPage() {
   }
 
   const handleGoToEBS = (engineeringData: EngineeringListing) => {
-    router.push(`/ebs-data?code=${engineeringData.ebs.code}&baseId=${engineeringData.id}`)
+    router.push(
+      `/ebs-data?code=${engineeringData.ebs.code}&baseId=${engineeringData.id}&name=${engineeringData.name}`,
+    )
   }
+
+  if (!permissionTagList.includes(permissionJson.structure_member_read)) {
+    return <NoPermission />
+  }
+
   return (
     <>
       <h3 className="font-bold text-[1.875rem]">构筑物</h3>
@@ -142,6 +150,7 @@ export default function BasicEngineeringManagementPage() {
       <header className="flex justify-between mb-4">
         <div className="flex gap-2">
           <Button
+            style={displayWithPermission(permissionTagList, permissionJson.structure_member_write)}
             className="bg-railway_blue text-white"
             onClick={() => {
               handleAddEngineering()
@@ -194,12 +203,20 @@ export default function BasicEngineeringManagementPage() {
                         onClick={() => {
                           handleEditMaterialApproach(row)
                         }}
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_update,
+                        )}
                         startIcon={<EditOutlinedIcon />}>
                         编辑
                       </Button>
                       <Button
                         variant="outlined"
                         color="error"
+                        style={displayWithPermission(
+                          permissionTagList,
+                          permissionJson.structure_member_delete,
+                        )}
                         onClick={() => {
                           handleDelMaterialApproach(row.id)
                         }}

@@ -51,6 +51,9 @@ export interface TypePostProjectSubSectionParams {
   ebs_ids: string
   engineering_listing_id: number
   id?: number
+  is_edited: 0 | 1
+  parent_level?: number
+  parent_code?: string
 }
 
 export interface TypeGetProjectSubSectionParams {

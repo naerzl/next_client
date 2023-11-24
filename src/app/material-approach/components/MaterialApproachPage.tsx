@@ -8,6 +8,7 @@ import {
   InputBase,
   Select,
   MenuItem,
+  Pagination,
 } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
@@ -23,9 +24,9 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { GetMaterialApproachParams, MaterialApproachData } from "@/app/material-approach/types"
 import { reqDelMaterialApproach, reqGetMaterialApproach } from "@/app/material-approach/api"
 import Loading from "@/components/loading"
-import { PROCESSING_RESULT } from "@/app/material-approach/const/enum"
+import { CLASS_OPTION, PROCESSING_RESULT } from "@/app/material-approach/const/enum"
 import useSWRMutation from "swr/mutation"
-import { dateToYYYYMM } from "@/libs/methods"
+import { dateToYYYYMM, displayWithPermission } from "@/libs/methods"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
 import { OAUTH2_ACCESS_TOKEN } from "@/libs/const"
 import { message } from "antd"
@@ -33,6 +34,11 @@ import { LayoutContext } from "@/components/LayoutContext"
 import IconButton from "@mui/material/IconButton"
 import SearchIcon from "@mui/icons-material/Search"
 import dayjs from "dayjs"
+import permissionJson from "@/config/permission.json"
+import NoPermission from "@/components/NoPermission"
+import { DatePicker } from "antd"
+import locale from "antd/es/date-picker/locale/zh_CN"
+import { BaseApiPager } from "@/types/api"
 
 function renderStatus(label: string): React.ReactNode {
   switch (label) {
@@ -66,8 +72,14 @@ function renderProperty(str: string) {
     return <></>
   }
 }
+
+function renderQuantity(item: MaterialApproachData) {
+  const obj = CLASS_OPTION.find((el) => el.value == item.class)
+
+  return obj ? item.arrivaled_quantity + obj.unit : item.arrivaled_quantity
+}
 export default function MaterialApproachPage() {
-  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   // 表格配置列
   const columns = [
@@ -86,7 +98,11 @@ export default function MaterialApproachPage() {
       dataIndex: "ebs_name",
       key: "ebs_name",
     },
-
+    {
+      title: "物资类型",
+      dataIndex: "class",
+      key: "class",
+    },
     {
       title: "到货数量",
       dataIndex: "start_tally",
@@ -131,7 +147,7 @@ export default function MaterialApproachPage() {
 
   const [swrState, setSWRState] = React.useState<GetMaterialApproachParams>({
     page: 1,
-    limit: 20,
+    limit: 10,
     project_id: PROJECT_ID,
   })
 
@@ -147,47 +163,73 @@ export default function MaterialApproachPage() {
   )
 
   const [materialApproachList, setMaterialApproachList] = React.useState<MaterialApproachData[]>([])
+  const [pager, setPager] = React.useState<BaseApiPager>({} as BaseApiPager)
 
   const getDataList = async () => {
-    const res = await getMaterialApproach(swrState)
-    console.log(res)
+    let params = {} as GetMaterialApproachParams
+    for (let swrStateKey in swrState) {
+      // @ts-ignore
+      if (swrState[swrStateKey] && swrState[swrStateKey] != "null") {
+        // @ts-ignore
+        params[swrStateKey] = swrState[swrStateKey]
+      }
+    }
+
+    const res = await getMaterialApproach(params)
     const newArr = res.items.sort(
       (a, b) => dayjs(b.arrivaled_at).unix() - dayjs(a.arrivaled_at).unix(),
     )
     setMaterialApproachList(newArr)
+    setPager(res.pager)
   }
 
   React.useEffect(() => {
     getDataList()
   }, [])
 
-  const [searchOption, setSearchOption] = React.useState({
-    name: "",
-    manufacturer: "",
-    status: "",
-  })
-
   const handleChangeSearchOption = (value: string, type: keyof GetMaterialApproachParams) => {
-    setSearchOption((prevState) => ({ ...prevState, [type]: value }))
+    setSWRState((prevState) => ({ ...prevState, [type]: value }))
   }
 
   const handleSearchMaterialApproachList = async () => {
-    const params = {
-      page: swrState.page,
-      limit: swrState.limit,
-      project_id: PROJECT_ID,
-    } as GetMaterialApproachParams
-
-    if (searchOption.name) params.name = searchOption.name
-    if (searchOption.manufacturer) params.manufacturer = searchOption.manufacturer
-    if (searchOption.status) params.status = searchOption.status
+    let params = {} as GetMaterialApproachParams
+    for (let swrStateKey in swrState) {
+      // @ts-ignore
+      if (swrState[swrStateKey] && swrState[swrStateKey] != "null") {
+        // @ts-ignore
+        params[swrStateKey] = swrState[swrStateKey]
+      }
+    }
 
     const res = await getMaterialApproach(params)
-    console.log(res)
     const newArr = res.items.sort(
       (a, b) => dayjs(b.arrivaled_at).unix() - dayjs(a.arrivaled_at).unix(),
     )
     setMaterialApproachList(newArr)
+    setPager(res.pager)
+  }
+
+  const handlePaginationChange = async (val: any, type: keyof GetMaterialApproachParams) => {
+    let params = {} as GetMaterialApproachParams
+    for (let swrStateKey in swrState) {
+      // @ts-ignore
+      if (swrState[swrStateKey] && swrState[swrStateKey] != "null") {
+        // @ts-ignore
+        params[swrStateKey] = swrState[swrStateKey]
+      }
+    }
+    if (type == "limit") {
+      params.page = 1
+    }
+    // @ts-ignore
+    params[type] = val
+    setSWRState(params)
+    const res = await getMaterialApproach(params)
+    const newArr = res.items.sort(
+      (a, b) => dayjs(b.arrivaled_at).unix() - dayjs(a.arrivaled_at).unix(),
+    )
+    setMaterialApproachList(newArr)
+    setPager(res.pager)
   }
 
   // 删除物资进场数据
@@ -201,6 +243,10 @@ export default function MaterialApproachPage() {
 
   const handleEditMaterialApproach = (materialData: MaterialApproachData) => {
     handleEditMaterial(materialData)
+  }
+
+  if (!permissionTagList.includes(permissionJson.material_approach_member_read)) {
+    return <NoPermission />
   }
 
   return (
@@ -218,77 +264,75 @@ export default function MaterialApproachPage() {
       </div>
       <header className="flex justify-between mb-4">
         <div className="flex gap-x-2">
-          <InputBase
-            className="w-[12rem] h-10 border  px-2 shadow bg-white"
-            placeholder="请输入物资名称"
-            value={searchOption.name}
-            onChange={(event) => {
-              handleChangeSearchOption(event.target.value, "name")
-            }}
-            // endAdornment={
-            //   <InputAdornment position="end">
-            //     <IconButton
-            //       type="button"
-            //       edge="end"
-            //       sx={{ p: "10px" }}
-            //       aria-label="search"
-            //       disableRipple>
-            //       <SearchIcon />
-            //     </IconButton>
-            //   </InputAdornment>
-            // }
-          />
+          {/*<InputBase*/}
+          {/*  className="w-[12rem] h-10 border  px-2 shadow bg-white"*/}
+          {/*  placeholder="请输入物资名称"*/}
+          {/*  value={swrState.name}*/}
+          {/*  onChange={(event) => {*/}
+          {/*    handleChangeSearchOption(event.target.value, "name")*/}
+          {/*  }}*/}
+          {/*/>*/}
 
-          <InputBase
-            className="w-[12rem] h-10 border  px-2 shadow bg-white"
-            placeholder="请输入生产厂家"
-            value={searchOption.manufacturer}
-            onChange={(event) => {
-              handleChangeSearchOption(event.target.value, "manufacturer")
-            }}
-            // endAdornment={
-            //   <InputAdornment position="end">
-            //     <IconButton
-            //       type="button"
-            //       edge="end"
-            //       sx={{ p: "10px" }}
-            //       aria-label="search"
-            //       disableRipple>
-            //       <SearchIcon />
-            //     </IconButton>
-            //   </InputAdornment>
-            // }
-          />
+          {/*<InputBase*/}
+          {/*  className="w-[12rem] h-10 border  px-2 shadow bg-white"*/}
+          {/*  placeholder="请输入生产厂家"*/}
+          {/*  value={swrState.manufacturer}*/}
+          {/*  onChange={(event) => {*/}
+          {/*    handleChangeSearchOption(event.target.value, "manufacturer")*/}
+          {/*  }}*/}
+          {/*/>*/}
 
-          <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            size="small"
-            placeholder="请选择一个状态"
-            value={searchOption.status}
-            onChange={(event) => {
-              handleChangeSearchOption(event.target.value, "status")
-            }}
-            className="w-[12rem] bg-white shadow">
-            <MenuItem value="" disabled>
-              <i className="text-[#ababab]">请选择一个状态</i>
-            </MenuItem>
-            {PROCESSING_RESULT.map((item: any) => (
-              <MenuItem value={item.value} key={item.value}>
-                {item.label}
-              </MenuItem>
-            ))}
-          </Select>
-          <Button
-            className="bg-railway_blue text-white"
-            onClick={() => {
-              handleSearchMaterialApproachList()
-            }}>
-            搜索
-          </Button>
+          {/*<Select*/}
+          {/*  labelId="demo-simple-select-label"*/}
+          {/*  id="demo-simple-select"*/}
+          {/*  size="small"*/}
+          {/*  placeholder="请选择一个状态"*/}
+          {/*  value={swrState.status}*/}
+          {/*  onChange={(event) => {*/}
+          {/*    handleChangeSearchOption(event.target.value, "status")*/}
+          {/*  }}*/}
+          {/*  className="w-[12rem] bg-white shadow">*/}
+          {/*  <MenuItem value="null" disabled>*/}
+          {/*    <i className="text-[#ababab]">请选择一个状态</i>*/}
+          {/*  </MenuItem>*/}
+          {/*  {PROCESSING_RESULT.map((item: any) => (*/}
+          {/*    <MenuItem value={item.value} key={item.value}>*/}
+          {/*      {item.label}*/}
+          {/*    </MenuItem>*/}
+          {/*  ))}*/}
+          {/*</Select>*/}
+
+          {/*<DatePicker.RangePicker*/}
+          {/*  onChange={(_, dateString) => {*/}
+          {/*    // console.log(dateString)*/}
+          {/*    let str = dateString.join(",")*/}
+          {/*    handleChangeSearchOption(str, "created_between")*/}
+          {/*  }}*/}
+          {/*  locale={locale}*/}
+          {/*/>*/}
+
+          {/*<InputBase*/}
+          {/*  className="w-[12rem] h-10 border  px-2 shadow bg-white"*/}
+          {/*  placeholder="请输入记录员"*/}
+          {/*  value={swrState.creator}*/}
+          {/*  onChange={(event) => {*/}
+          {/*    handleChangeSearchOption(event.target.value, "creator")*/}
+          {/*  }}*/}
+          {/*/>*/}
+          {/*<Button*/}
+          {/*  className="bg-railway_blue text-white"*/}
+          {/*  onClick={() => {*/}
+          {/*    handleSearchMaterialApproachList()*/}
+          {/*  }}>*/}
+          {/*  搜索*/}
+          {/*</Button>*/}
         </div>
         <div>
           {/*<Button*/}
+          {/*  style={displayWithPermission(*/}
+          {/*    permissionTagList,*/}
+          {/*    permissionJson.material_approach_member_write,*/}
+          {/*  )}*/}
           {/*  className="bg-railway_blue text-white"*/}
           {/*  onClick={() => {*/}
           {/*    handleAddMaterial()*/}
@@ -300,57 +344,96 @@ export default function MaterialApproachPage() {
       {isMutating ? (
         <Loading />
       ) : (
-        <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-y-auto">
-          <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
-            <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
-              <TableRow>
-                {columns.map((col, index) => (
-                  <TableCell key={index} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
-                    {col.title}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {materialApproachList.map((row) => (
-                <TableRow sx={{ "&:last-child td, &:last-child th": { border: 0 } }} key={row.id}>
-                  <TableCell component="th" scope="row">
-                    {dateToYYYYMM(row.arrivaled_at)}
-                  </TableCell>
-                  <TableCell align="left">{row.dictionary?.name}</TableCell>
-                  <TableCell align="left">
-                    {renderProperty(row.dictionary?.properties ?? "[]")}
-                  </TableCell>
-                  <TableCell align="left">{row.arrivaled_quantity}</TableCell>
-                  <TableCell align="left">{row.manufacturer}</TableCell>
-                  <TableCell align="left">{renderStatus(row.status)}</TableCell>
-                  <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
-                  <TableCell align="left">{row.creator}</TableCell>
-                  {/*<TableCell align="left">*/}
-                  {/*  <div className="flex justify-between">*/}
-                  {/*    <Button*/}
-                  {/*      variant="outlined"*/}
-                  {/*      onClick={() => {*/}
-                  {/*        handleEditMaterialApproach(row)*/}
-                  {/*      }}*/}
-                  {/*      startIcon={<EditOutlinedIcon />}>*/}
-                  {/*      编辑*/}
-                  {/*    </Button>*/}
-                  {/*    <Button*/}
-                  {/*      variant="outlined"*/}
-                  {/*      color="error"*/}
-                  {/*      onClick={() => {*/}
-                  {/*        handleDelMaterialApproach(row.id)*/}
-                  {/*      }}*/}
-                  {/*      startIcon={<DeleteOutlineIcon />}>*/}
-                  {/*      删除*/}
-                  {/*    </Button>*/}
-                  {/*  </div>*/}
-                  {/*</TableCell>*/}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="flex-1">
+          <div className="h-full relative border">
+            <div
+              className="bg-white  custom-scroll-bar shadow-sm overflow-y-auto "
+              style={{ height: "calc(100% - 32px)" }}>
+              <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
+                <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
+                  <TableRow>
+                    {columns.map((col, index) => (
+                      <TableCell key={index} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
+                        {col.title}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {materialApproachList.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell component="th" scope="row">
+                        {dateToYYYYMM(row.arrivaled_at)}
+                      </TableCell>
+                      <TableCell align="left">{row.dictionary?.name}</TableCell>
+                      <TableCell align="left">
+                        {renderProperty(row.dictionary?.properties ?? "[]")}
+                      </TableCell>
+                      <TableCell align="left">
+                        {CLASS_OPTION.find((item) => item.value == row.class)?.label}
+                      </TableCell>
+                      <TableCell align="left">{renderQuantity(row)}</TableCell>
+                      <TableCell align="left">{row.manufacturer}</TableCell>
+                      <TableCell align="left">{renderStatus(row.status)}</TableCell>
+                      <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
+                      <TableCell align="left">{row.creator}</TableCell>
+                      {/*<TableCell align="left">*/}
+                      {/*  <div className="flex justify-between">*/}
+                      {/*    <Button*/}
+                      {/*      style={displayWithPermission(*/}
+                      {/*        permissionTagList,*/}
+                      {/*        permissionJson.material_approach_member_update,*/}
+                      {/*      )}*/}
+                      {/*      variant="outlined"*/}
+                      {/*      onClick={() => {*/}
+                      {/*        handleEditMaterialApproach(row)*/}
+                      {/*      }}*/}
+                      {/*      startIcon={<EditOutlinedIcon />}>*/}
+                      {/*      编辑*/}
+                      {/*    </Button>*/}
+                      {/*    <Button*/}
+                      {/*      style={displayWithPermission(*/}
+                      {/*        permissionTagList,*/}
+                      {/*        permissionJson.material_approach_member_delete,*/}
+                      {/*      )}*/}
+                      {/*      variant="outlined"*/}
+                      {/*      color="error"*/}
+                      {/*      onClick={() => {*/}
+                      {/*        handleDelMaterialApproach(row.id)*/}
+                      {/*      }}*/}
+                      {/*      startIcon={<DeleteOutlineIcon />}>*/}
+                      {/*      删除*/}
+                      {/*    </Button>*/}
+                      {/*  </div>*/}
+                      {/*</TableCell>*/}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="absolute bottom-0 w-full flex justify-center items-center gap-x-2 bg-white border-t">
+              <span>共{pager.count}条</span>
+              <select
+                value={swrState.limit}
+                className="border"
+                onChange={(event) => {
+                  handlePaginationChange(event.target.value, "limit")
+                }}>
+                <option value={10}>10条/页</option>
+                <option value={20}>20条/页</option>
+                <option value={50}>50条/页</option>
+              </select>
+              <Pagination
+                page={swrState.page}
+                count={pager.count ? Math.ceil(pager.count / pager.limit) : 1}
+                variant="outlined"
+                shape="rounded"
+                onChange={(event, page) => {
+                  handlePaginationChange(page, "page")
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
 
