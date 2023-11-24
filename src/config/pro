@@ -1,0 +1,17 @@
+# 普通请求地址
+NEXT_PUBLIC_API_BASE_URL="http://local-client-api.zctc.cc/v1"
+
+# auth2 请求地址
+NEXT_PUBLIC_AUTH2_URL="http://local-client-api.zctc.cc/v1"
+
+# 认证中心地址
+NEXT_PUBLIC_AUTH_PATH="http://local-oauth.zctc.cc"
+
+# cookie 的domain
+NEXT_PUBLIC_COOKIE_DOMAIN="zctc.cc"
+
+# 当前地址
+NEXT_PUBLIC_ORIGIN_PATH="http://local-client.zctc.cc"
+
+# 官网地址
+NEXT_PUBLIC_WEB_PATH="http://local-home.zctc.cc"

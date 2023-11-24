@@ -1,0 +1,95 @@
+export const Pile_Type_Enum = [
+  {
+    value: "FRICTION",
+    label: "摩擦桩",
+  },
+  {
+    value: "SOCKETED",
+    label: "嵌岩桩",
+  },
+]
+
+export const Drill_Mode_Enum = [
+  {
+    value: "MANUAL_HOLE_DIGGING",
+    label: "人工挖孔",
+  },
+  {
+    value: "DRY_CONSTRUCTION_DRILL",
+    label: "干作业钻孔",
+  },
+  {
+    value: "MUD_PROTECTION_DRILL",
+    label: "泥浆护壁钻孔",
+  },
+  {
+    value: "CASING_PIPE_WALL_DRILL",
+    label: "套管护壁钻孔",
+  },
+  {
+    value: "IMMERSED_TUBE_DRILL",
+    label: "沉管",
+  },
+]
+
+export const Connect_method_enum = [
+  {
+    value: "MACHINE",
+    label: "机械连接",
+  },
+  {
+    value: "WELD",
+    label: "焊接连接",
+  },
+  {
+    value: "LASHED",
+    label: "绑扎搭接",
+  },
+]
+
+export const PILE_CODE = [
+  "030101010102010701",
+  "030101010102010702",
+  "030101010101010701",
+  "030101010101010702",
+  "030102010101010701",
+  "030102010101010702",
+  "03010301010101010701",
+  "03010301010101010702",
+  "03020101010101010701",
+  "03020101010101010702",
+  "03020102010101010701",
+  "03020102010101010702",
+  "03020103010101010701",
+  "03020103010101010702",
+  "03020201010101010701",
+  "03020201010101010702",
+  "03020201020101010701",
+  "03020201020101010702",
+  "030301010101010701",
+  "030301010101010702",
+  "030301020101010701",
+  "030301020101010702",
+  "030302010101010701",
+  "030302010101010702",
+  "030302020101010701",
+  "030302020101010702",
+  "030401010101010701",
+  "030401010101010702",
+  "030401020101010701",
+  "030401020101010702",
+  "030402010101010701",
+  "030402010101010702",
+  "030402020101010701",
+  "030402020101010702",
+]
+
+export const BASIC_DICTIONARY_CLASS_ID = 13
+
+export const REBAR_DICTIONARY_CLASS_ID = 11
+
+export const CONCRETE_DICTIONARY_CLASS_ID = 14
+
+export const ACOUSTIC_TUBE_DICTIONARY_CLASS_ID = 10
+
+export const SPACER_DICTIONARY_CLASS_ID = 13
