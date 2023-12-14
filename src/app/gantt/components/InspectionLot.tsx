@@ -8,7 +8,7 @@ import GanttContext from "@/app/gantt/context/ganttContext"
 import { FILE_NAME } from "@/app/gantt/const"
 import { message } from "antd"
 
-const INDEX_ARR = [1, 7, 4, 10]
+const INDEX_ARR = [1, 7, 4, 10, 11, 12, 13]
 export default function InspectionLot() {
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
