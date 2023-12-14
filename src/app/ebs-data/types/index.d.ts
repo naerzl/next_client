@@ -62,6 +62,8 @@ export interface TypeEBSDataList {
   engineering_listing_id?: number
   parent_is_loop?: boolean
   is_loop_id: number
+  is_corporeal: number
+  tags: string
 }
 
 /*创建EBS结构 请求参数*/
@@ -280,15 +282,25 @@ export interface ProcessFormListData {
   roles: ProcessRoleData[]
 }
 
+export interface ProjectProcess {
+  id: number
+  is_disabled: number
+  percentage: number
+  process_id: number
+  stage: number
+}
+
 export interface ProcessListData {
   id: number
   name: string
   desc: string
   created_at: string
   updated_at: string
-  percentage: number
+  percentage: number | null
   stage: number
   roles: ProcessRoleData[]
+  projectProcess: ProjectProcess | null
+  forms: any[]
 }
 
 export interface AcousticTubeListData {
@@ -319,4 +331,11 @@ export interface TypePutAcousticTubeParams {
   dictionary_id: number
   quantity: number
   length?: number
+}
+
+export interface TypePutProjectProcessParams {
+  project_id: number
+  engineering_listing_id: number
+  ebs_id: number
+  processes: string
 }

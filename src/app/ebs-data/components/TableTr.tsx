@@ -277,13 +277,11 @@ function TableTr(props: Props) {
   }
 
   const handleCLickCell = () => {
-    if (item.name.includes("#桩") && item.is_can_select != 1 && item.is_loop != 1) {
-      handleOpenDrawerProcess(item)
+    handleOpenDrawerProcess(item)
 
-      ctx.changeEBSItem(
-        Object.assign(item, { engineering_listing_id: Number(searchParams.get("baseId")) }),
-      )
-    }
+    ctx.changeEBSItem(
+      Object.assign(item, { engineering_listing_id: Number(searchParams.get("baseId")) }),
+    )
   }
 
   const renderName = (): string => {
@@ -299,6 +297,13 @@ function TableTr(props: Props) {
         <td
           className="border p-4 overflow-hidden cursor-pointer col-span-3 flex justify-between"
           title={renderName()}
+          onClick={() => {
+            if (props.children) {
+              handleClickClose()
+            } else {
+              handleClick()
+            }
+          }}
           onContextMenu={(event) => {
             handleClickContextMenu(event)
           }}>
@@ -306,37 +311,32 @@ function TableTr(props: Props) {
             className="flex-1 flex flex-shrink-0  overflow-hidden"
             style={{ textIndent: `${(item.level - 1) * 10}px` }}>
             {emptyChildren.includes(item.id) ? (
-              <i
-                className="iconfont  icon-shuaxin  text-[14px] font-bold mr-1.5"
-                onClick={() => {
-                  handleClick()
-                }}></i>
+              <i className="iconfont  icon-shuaxin  text-[14px] font-bold mr-1.5"></i>
             ) : props.children ? (
-              <i
-                className="iconfont  icon-xiangxiajiantou  text-[14px] font-bold mr-1.5"
-                onClick={() => {
-                  handleClickClose()
-                }}></i>
+              <i className="iconfont  icon-xiangxiajiantou  text-[14px] font-bold mr-1.5"></i>
             ) : (
-              <i
-                className="iconfont icon-xiangyoujiantou text-[14px] font-bold mr-1.5"
-                onClick={() => {
-                  handleClick()
-                }}></i>
+              <i className="iconfont icon-xiangyoujiantou text-[14px] font-bold mr-1.5"></i>
             )}
 
             <span
               className="overflow-hidden text-ellipsis whitespace-nowrap w-full"
               style={{ textIndent: 0 }}
-              onClick={() => {
-                handleCLickCell()
-              }}>
+              onClick={() => {}}>
               {renderName()}
             </span>
           </div>
 
           {
             <div className="text-[#6d6e6f] flex gap-x-2.5 w-[6.25rem] justify-end">
+              {item.is_corporeal == 1 && (
+                <i
+                  className="iconfont icon-shigong w-4 aspect-square"
+                  title="工序"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleCLickCell()
+                  }}></i>
+              )}
               {item.is_can_select == 1 && (
                 <i
                   className="iconfont icon-appstoreadd w-4 aspect-square"
@@ -345,7 +345,8 @@ function TableTr(props: Props) {
                     permissionTagList,
                     permissionJson.structure_member_write,
                   )}
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation()
                     handleTdCellAddCustom()
                   }}></i>
               )}
@@ -357,7 +358,8 @@ function TableTr(props: Props) {
                     permissionTagList,
                     permissionJson.structure_member_write,
                   )}
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation()
                     handleTdCellAdd()
                   }}></i>
               )}
@@ -370,7 +372,8 @@ function TableTr(props: Props) {
                     permissionTagList,
                     permissionJson.structure_member_update,
                   )}
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation()
                     handleTdCellEdit()
                   }}></i>
               )}
@@ -383,7 +386,8 @@ function TableTr(props: Props) {
                     permissionTagList,
                     permissionJson.structure_member_delete,
                   )}
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation()
                     handleTdCellDelete()
                   }}></i>
               )}

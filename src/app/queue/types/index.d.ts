@@ -6,4 +6,5 @@ export interface QueueList {
   class: string
   created_at: string
   updated_at: string
+  file_names: string | null
 }

@@ -15,3 +15,8 @@ export interface PermissionData {
   permission: string
   action: string
 }
+
+export interface EnumType {
+  label: string
+  value: string
+}

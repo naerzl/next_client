@@ -1,5 +1,5 @@
 import React from "react"
-import { ProcessListData } from "../types"
+import { ProcessListData } from "@/app/ebs-data/types"
 
 export default function useDialogProcessForm() {
   const [dialogAddFormOpen, setDialogAddFormOpen] = React.useState(false)

@@ -35,6 +35,8 @@ import { SnackbarProvider } from "notistack"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const blackList = ["/", "/auth2/"]
+
 export default function RootLayout({ children }: { children: React.ReactElement }) {
   const pathname = usePathname()
 
@@ -115,6 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactElement 
   const [permission, setPermission] = React.useState<PermissionData[]>([])
 
   const [permissionTagList, setPermissionTagList] = React.useState<string[]>([])
+
   const getProjectList = async () => {
     try {
       setWaitWithProjectAndPermission(true)
@@ -122,7 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactElement 
       // 当前项目数据为null 跳转
       if (!res) {
         message.error("您未在项目内，5秒内将为您跳转至官网！")
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
           setTimeout(() => {
             resolve(0)
           }, 5000)
@@ -140,7 +143,7 @@ export default function RootLayout({ children }: { children: React.ReactElement 
       // 如果所有的子项目为空
       if (!noNullItem) {
         message.error("您未在项目内，5秒内将为您跳转至官网！")
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
           setTimeout(() => {
             resolve(0)
           }, 5000)
@@ -157,7 +160,7 @@ export default function RootLayout({ children }: { children: React.ReactElement 
           _projectId = noNullItem.project.id
         } else {
           message.error("您未在项目内，5秒内将为您跳转至官网！")
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve) => {
             setTimeout(() => {
               resolve(0)
             }, 5000)
@@ -195,13 +198,17 @@ export default function RootLayout({ children }: { children: React.ReactElement 
     }
   }, [pathname])
 
-  // React.useEffect(() => {
-  //   window.onresize = () => {
-  //     let res = window.innerWidth / (1920 / 16)
-  //     document.documentElement.style.fontSize = `${res}px`
-  //     console.log(window.innerWidth)
-  //   }
-  // }, [window.innerWidth])
+  const changePermissionTagList = (arr: string[]) => {
+    setPermissionTagList(arr)
+  }
+
+  const changeProjectList = (arr: ReqGetProjectCurrentResponse[]) => {
+    setProjectList(arr)
+  }
+
+  const changePermissionList = (arr: PermissionData[]) => {
+    setPermission(arr)
+  }
 
   if (
     (!accessToken && segment && segment != "auth2") ||
@@ -232,6 +239,9 @@ export default function RootLayout({ children }: { children: React.ReactElement 
             permissionList: permission,
             permissionTagList: permissionTagList,
             getProjectList,
+            changePermissionTagList,
+            changeProjectList,
+            changePermissionList,
           }}>
           <SnackbarProvider maxSnack={5}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -239,24 +249,24 @@ export default function RootLayout({ children }: { children: React.ReactElement 
                 <SWRConfig value={{ provider: () => new Map() }}>
                   <ConfirmProvider>
                     <ConfirmationDialogProvider>
-                      {pathname != "/" ? (
-                        <>
-                          <aside className="h-full w-60  min-w-[15rem]">
-                            {/*<Side items={menus} onClick={whenMenuClick} />*/}
-                            <Side />
-                          </aside>
-                          <div className="flex-1 flex  flex-col bg-[#f8fafb] min-w-[50.625rem]">
-                            <Nav />
+                      {!blackList.includes(pathname) && (
+                        <div className="flex flex-col w-full">
+                          <Nav />
+                          <div className="flex-1 flex  bg-[#f8fafb] w-full overflow-hidden">
+                            <aside className="h-full w-60  min-w-[15rem]">
+                              <Side />
+                            </aside>
                             <main
-                              className="px-7.5 py-12  flex flex-col flex-1"
-                              style={{ height: "calc(100vh - 64px)" }}>
+                              className="px-7.5 py-12  flex flex-col flex-1 overflow-hidden"
+                              // style={{ height: "calc(100vh - 64px)" }}
+                            >
                               {children}
                             </main>
                           </div>
-                        </>
-                      ) : (
-                        <>{children}</>
+                        </div>
                       )}
+                      {pathname == "/" && <>{children}</>}
+                      {pathname == "/auth2/" && <>{children}</>}
                     </ConfirmationDialogProvider>
                   </ConfirmProvider>
                 </SWRConfig>

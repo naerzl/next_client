@@ -24,6 +24,7 @@ import {
   TypePostAcousticTubeParams,
   TypePutAcousticTubeParams,
   TypeApiPutEBSNameParams,
+  TypePutProjectProcessParams,
 } from "@/app/ebs-data/types"
 
 type SubpartClass = "field" | "subpart" | "subitem" | "examination"
@@ -89,7 +90,15 @@ export const reqGetProcessForm = (
 // 获取基础工序
 export const reqGetProcess = (
   url: string,
-  { arg }: FetchParams<{ ebs_id: number; name?: string }>,
+  {
+    arg,
+  }: FetchParams<{
+    tags?: string
+    name?: string
+    project_id: number
+    engineering_listing_id: number
+    ebs_id: number
+  }>,
 ): Promise<ProcessListData[]> => fetcher({ url, arg })
 
 // 获取基础数据（桥涵-钻孔桩）
@@ -255,3 +264,8 @@ export const reqGetDictionary = (
   url: string,
   { arg }: FetchParams<{ name?: string; class_id?: number }>,
 ): Promise<DictionaryData[]> => fetcher({ url, arg })
+
+export const reqPutProjectProcess = (
+  url: string,
+  { arg }: FetchParams<TypePutProjectProcessParams>,
+) => fetcher({ url, arg, method: "put" })

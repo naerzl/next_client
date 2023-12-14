@@ -3,6 +3,7 @@ import { getCookie } from "./cookies"
 import dayjs from "dayjs"
 import tz from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
+import { EnumType } from "@/types/api"
 
 // oauth1.0发送statement
 
@@ -130,4 +131,12 @@ export function dateToUTCCustom(date: string | Date, type: string) {
 
 export function displayWithPermission(arr: string[], tag: string) {
   return arr.includes(tag) ? {} : { display: "none" }
+}
+
+export function intoDoubleFixed3(val: string | number) {
+  return +Number(val).toFixed(3)
+}
+
+export function findEnumValueWithLabel(arr: EnumType[], value: string) {
+  return arr.find((item) => item.value == value)
 }

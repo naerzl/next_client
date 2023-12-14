@@ -2,15 +2,12 @@
 import React from "react"
 import { reqGetUserCurrent } from "@/app/dashboard/api"
 import { UserCurrentData } from "@/app/dashboard/index"
-import { useRouter, useParams } from "next/navigation"
+import { LayoutContext } from "@/components/LayoutContext"
 
 function Page() {
   const [userInfo, setUserInfo] = React.useState<UserCurrentData>({} as UserCurrentData)
+  const layoutCtx = React.useContext(LayoutContext)
 
-  const router = useRouter()
-  const params = useParams()
-
-  console.log(router, params)
   const getUserCurrent = async () => {
     const res = await reqGetUserCurrent("/user/current")
     setUserInfo(res)

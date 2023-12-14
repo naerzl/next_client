@@ -16,8 +16,6 @@ const yuanStyle = {
 export default function HomePage() {
   const router = useRouter()
 
-  console.log(process.env.NEXT_PUBLIC_API_BASE_URL)
-
   const handleGoToLogin = async () => {
     const state = generateRandomString()
     // 补货到抛出的错误 重新初始化token 重新登录

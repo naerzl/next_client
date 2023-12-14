@@ -134,7 +134,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
   React.useEffect(() => {
     gantt.plugins({
       fullscreen: true, // 全屏
-      tooltip: true, // 鼠标已入提示信息
+      // tooltip: true, // 鼠标已入提示信息
       marker: true, // 垂直标记
       // quick_info: true, // 单击快捷查看信息
       keyboard_navigation: true, // 键盘导航
@@ -337,8 +337,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
           const task = gantt.getTask(taskId)
           const someOne = PILE_CODE.some((code) => task.code != code && task.code.startsWith(code))
 
-          console.log(someOne, task)
-          if (task.class == "none" && task.name.includes("#桩")) {
+          if (task.is_corporeal == 1) {
             const topLevelParentId = getGanttTopLevelParentId(taskId)
             const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
             const newTask: any = structuredClone(task)
