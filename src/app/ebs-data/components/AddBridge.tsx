@@ -29,6 +29,7 @@ import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { DictionaryData } from "@/app/gantt/types"
 import { message } from "antd"
+import { intoDoubleFixed3 } from "@/libs/methods"
 
 type Props = {
   open: boolean
@@ -117,12 +118,12 @@ export default function AddBridge(props: Props) {
       ebs_id: ctx.ebsItem.id,
       engineering_listing_id: ctx.ebsItem.engineering_listing_id,
       project_id: PROJECT_ID,
-      pile_diameter: values.pile_diameter * 1000,
-      pile_length: values.pile_length * 1000,
-      pile_top_elevation: values.pile_top_elevation * 1000,
-      rebar_cage_length: values.rebar_cage_length * 1000,
+      pile_diameter: intoDoubleFixed3(values.pile_diameter) * 1000,
+      pile_length: intoDoubleFixed3(values.pile_length) * 1000,
+      pile_top_elevation: intoDoubleFixed3(values.pile_top_elevation) * 1000,
+      rebar_cage_length: intoDoubleFixed3(values.rebar_cage_length) * 1000,
       liner_dictionary_id: dictionarySelect,
-      liner_number: values.liner_number * 1000,
+      liner_number: intoDoubleFixed3(values.liner_number) * 1000,
       pile_type: pileTypeState,
       drill_mode: drillModeState,
     } as TypeApiPostBridgeBoredBasicDataParams & { id: number }

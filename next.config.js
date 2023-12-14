@@ -3,17 +3,17 @@ const nextConfig = {
   output: "export",
   trailingSlash: true,
   webpack: (config) => {
-    // config.module.rules.push({
-    //   test: /\.(pdf|svg|docx|doc)$/,
-    //   use: [
-    //     {
-    //       loader: "file-loader",
-    //       options: {
-    //         name: "pdfs/[name].[ext]",
-    //       },
-    //     },
-    //   ],
-    // })
+    config.module.rules.push({
+      test: /\.(pdf|svg|docx|doc|xlsx)$/,
+      use: [
+        {
+          loader: "file-loader",
+          options: {
+            name: "pdfs/[name].[ext]",
+          },
+        },
+      ],
+    })
 
     config.resolve.alias.canvas = false
     config.resolve.extensionAlias = {

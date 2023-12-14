@@ -125,25 +125,24 @@ const menuList: { [key: string]: any } = {
       },
     },
   },
-  // queue: {
-  //   title: "导出管理",
-  //   icon: <OutboxIcon />,
-  //   open: false,
+  queue: {
+    title: "导出管理",
+    icon: <OutboxIcon />,
+    open: false,
 
-  // permissionTag: "export_management_module_read",
-  //   children: {
-  //     queue: {
-  //       path: "/queue",
-  //       title: "导出任务",
-  // permissionTag: "export_task_member_read",
-  //       open: false,
-  //     },
-  //   },
-  // },
+    permissionTag: "export_management_module_read",
+    children: {
+      queue: {
+        path: "/queue",
+        title: "导出任务",
+        permissionTag: "export_task_member_read",
+        open: false,
+      },
+    },
+  },
 }
 
 function side() {
-  const logo = "/static/images/logo.png"
   const pathName = usePathname()
 
   const router = useRouter()
@@ -191,63 +190,12 @@ function side() {
     router.push(path)
   }
 
-  const [currentProject, setCurrentProject] = React.useState<number>(ctxLayout.projectId)
-
-  const handleChangeCurrentProject = async (event: SelectChangeEvent<number>) => {
-    const obj = ctxLayout.projectList.find((item) => {
-      if (item.project) {
-        return item.project?.id == event.target.value
-      } else {
-        return false
-      }
-    })
-    if (obj) {
-      ctxLayout.changeProject(obj.project?.id)
-      setCurrentProject(obj.project?.id)
-      await reqPutProjectChangeDefault("/project/change-default", {
-        arg: { project_id: obj.project?.id },
-      })
-      router.push("/dashboard")
-      ctxLayout.getProjectList()
-    }
-  }
-
   return (
     <>
       <List
-        sx={{ width: "100%", maxWidth: "15rem", bgcolor: "background.paper" }}
+        sx={{ width: "100%", maxWidth: "15rem", bgcolor: "background.paper", height: "100%" }}
         component="nav"
-        aria-labelledby="nested-list-subheader"
-        subheader={
-          <ListSubheader
-            component="div"
-            id="nested-list-subheader"
-            className="h-16 flex items-center gap-1 max-h-16"
-            sx={{ fontSize: "24px" }}>
-            <img src={logo} alt="" className="w-10 h-10" />
-            <div className="text-base font-bold text-railway_303 flex-1">
-              <Select
-                fullWidth
-                className="no-border-select"
-                size="small"
-                labelId="demo-simple-select-helper-label"
-                id="no-border-select"
-                value={currentProject}
-                onChange={(event) => {
-                  handleChangeCurrentProject(event)
-                }}>
-                <MenuItem disabled>
-                  <i className="text-[#ababab]">请选择一个项目</i>
-                </MenuItem>
-                {ctxLayout.projectList.map((item, index) => (
-                  <MenuItem key={index} value={item.project?.id}>
-                    {item.project?.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </div>
-          </ListSubheader>
-        }>
+        aria-labelledby="nested-list-subheader">
         {Object.keys(menuList).map((key, index) => (
           <div key={index} style={displayWithPermission(menuList[key].permissionTag)}>
             <ListItemButton

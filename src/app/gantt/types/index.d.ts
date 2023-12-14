@@ -1,3 +1,5 @@
+import { reqGetExportInspectionLot } from "@/app/gantt/api"
+
 export interface ProcessRoleData {
   flag: string
   flag_name: string
@@ -191,4 +193,19 @@ export interface DictionaryData {
   id: number
   name: string
   properties: string
+}
+
+export interface TypePostProcessDataCollectionGenerate {
+  project_id: number
+  project_sp_id: number
+  project_si_id: number
+  generate_at?: string
+}
+
+export interface GetExportInspectionLotParams {
+  project_id: number
+  ebs_id: number
+  project_si_id: number
+  project_sp_id: number
+  class: number
 }

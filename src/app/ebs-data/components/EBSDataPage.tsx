@@ -246,7 +246,7 @@ export default function EBSDataPage(props: any) {
         </Breadcrumbs>
       </div>
       <div className="bg-white border flex-1 overflow-y-auto">
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto custom-scroll-bar">
           <table className="w-full h-full border-spacing-0 border-separate overflow-y-auto">
             <thead className="bg-[#fafafa] h-12 text-sm sticky top-0">
               <tr className="grid grid-cols-6 h-full">

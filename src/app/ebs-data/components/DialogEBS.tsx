@@ -179,7 +179,7 @@ export default function DialogEBS(props: Props) {
           return new Promise((resolve) => {
             window.setTimeout(() => {
               resolve(num)
-            }, 2000)
+            }, 1000)
           })
         }
 
