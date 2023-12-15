@@ -13,6 +13,9 @@ import { dateToUTCCustom, findEnumValueWithLabel } from "@/libs/methods"
 import { STATUS_ENUM } from "@/app/queue/const"
 import { QueueList } from "@/app/queue/types"
 
+let STR =
+  "http://zctc-docs.oss-cn-beijing.aliyuncs.com/export%2F27%2F31%2F32795%2FInspection_lot_template%2F02%28%E8%AE%B0%29%E9%92%A2%E6%8A%A4%E7%AD%92%E5%AE%89%E8%A3%85%E8%B4%A8%E9%87%8F%E6%A3%80%E9%AA%8C%E8%AE%B0%E5%BD%95%E8%A1%A8.xlsx?Expires=601702620668&OSSAccessKeyId=LTAI5tRrhJmZ5QDdkcYk9h5C&Signature=D6FJ3uVEnknfP%2BSK3A2Gm416SV0%3D"
+
 const columns = [
   // {
   //   title: "单位工程名称",
@@ -119,13 +122,20 @@ export default function QueuePage() {
     }
 
     const a = document.createElement("a")
-
-    fileUrlArr.forEach((item) => {
-      // a.href = item
-      // a.target = "_blank"
-      // a.click()
-      window.open(item)
-    })
+    for (const index in fileUrlArr) {
+      let r = await fetch(STR)
+      let blob = await r.blob()
+      let localUrl = URL.createObjectURL(blob)
+      console.log(localUrl)
+      const fr = new FileReader()
+      fr.readAsDataURL(blob)
+      fr.onload = (e) => {
+        console.log(e.target?.result)
+        a.href = e.target!.result as string
+        a.click()
+      }
+      // console.log(localUrl)
+    }
 
     a.remove()
   }
