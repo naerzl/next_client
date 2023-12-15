@@ -121,9 +121,10 @@ export default function QueuePage() {
     const a = document.createElement("a")
 
     fileUrlArr.forEach((item) => {
-      a.href = item
-      a.target = "_blank"
-      a.click()
+      // a.href = item
+      // a.target = "_blank"
+      // a.click()
+      window.open(item)
     })
 
     a.remove()
