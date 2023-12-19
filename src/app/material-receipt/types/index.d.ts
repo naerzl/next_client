@@ -27,6 +27,9 @@ export interface MaterialReceiveData {
   updated_at: string
   dictionary: DictionaryData
   project_material_id: number
+  ebs_desc: any
+  machine: null | any
+  material: null | any
 }
 
 export interface PostMaterialReceiveParams {

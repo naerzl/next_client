@@ -63,7 +63,7 @@ export default function DrawerAndTabs(props: Props) {
             sx={{ borderRight: 1, borderColor: "divider" }}>
             <Tab label="工序列表" {...a11yProps(0)} />
             <Tab label="设计数据" {...a11yProps(1)} />
-            <Tab label="检验批" {...a11yProps(2)} />
+            {item.subpart_class == "examination" && <Tab label="检验批" {...a11yProps(2)} />}
           </Tabs>
 
           <TabPanel value={value} index={0}>
@@ -72,9 +72,11 @@ export default function DrawerAndTabs(props: Props) {
           <TabPanel value={value} index={1}>
             <DesignData />
           </TabPanel>
-          <TabPanel value={value} index={2}>
-            <InspectionLot />
-          </TabPanel>
+          {item.subpart_class == "examination" && (
+            <TabPanel value={value} index={2}>
+              <InspectionLot />
+            </TabPanel>
+          )}
         </Box>
       </Drawer>
     </>

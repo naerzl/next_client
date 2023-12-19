@@ -76,7 +76,9 @@ function renderProperty(str: string) {
 function renderQuantity(item: MaterialApproachData) {
   const obj = CLASS_OPTION.find((el) => el.value == item.class)
 
-  return obj ? item.arrivaled_quantity + obj.unit : item.arrivaled_quantity
+  return obj
+    ? (item.arrivaled_quantity / 1000).toFixed(3) + obj.unit
+    : (item.arrivaled_quantity / 1000).toFixed(3)
 }
 export default function MaterialApproachPage() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
@@ -344,7 +346,7 @@ export default function MaterialApproachPage() {
       {isMutating ? (
         <Loading />
       ) : (
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           <div className="h-full relative border">
             <div
               className="bg-white  custom-scroll-bar shadow-sm overflow-y-auto "

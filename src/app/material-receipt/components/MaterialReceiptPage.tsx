@@ -9,7 +9,7 @@ import TableHead from "@mui/material/TableHead"
 import TableRow from "@mui/material/TableRow"
 import TableCell from "@mui/material/TableCell"
 import TableBody from "@mui/material/TableBody"
-import { dateToYYYYMM, displayWithPermission } from "@/libs/methods"
+import { dateToYYYYMM, displayWithPermission, intoDoubleFixed3 } from "@/libs/methods"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import { useAddOrEditMaterial } from "@/app/material-receipt/hooks/useAddOrEditMaterial"
@@ -25,6 +25,16 @@ import NoPermission from "@/components/NoPermission"
 import { BaseApiPager } from "@/types/api"
 import { GetMaterialProcessingParams } from "@/app/material-processing/types"
 import dayjs from "dayjs"
+
+function findTestName(row: MaterialReceiveData) {
+  if (row.machine) {
+    return row.machine.name
+  }
+
+  if (row.material) {
+    return row.material.dictionary ? row.material.dictionary.name : ""
+  }
+}
 
 function renderProperty(str: string) {
   const arr: { key: string; value: string }[] | any = JSON.parse(str || "{}")
@@ -61,7 +71,11 @@ const columns = [
     dataIndex: "ebs_name",
     key: "ebs_name",
   },
-
+  {
+    title: "领用部位",
+    dataIndex: "ebs_desc",
+    key: "ebs_desc",
+  },
   {
     title: "领用数量",
     dataIndex: "start_tally",
@@ -199,7 +213,7 @@ export default function MaterialReceiptPage() {
         <Loading />
       ) : (
         <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-y-auto pb-8 relative">
-          <div className="h-full overflow-y-auto">
+          <div className="h-full custom-scroll-bar overflow-y-auto">
             <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
               <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
                 <TableRow>
@@ -216,9 +230,14 @@ export default function MaterialReceiptPage() {
                     <TableCell component="th" scope="row">
                       {dateToYYYYMM(row.received_at)}
                     </TableCell>
-                    <TableCell align="left">{row.dictionary.name}</TableCell>
-                    <TableCell align="left">{renderProperty(row.dictionary.properties)}</TableCell>
-                    <TableCell align="left">{row.received_quantity}</TableCell>
+                    <TableCell align="left">{findTestName(row)}</TableCell>
+                    <TableCell align="left">
+                      {renderProperty(row.dictionary ? row.dictionary.properties : "")}
+                    </TableCell>
+                    <TableCell align="left">{row.ebs_desc}</TableCell>
+                    <TableCell align="left">
+                      {row.received_quantity && intoDoubleFixed3(row.received_quantity / 1000)}
+                    </TableCell>
                     <TableCell align="left">{row.construction_team_full_name}</TableCell>
                     <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                     <TableCell align="left">{row.creator}</TableCell>

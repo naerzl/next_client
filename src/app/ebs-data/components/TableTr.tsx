@@ -11,6 +11,7 @@ import { LayoutContext } from "@/components/LayoutContext"
 import useDrawerProcess from "@/app/ebs-data/hooks/useDrawerProcess"
 import { displayWithPermission } from "@/libs/methods"
 import permissionJson from "@/config/permission.json"
+import useDebounce from "@/hooks/useDebounce"
 
 interface Props {
   item: TypeEBSDataList
@@ -253,8 +254,19 @@ function TableTr(props: Props) {
 
   const [emptyChildren, setEmptyChildren] = React.useState<number[]>([])
 
+  const [isRotating, setIsRotating] = React.useState(false)
+
+  const { run: handleRotaing } = useDebounce(() => {
+    setIsRotating(true)
+    setTimeout(() => {
+      setIsRotating(false)
+    }, 1000)
+  })
+
   // 点击 字体图片展开功能
   const handleClick = async () => {
+    handleRotaing()
+
     const res = await ctx.handleExpandChange(true, item)
     // console.log(res)
     if (res <= 0) {
@@ -309,13 +321,16 @@ function TableTr(props: Props) {
           }}>
           <div
             className="flex-1 flex flex-shrink-0  overflow-hidden"
-            style={{ textIndent: `${(item.level - 1) * 10}px` }}>
+            style={{ paddingLeft: `${(item.level - 1) * 10}px` }}>
             {emptyChildren.includes(item.id) ? (
-              <i className="iconfont  icon-shuaxin  text-[14px] font-bold mr-1.5"></i>
+              <i
+                className={`iconfont  icon-shuaxin  text-[14px] font-bold mr-1.5 h-full aspect-square flex items-center justify-center transition-all ${
+                  isRotating ? "rotating" : ""
+                }`}></i>
             ) : props.children ? (
-              <i className="iconfont  icon-xiangxiajiantou  text-[14px] font-bold mr-1.5"></i>
+              <i className="iconfont  icon-xiangxiajiantou  text-[14px] font-bold mr-1.5 h-full aspect-squar flex items-center justify-center"></i>
             ) : (
-              <i className="iconfont icon-xiangyoujiantou text-[14px] font-bold mr-1.5"></i>
+              <i className="iconfont icon-xiangyoujiantou text-[14px] font-bold mr-1.5 h-full aspect-squar flex items-center justify-center"></i>
             )}
 
             <span

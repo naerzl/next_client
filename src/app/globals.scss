@@ -155,3 +155,14 @@ input.custom[type="number"]{
     }
   }
 }
+
+.rotating {
+  display: inline-block;
+  animation-name: rotating;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+}
+@keyframes rotating {
+  from { transform: rotate(0deg);}
+  to { transform: rotate(360deg);}
+}

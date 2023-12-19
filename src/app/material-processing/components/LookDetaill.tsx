@@ -7,6 +7,7 @@ import {
   CLASS_OPTION,
   LINK_METHOD_OPTION,
   subConcreteDictionaryClass,
+  subRebarDictionaryClass,
 } from "@/app/material-processing/const"
 import useSWRMutation from "swr/mutation"
 import { reqGetDictionary } from "@/app/gantt/api"
@@ -72,21 +73,21 @@ export default function LookDetail(props: Props) {
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">物料类型:</b>
                   <span className="font-bold text-railway_303">
-                    {subConcreteDictionaryClass.find((el) => el.value == item.class)?.label}
+                    {subRebarDictionaryClass.find((el) => el.value == item.class)?.label}
                   </span>
                 </li>
 
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">物料名称:</b>
                   <span className="font-bold text-railway_303">
-                    {dictionary.find((el) => el.id == item.dictionary_id)?.name}
+                    {dictionary.find((el) => el.id == item.dictionary_id)?.name.split(" ")[0]}
                   </span>
                 </li>
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">数量:</b>
                   <span className="font-bold text-railway_303">
                     {item.quantity}
-                    {subConcreteDictionaryClass.find((el) => el.value == item.class)?.unit}
+                    {subRebarDictionaryClass.find((el) => el.value == item.class)?.unit}
                   </span>
                 </li>
               </ul>

@@ -13,6 +13,7 @@ export interface GetMaterialResponse {
 
 export interface MaterialProcessingData {
   id: number
+  name: number
   project_id: number
   dictionary_id: number
   recorder: string

@@ -72,10 +72,6 @@ const concreteFormHeaders = [
 
 const acousticTubeDataFormHeaders = [
   {
-    title: "编号",
-    key: "rebar_no",
-  },
-  {
     title: "声测管型号",
     key: "dictionaryName",
   },
@@ -90,6 +86,10 @@ const acousticTubeDataFormHeaders = [
 ]
 
 const rebarFormHeaders = [
+  {
+    title: "钢筋编号",
+    key: "rebar_no",
+  },
   {
     title: "钢筋型号",
     key: "dictionaryName",

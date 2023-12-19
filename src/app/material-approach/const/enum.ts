@@ -55,7 +55,7 @@ export const CLASS_OPTION = [
     unit: "吨",
   },
   {
-    value: "sheng",
+    value: "acoustic_tube",
     label: "声测管",
     id: 15,
     unit: "米",
@@ -68,7 +68,7 @@ export const CLASS_OPTION = [
   },
 
   {
-    value: "kuai",
+    value: "spacer",
     label: "垫块",
     id: 17,
     unit: "个",
