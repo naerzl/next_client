@@ -1,32 +1,6 @@
 import { DICTIONARY_CLASS_ID } from "@/libs/const"
 
-export const CLASS_OPTION = [
-  {
-    value: "rebar",
-    label: "钢筋笼",
-  },
-  {
-    value: "concrete",
-    label: "混凝土",
-  },
-]
-
-export const LINK_METHOD_OPTION = [
-  {
-    value: "MACHINE",
-    label: "机械连接",
-  },
-  {
-    value: "WELD",
-    label: "绑扎搭接",
-  },
-  {
-    value: "LASHED",
-    label: "焊接连接",
-  },
-]
-
-export const subRebarDictionaryClass = [
+export const DictionaryClassOption = [
   {
     value: "acoustic_tube",
     label: "声测管",
@@ -45,9 +19,6 @@ export const subRebarDictionaryClass = [
     id: DICTIONARY_CLASS_ID.spacer,
     unit: "个",
   },
-]
-
-export const subConcreteDictionaryClass = [
   {
     value: "cement",
     label: "水泥",
@@ -82,6 +53,12 @@ export const subConcreteDictionaryClass = [
     value: "additive",
     label: "外加剂",
     id: DICTIONARY_CLASS_ID.additive,
+    unit: "吨",
+  },
+  {
+    value: "concrete",
+    label: "混凝土",
+    id: DICTIONARY_CLASS_ID.concrete,
     unit: "吨",
   },
 ]

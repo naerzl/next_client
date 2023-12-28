@@ -25,6 +25,10 @@ import NoPermission from "@/components/NoPermission"
 import { BaseApiPager } from "@/types/api"
 import { GetMaterialProcessingParams } from "@/app/material-processing/types"
 import dayjs from "dayjs"
+import MaterialExport from "@/app/components/MaterialExport"
+import ExportForm from "@/app/material-receipt/components/ExportForm"
+import useMaterialExport from "@/hooks/useMaterialExport"
+import ExitToAppIcon from "@mui/icons-material/ExitToApp"
 
 function findTestName(row: MaterialReceiveData) {
   if (row.machine) {
@@ -97,10 +101,10 @@ const columns = [
     dataIndex: "parent_name",
     key: "parent_name",
   },
-  // {
-  //   title: "操作",
-  //   key: "action",
-  // },
+  {
+    title: "操作",
+    key: "action",
+  },
 ]
 export default function MaterialReceiptPage() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
@@ -176,6 +180,8 @@ export default function MaterialReceiptPage() {
     setPager(res.pager)
   }
 
+  const { exportOpen, handleExportOpen, handleExportClose } = useMaterialExport()
+
   if (!permissionTagList.includes(permissionJson.receipt_of_materials_member_read)) {
     return <NoPermission />
   }
@@ -241,35 +247,43 @@ export default function MaterialReceiptPage() {
                     <TableCell align="left">{row.construction_team_full_name}</TableCell>
                     <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                     <TableCell align="left">{row.creator}</TableCell>
-                    {/*<TableCell align="left">*/}
-                    {/*  <div className="flex justify-between">*/}
-                    {/*    <Button*/}
-                    {/*      style={displayWithPermission(*/}
-                    {/*        permissionTagList,*/}
-                    {/*        permissionJson.receipt_of_materials_member_update,*/}
-                    {/*      )}*/}
-                    {/*      variant="outlined"*/}
-                    {/*      onClick={() => {*/}
-                    {/*        handleEditMaterialApproach(row)*/}
-                    {/*      }}*/}
-                    {/*      startIcon={<EditOutlinedIcon />}>*/}
-                    {/*      编辑*/}
-                    {/*    </Button>*/}
-                    {/*    <Button*/}
-                    {/*      style={displayWithPermission(*/}
-                    {/*        permissionTagList,*/}
-                    {/*        permissionJson.receipt_of_materials_member_delete,*/}
-                    {/*      )}*/}
-                    {/*      variant="outlined"*/}
-                    {/*      color="error"*/}
-                    {/*      onClick={() => {*/}
-                    {/*        handleDelMaterialApproach(row.id)*/}
-                    {/*      }}*/}
-                    {/*      startIcon={<DeleteOutlineIcon />}>*/}
-                    {/*      删除*/}
-                    {/*    </Button>*/}
-                    {/*  </div>*/}
-                    {/*</TableCell>*/}
+                    <TableCell align="left">
+                      <div className="flex justify-center gap-x-2">
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            handleExportOpen()
+                          }}
+                          startIcon={<ExitToAppIcon />}>
+                          导出
+                        </Button>
+                        {/*<Button*/}
+                        {/*  style={displayWithPermission(*/}
+                        {/*    permissionTagList,*/}
+                        {/*    permissionJson.receipt_of_materials_member_update,*/}
+                        {/*  )}*/}
+                        {/*  variant="outlined"*/}
+                        {/*  onClick={() => {*/}
+                        {/*    handleEditMaterialApproach(row)*/}
+                        {/*  }}*/}
+                        {/*  startIcon={<EditOutlinedIcon />}>*/}
+                        {/*  编辑*/}
+                        {/*</Button>*/}
+                        {/*<Button*/}
+                        {/*  style={displayWithPermission(*/}
+                        {/*    permissionTagList,*/}
+                        {/*    permissionJson.receipt_of_materials_member_delete,*/}
+                        {/*  )}*/}
+                        {/*  variant="outlined"*/}
+                        {/*  color="error"*/}
+                        {/*  onClick={() => {*/}
+                        {/*    handleDelMaterialApproach(row.id)*/}
+                        {/*  }}*/}
+                        {/*  startIcon={<DeleteOutlineIcon />}>*/}
+                        {/*  删除*/}
+                        {/*</Button>*/}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -306,6 +320,12 @@ export default function MaterialReceiptPage() {
           editItem={editItem}
           getDataList={getDataList}
         />
+      )}
+
+      {exportOpen && (
+        <MaterialExport open={exportOpen} handleClose={handleExportClose}>
+          <ExportForm handleClose={handleExportClose} />
+        </MaterialExport>
       )}
     </>
   )

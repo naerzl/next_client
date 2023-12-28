@@ -166,3 +166,11 @@ input.custom[type="number"]{
   from { transform: rotate(0deg);}
   to { transform: rotate(360deg);}
 }
+
+.MuiTooltip-popper{
+  z-index: 1701 !important;
+}
+
+.ant-picker-dropdown{
+  z-index: 1703 !important;
+}

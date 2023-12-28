@@ -26,6 +26,8 @@ type Props = {
   getSubGanttList: (item: any) => void
   // eslint-disable-next-line no-unused-vars
   handleOpenDrawerProcess: (item: any) => void
+  // eslint-disable-next-line no-unused-vars
+  handleOpenDialogWithMaterialDemand: (item: any) => void
 }
 
 function getGanttTopLevelParentId(id: string | number): string | number {
@@ -110,7 +112,14 @@ function updateChildrenTask(task: Task, duration?: number) {
 }
 
 const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
-  const { zoom, onDataUpdated, editGanttItem, getSubGanttList, handleOpenDrawerProcess } = props
+  const {
+    zoom,
+    onDataUpdated,
+    editGanttItem,
+    getSubGanttList,
+    handleOpenDrawerProcess,
+    handleOpenDialogWithMaterialDemand,
+  } = props
 
   const { trigger: getProcessApi } = useSWRMutation("/process", reqGetProcess)
 
@@ -332,6 +341,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     })
 
     gantt.attachEvent("onTaskClick", function (taskId, e) {
+      console.log(taskId, e.target.className)
       if (/^\d/.test(taskId)) {
         if (e.target.className.includes("gantt_task_content")) {
           const task = gantt.getTask(taskId)
@@ -351,6 +361,10 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
 
         if (e.target.className.includes("iconfont")) {
         }
+      }
+      if (String(taskId).startsWith("w") && !e.target.className.includes("gantt_tree_icon")) {
+        const task = gantt.getTask(taskId)
+        handleOpenDialogWithMaterialDemand(task)
       }
       return true
     })

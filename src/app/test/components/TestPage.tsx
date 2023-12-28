@@ -26,6 +26,10 @@ import locale from "antd/es/date-picker/locale/zh_CN"
 import { BaseApiPager } from "@/types/api"
 import { GetMaterialReceiveParams } from "@/app/material-receipt/types"
 import dayjs from "dayjs"
+import MaterialExport from "@/app/components/MaterialExport"
+import ExportForm from "@/app/test/components/ExportForm"
+import useMaterialExport from "@/hooks/useMaterialExport"
+import ExitToAppIcon from "@mui/icons-material/ExitToApp"
 
 const columns = [
   {
@@ -143,6 +147,8 @@ export default function TestPage() {
     setPager(res.pager)
   }
 
+  const { exportOpen, handleExportOpen, handleExportClose } = useMaterialExport()
+
   if (!permissionTagList.includes(permissionJson.test_list_member_read)) {
     return <NoPermission />
   }
@@ -200,7 +206,7 @@ export default function TestPage() {
             <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
               <TableRow>
                 {columns.map((col, index) => (
-                  <TableCell key={index} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
+                  <TableCell key={index} sx={{ width: col.key == "action" ? "280px" : "auto" }}>
                     {col.title}
                   </TableCell>
                 ))}
@@ -219,7 +225,15 @@ export default function TestPage() {
                   <TableCell align="left">{row.tested_by}</TableCell>
                   <TableCell align="left">{row.creator}</TableCell>
                   <TableCell align="left">
-                    <div className="flex justify-between">
+                    <div className="flex justify-center gap-x-2">
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          handleExportOpen()
+                        }}
+                        startIcon={<ExitToAppIcon />}>
+                        导出
+                      </Button>
                       <Button
                         variant="outlined"
                         style={displayWithPermission(
@@ -238,13 +252,6 @@ export default function TestPage() {
               ))}
             </TableBody>
           </Table>
-          {drawerOpen && (
-            <LookTestDetaill
-              editItem={detailItem}
-              open={drawerOpen}
-              close={handleCloseLookTestDetailDrawer}
-            />
-          )}
         </div>
         <div className="absolute bottom-0 w-full flex justify-center items-center gap-x-2 bg-white">
           <span>共{pager.count}条</span>
@@ -269,6 +276,20 @@ export default function TestPage() {
           />
         </div>
       </div>
+
+      {drawerOpen && (
+        <LookTestDetaill
+          editItem={detailItem}
+          open={drawerOpen}
+          close={handleCloseLookTestDetailDrawer}
+        />
+      )}
+
+      {exportOpen && (
+        <MaterialExport open={exportOpen} handleClose={handleExportClose}>
+          <ExportForm handleClose={handleExportClose} />
+        </MaterialExport>
+      )}
     </>
   )
 }

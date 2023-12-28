@@ -18,5 +18,5 @@ export interface PermissionData {
 
 export interface EnumType {
   label: string
-  value: string
+  value: string | number
 }

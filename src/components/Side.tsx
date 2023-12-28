@@ -56,6 +56,11 @@ const menuList: { [key: string]: any } = {
     icon: <HiveOutlinedIcon />,
     permissionTag: "material_management_module_read",
     children: {
+      "material-demand": {
+        path: "/material-demand",
+        title: "物资需求计划",
+        permissionTag: "material_approach_member_read",
+      },
       "material-approach": {
         path: "/material-approach",
         title: "物资进场",
@@ -69,6 +74,11 @@ const menuList: { [key: string]: any } = {
       "material-receipt": {
         path: "/material-receipt",
         title: "物资领用",
+        permissionTag: "receipt_of_materials_member_read",
+      },
+      proportion: {
+        path: "/proportion",
+        title: "配合比设置",
         permissionTag: "receipt_of_materials_member_read",
       },
     },

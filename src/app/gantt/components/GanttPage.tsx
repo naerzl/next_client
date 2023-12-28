@@ -27,6 +27,8 @@ import NoPermission from "@/components/NoPermission"
 import * as fastq from "fastq"
 import type { queueAsPromised } from "fastq"
 import { VariantType, useSnackbar } from "notistack"
+import DialogMaterialDemand from "@/app/gantt/components/DialogMaterialDemand"
+import useDialogMaterialDemand from "@/app/gantt/hooks/useDialogMaterialDemand"
 
 // type GanttItemType = {
 //   id: number | string
@@ -441,6 +443,13 @@ const GanttPage = () => {
     setEBSItem(item)
   }
 
+  const {
+    dialogOpen,
+    handleOpenDialogWithMaterialDemand,
+    handleCloseDialogWithMaterialDemand,
+    item: dialogItem,
+  } = useDialogMaterialDemand()
+
   if (!permissionTagList.includes(permissionJson.construction_plan_member_read)) {
     return <NoPermission />
   }
@@ -539,6 +548,7 @@ const GanttPage = () => {
             editGanttItem={handleEditGanttItem}
             getSubGanttList={getSubGanttList}
             handleOpenDrawerProcess={handleOpenDrawerProcess}
+            handleOpenDialogWithMaterialDemand={handleOpenDialogWithMaterialDemand}
           />
         </div>
         {drawerProcessOpen && (
@@ -546,6 +556,13 @@ const GanttPage = () => {
             item={item}
             open={drawerProcessOpen}
             handleCloseDrawerProcess={handleCloseDrawerProcess}
+          />
+        )}
+        {dialogOpen && (
+          <DialogMaterialDemand
+            open={dialogOpen}
+            item={dialogItem}
+            handleCloseDialogAddForm={handleCloseDialogWithMaterialDemand}
           />
         )}
       </div>
