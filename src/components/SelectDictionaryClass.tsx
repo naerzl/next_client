@@ -6,6 +6,8 @@ import type { DefaultOptionType } from "antd/es/select"
 import { subConcreteDictionaryClass } from "@/app/material-processing/const"
 import { reqGetDictionaryClass } from "@/app/api"
 import useSWRMutation from "swr/mutation"
+import {DictionaryClassData} from "@/types/api";
+import {DICTIONARY_CLASS_ID} from "@/libs/const";
 
 type Props = {
   // eslint-disable-next-line no-unused-vars
@@ -13,6 +15,15 @@ type Props = {
   placeholder?: string
   disabled?: boolean
 }
+
+
+type option = {
+  pId: number,
+  id: number,
+  value: string,
+  title: string,
+}
+
 function SelectDictionaryClass(props: Props) {
   let { onChange: onChangeWithProps, placeholder, disabled } = props
 
@@ -26,6 +37,29 @@ function SelectDictionaryClass(props: Props) {
 
   const getDictionaryClassList = async () => {
     const res = await getDictionaryClassApi({ is_all: 1 })
+    setTreeData(filterByParentId([DICTIONARY_CLASS_ID.concrete], res))
+  }
+
+  const filterByParentId = (parentIds: number[] = [], items: DictionaryClassData[], currentParentId = 0): option[] => {
+    return items.reduce((previousValue:option[], currentValue: DictionaryClassData):option[] => {
+      let currentParentIds: number[] = []
+      if(currentValue != undefined && parentIds.indexOf(currentValue.parent_id!) > -1) {
+        previousValue.push({
+          pId: currentParentId,
+          id: currentValue.id,
+          value: currentValue.id.toString(),
+          title: currentValue.name,
+        })
+        currentParentIds.push(currentValue.id)
+      }
+
+      let filterExtends: option[] = []
+      if (currentParentIds.length > 0) {
+        filterExtends = filterByParentId(currentParentIds, items, ++currentParentId)
+      }
+
+      return [...previousValue, ...filterExtends]
+    }, [])
   }
 
   React.useEffect(() => {

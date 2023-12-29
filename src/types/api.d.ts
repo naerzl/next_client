@@ -24,6 +24,7 @@ export interface EnumType {
 // 数据字典类型数据
 export interface DictionaryClassData {
   id: number
+  parent_id?: number
   name: string
   serial: number
   icon: string
