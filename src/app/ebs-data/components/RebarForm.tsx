@@ -156,7 +156,7 @@ export default function RebarForm() {
               tableList.map((row: RebarData, index: number) => (
                 <TableRow key={row.id}>
                   <TableCell align="left">{row.rebar_no}</TableCell>
-                  <TableCell align="left">{renderProperty(row.dictionary.properties)}</TableCell>
+                  <TableCell align="left">{renderProperty(row.dictionary?.properties)}</TableCell>
                   <TableCell align="left">{row.unit_weight / 1000}</TableCell>
                   <TableCell align="left">{row.number / 1000}</TableCell>
                   <TableCell align="left">{row.unit_length / 1000}</TableCell>

@@ -8,6 +8,7 @@ import {
   PostMaterialDemandItemParams,
   PostMaterialDemandParams,
   PutMaterialDemandItemParams,
+  PutMaterialDemandParams,
 } from "@/app/material-demand/types"
 
 export const reqGetMaterialDemand = (
@@ -19,6 +20,9 @@ export const reqPostMaterialDemand = (
   url: string,
   { arg }: FetchParams<PostMaterialDemandParams>,
 ) => fetcher({ url, arg, method: "post" })
+
+export const reqPutMaterialDemand = (url: string, { arg }: FetchParams<PutMaterialDemandParams>) =>
+  fetcher({ url, arg, method: "put" })
 
 export const reqDelMaterialDemand = (
   url: string,

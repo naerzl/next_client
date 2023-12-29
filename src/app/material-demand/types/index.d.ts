@@ -24,7 +24,7 @@ export interface MaterialDemandListData {
   engineering_listing_id: number
   project_sp_id: number
   project_si_id: number
-  status: string
+  status: "waiting" | "confirmed"
   creator: string
   creator_unionid: string
   created_at: string
@@ -47,14 +47,21 @@ export interface PostMaterialDemandParams {
   action: 2 | 1
 }
 
+export interface PutMaterialDemandParams {
+  id: number
+  project_id: number
+  status: "waiting" | "confirmed"
+}
+
 export interface PostMaterialDemandItemParams {
+  class: "user" | "system"
   requirement_id: number
   parent_id?: number
   ebs_id: number
   ebs_desc?: string
   proportion_id?: number
   dictionary_id: number
-  loss_coefficient?: string
+  loss_coefficient?: number | string
   actual_usage: number
   planned_usage_at: string
 }
@@ -65,7 +72,8 @@ export interface PutMaterialDemandItemParams {
   proportion_id?: number
   loss_coefficient?: string
   actual_usage: number
-  planned_usage_at?: string
+  planned_usage_at: string
+  dictionary_id?: number
 }
 
 export interface GetMaterialDemandItemParams {
@@ -79,6 +87,18 @@ export interface GetMaterialDemandItemParams {
 export interface GetMaterialDemandItemResponse {
   pager: BaseApiPager
   items: MaterialDemandItemListData[]
+}
+
+export interface DictionaryWithDemand {
+  id: number
+  properties: string
+  name: string
+  dictionary_class_id: number
+  dictionary_class: {
+    id: number
+    name: string
+    parent_id: number
+  }
 }
 
 export interface MaterialDemandItemListData {
@@ -115,12 +135,7 @@ export interface MaterialDemandItemListData {
     }
     usages: Usages[]
   }
-  dictionary: {
-    id: number
-    properties: string
-    name: string
-    dictionary_class_id: number
-  }
+  dictionary: DictionaryWithDemand
   proportions?: MaterialListType[]
   isEdit?: boolean
   isConcreteEdit?: boolean

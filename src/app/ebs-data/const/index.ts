@@ -1,3 +1,5 @@
+import { DICTIONARY_CLASS_ID } from "@/libs/const"
+
 export const Pile_Type_Enum = [
   {
     value: "FRICTION",
@@ -84,12 +86,12 @@ export const PILE_CODE = [
   "030402020101010702",
 ]
 
-export const BASIC_DICTIONARY_CLASS_ID = 13
+export const BASIC_DICTIONARY_CLASS_ID = DICTIONARY_CLASS_ID.spacer
 
-export const REBAR_DICTIONARY_CLASS_ID = 11
+export const REBAR_DICTIONARY_CLASS_ID = DICTIONARY_CLASS_ID.rebar
 
-export const CONCRETE_DICTIONARY_CLASS_ID = 14
+export const CONCRETE_DICTIONARY_CLASS_ID = DICTIONARY_CLASS_ID.concrete
 
-export const ACOUSTIC_TUBE_DICTIONARY_CLASS_ID = 10
+export const ACOUSTIC_TUBE_DICTIONARY_CLASS_ID = DICTIONARY_CLASS_ID.acoustic_tube
 
-export const SPACER_DICTIONARY_CLASS_ID = 13
+export const SPACER_DICTIONARY_CLASS_ID = DICTIONARY_CLASS_ID.spacer

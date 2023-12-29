@@ -16,7 +16,6 @@ import TableRow from "@mui/material/TableRow"
 import TableCell from "@mui/material/TableCell"
 import TableBody from "@mui/material/TableBody"
 import { ProcessListData } from "@/app/gantt/types"
-import ganttContext from "@/app/gantt/context/ganttContext"
 import { LayoutContext } from "@/components/LayoutContext"
 import { BaseApiPager } from "@/types/api"
 import Tooltip from "@mui/material/Tooltip"
@@ -28,11 +27,14 @@ import {
   reqGetMaterialDemandItem,
   reqPostMaterialDemand,
   reqPostMaterialDemandItem,
+  reqPutMaterialDemand,
   reqPutMaterialDemandItem,
 } from "@/app/material-demand/api"
 import {
   DemandEditState,
+  DictionaryWithDemand,
   MaterialDemandItemListData,
+  PostMaterialDemandItemParams,
   PutMaterialDemandItemParams,
 } from "@/app/material-demand/types"
 import { CONCRETE_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
@@ -49,6 +51,9 @@ import locale from "antd/es/date-picker/locale/zh_CN"
 import "dayjs/locale/zh-cn"
 import dayjs, { Dayjs } from "dayjs"
 import { DICTIONARY_CLASS_ID } from "@/libs/const"
+import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import { useRouter } from "next/navigation"
+import SelectDictionaryClass from "@/components/SelectDictionaryClass"
 
 type Props = {
   open: boolean
@@ -70,10 +75,11 @@ export type MaterialListType = {
   quantity?: number
   dictionaryName: string
   dictionaryList: DictionaryData[]
+  dictionary: any
   isSubEdit?: boolean
   isSelect?: boolean
+  class: "user" | "system"
   editState: SubEditState
-  isDel?: boolean
   loss_coefficient: string
   actual_usage: number // 需求用量
   planned_usage_at: string
@@ -124,6 +130,8 @@ const columns = [
   },
 ]
 
+type Status = "waiting" | "confirmed"
+
 function findConstUnitWithDictionary(str: string) {
   const arr: { key: string; value: string }[] | any = JSON.parse(str || "[]")
 
@@ -131,8 +139,40 @@ function findConstUnitWithDictionary(str: string) {
   return obj ? obj.value : ""
 }
 
+// 找混凝土对应的配合比
+function findProportionSelf(
+  arr: MaterialProportionListData[],
+  row: MaterialDemandItemListData,
+  engId: number,
+) {
+  return arr.filter((el) => {
+    let flag1 = el.dictionary_id == row.dictionary_id
+    let flag2: boolean
+    if (el.usages) {
+      flag2 = !!el.usages.find(
+        (use) => use.ebs_id == row.ebs_id && use.engineeringListing_id == engId,
+      )
+    } else {
+      flag2 = false
+    }
+
+    return flag1 && flag2
+  })
+}
+
+// 处理系统字典的属性（找WZ）
+function filterDictionaryWithWZAttribute(str: string) {
+  let attributes = JSON.parse(str ?? "[]")
+  if (attributes instanceof Array) {
+    return attributes.filter((item) => item.value.startsWith("WZ"))
+  }
+  return []
+}
+
 export default function DialogMaterialDemand(props: Props) {
   const { open, handleCloseDialogAddForm, item } = props
+
+  const router = useRouter()
 
   const { trigger: postMaterialDemandApi } = useSWRMutation(
     "/project-material-requirement",
@@ -164,6 +204,11 @@ export default function DialogMaterialDemand(props: Props) {
     reqGetMaterialDemand,
   )
 
+  const { trigger: putMaterialDemandApi } = useSWRMutation(
+    "/project-material-requirement",
+    reqPutMaterialDemand,
+  )
+
   const { trigger: getMaterialProportionApi } = useSWRMutation(
     "/material-proportion",
     reqGetMaterialProportion,
@@ -173,9 +218,14 @@ export default function DialogMaterialDemand(props: Props) {
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
-  const ctx = React.useContext(ganttContext)
+  const [pageState, setPageState] = React.useState({
+    page: 1,
+    limit: 10,
+  })
 
   const [requirementId, setRequirementId] = React.useState(0)
+
+  const [requirementStatus, setRequirementStates] = React.useState<Status>("waiting")
 
   const [pager, setPager] = React.useState<BaseApiPager>({} as BaseApiPager)
 
@@ -190,50 +240,70 @@ export default function DialogMaterialDemand(props: Props) {
     })
     if (res.items.length > 0) {
       setRequirementId(res.items[0].id)
+      setRequirementStates(res.items[0].status)
     } else {
       setRequirementId(0)
       setRequirementList([])
     }
   }
-  const getMaterialDemandItemList = async () => {
-    const res = await getMaterialDemandItemApi({ requirement_id: requirementId })
+  //  获取需求计划的项
+  const getMaterialDemandItemList = async (flag?: boolean) => {
+    const res = await getMaterialDemandItemApi({
+      requirement_id: requirementId,
+      page: pageState.page,
+      limit: pageState.limit,
+    })
 
+    //  处理完的数据
     const arrs: MaterialDemandItemListData[] = []
 
+    // 遍历数据 判断三种情况 （1.自定义配合比 2.字典配合比 3.不处理）
     for (const itemsKey in res.items) {
       let item = res.items[itemsKey]
 
+      // 给主列表编辑的数据保留一份
       item.editState = {
         lossCoefficient: item.loss_coefficient,
         actualUsage: item.actual_usage / 1000,
         plannedUsageAt: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
       } as DemandEditState
 
+      item.isEdit = flag ?? allEdit
+
+      // 如果有自定义配合比存起来
+      if (item.material_proportion) {
+        item.editState.proportion = item.material_proportion.id
+      }
+
+      //   有没有保存过的
+      let subR: MaterialDemandItemListData[] = []
       if (item.dictionary && item.dictionary.dictionary_class_id == DICTIONARY_CLASS_ID.concrete) {
         // 获取混凝土的子列表
         const r = await getMaterialDemandItemApi({
           requirement_id: requirementId,
           parent_id: item.id,
         })
-
+        subR = r.items
+      }
+      // 有保存过得
+      if (subR.length > 0) {
+        // 处理子列表的数据
         const subTableList = []
 
-        // 获取每一个子项的字典名称
-        for (const rKey in r.items) {
-          let subItem = r.items[rKey]
-          const subDictionary = await getDictionaryListApi({
-            class_id: subItem.dictionary.dictionary_class_id,
-          })
+        for (const subRKey in subR) {
+          let subItem = subR[subRKey]
 
           // 处理数据
           let obj = {
             id: subItem.id,
             dictionary_id: subItem.dictionary_id,
             quantity: subItem.quantity,
-            dictionaryList: subDictionary,
-            dictionaryName: subDictionary.find((dict) => dict.id == subItem.dictionary_id)!.name,
+            dictionaryList: [],
+            dictionaryName: subItem.dictionary.name,
+            dictionary: subItem.dictionary,
             dictionary_class_id: subItem.dictionary.dictionary_class_id,
-            isDel: true,
+            isSubEdit: item.isEdit,
+            class: subItem.class,
             editState: {
               plannedUsageAt: dateToUTCCustom(subItem.planned_usage_at, "YYYY-MM-DD"),
               lossCoefficient: subItem.loss_coefficient,
@@ -246,46 +316,69 @@ export default function DialogMaterialDemand(props: Props) {
 
           subTableList.push(obj)
         }
+        item.proportions = subTableList
 
-        if (item.material_proportion) {
-          // item.editState.proportion = item.material_proportion.id
-          // let materials = JSON.parse(item.material_proportion.materials)
-          // let arr: Array<MaterialListType> = []
-          //
-          // for (const materialsKey in materials) {
-          //   let itemWithMaterial = materials[materialsKey]
-          //   const res = await getDictionaryListApi({
-          //     class_id: itemWithMaterial.dictionary_class_id,
-          //   })
-          //
-          //   // 需要计算数据
-          //   let obj = {
-          //     dictionary_id: itemWithMaterial.dictionary_id,
-          //     quantity: itemWithMaterial.quantity,
-          //     dictionaryList: res,
-          //     dictionary_class_id: itemWithMaterial.dictionary_class_id,
-          //     editState: {
-          //       plannedUsageAt: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
-          //       lossCoefficient: "",
-          //       actualUsage: 0, // 需求用量
-          //     },
-          //     planned_usage_at: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
-          //     actual_usage: 0,
-          //   } as MaterialListType
-          //
-          //   arr.push(obj)
-          // }
+        arrs.push(item)
+        // 自定义的
+      } else if (item.material_proportion) {
+        item.editState.proportion = item.material_proportion.id
 
-          // arrs.push({ ...item, proportions: [...arr, ...subTableList] })
-          arrs.push({ ...item, proportions: [...subTableList] })
-        } else {
-          arrs.push(item)
+        let materials = JSON.parse(item.material_proportion.materials)
+        let subArr: Array<PostMaterialDemandItemParams> = []
+
+        for (const materialsKey in materials) {
+          let itemWithMaterial = materials[materialsKey]
+
+          let subActualUsage =
+            item.actual_usage * intoDoubleFixed3(itemWithMaterial.quantity / 1000)
+          // 需要计算数据
+          let postParams = {
+            class: "system",
+            parent_id: item.id,
+            requirement_id: requirementId,
+            dictionary_id: itemWithMaterial.dictionary_id,
+            actual_usage: subActualUsage,
+            loss_coefficient: +item.loss_coefficient,
+            ebs_id: item.ebs_id,
+            planned_usage_at: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
+          } as PostMaterialDemandItemParams
+
+          subArr.push(postParams)
         }
+        await Promise.all(subArr.map((params) => postMaterialDemandItemApi(params)))
+        getMaterialDemandItemList()
+        return
+        // 字典的
+      } else if (
+        item.dictionary &&
+        item.dictionary.dictionary_class_id == DICTIONARY_CLASS_ID.concrete
+      ) {
+        let _WZArr = filterDictionaryWithWZAttribute(item.dictionary.properties)
+        for (const wzArrKey in _WZArr) {
+          let wzItem = _WZArr[wzArrKey]
+          let valueSplitArr = wzItem.value.split("!")
+          let subActualUsage = item.actual_usage * intoDoubleFixed3(Number(valueSplitArr[2]) / 1000)
+          let dictionaryLists = await getDictionaryListApi({ name: valueSplitArr[1].trim() })
+          if (dictionaryLists.length > 0) {
+            let postParams = {
+              class: "system",
+              parent_id: item.id,
+              requirement_id: requirementId,
+              dictionary_id: dictionaryLists[0].id,
+              actual_usage: subActualUsage,
+              loss_coefficient: +item.loss_coefficient,
+              ebs_id: item.ebs_id,
+              planned_usage_at: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
+            } as PostMaterialDemandItemParams
+            await postMaterialDemandItemApi(postParams)
+          }
+        }
+        getMaterialDemandItemList()
+        return
       } else {
         arrs.push(item)
       }
     }
-
     setRequirementList(arrs)
     setPager(res.pager)
   }
@@ -306,7 +399,7 @@ export default function DialogMaterialDemand(props: Props) {
 
   React.useEffect(() => {
     !!requirementId && getMaterialDemandItemList()
-  }, [requirementId])
+  }, [requirementId, pageState])
 
   const handleCreateMaterialDemand = async () => {
     await postMaterialDemandApi({
@@ -328,6 +421,7 @@ export default function DialogMaterialDemand(props: Props) {
       action: 2,
     })
     getMaterialDemandList()
+    getMaterialDemandItemList()
   }
 
   const handleChangeSelectProportion = async (val: number, index: number) => {
@@ -335,35 +429,77 @@ export default function DialogMaterialDemand(props: Props) {
     if (obj) {
       const cloneList = structuredClone(requirementList)
 
-      let materials = JSON.parse(obj.materials)
-      let arr: Array<MaterialListType> = []
-      for (const materialsKey in materials) {
-        let item = materials[materialsKey]
-        const res = await getDictionaryListApi({ class_id: item.dictionary_class_id })
+      // 主列表对象
+      const requirementItem = cloneList[index]
 
-        let obj = {
-          dictionary_id: item.dictionary_id,
-          quantity: item.quantity,
-          dictionaryList: res,
-          dictionary_class_id: item.dictionary_class_id,
-          isSelect: false,
-          isSubEdit: true,
-          editState: {
-            lossCoefficient: "",
-            actualUsage: 0,
-            plannedUsageAt: cloneList[index].editState.plannedUsageAt,
-          },
-          planned_usage_at: cloneList[index].editState.plannedUsageAt,
-          loss_coefficient: "",
-          actual_usage: 0,
-        } as MaterialListType
+      await putMaterialDemandItemApi({
+        id: requirementItem.id!,
+        dictionary_id: requirementItem.dictionary_id,
+        requirement_id: requirementId,
+        actual_usage: requirementItem.actual_usage,
+        proportion_id: val,
+        loss_coefficient: requirementItem.loss_coefficient,
+        planned_usage_at: requirementItem.editState.plannedUsageAt,
+      })
+      let materials: any[] = JSON.parse(obj.materials)
 
-        arr.push(obj)
+      const filterWithUserAddArr = requirementItem.proportions?.filter((el) => el.class != "user")
+
+      if (filterWithUserAddArr!.length > materials.length) {
+        for (const key in filterWithUserAddArr) {
+          // @ts-ignore
+          let el = filterWithUserAddArr[key]
+          let findItem = materials.find(
+            (_material) => _material.dictionary_class_id == el.dictionary_class_id,
+          )
+          if (findItem) {
+            await putMaterialDemandItemApi({
+              id: el.id!,
+              dictionary_id: findItem.dictionary_id,
+              requirement_id: requirementId,
+              actual_usage: el.actual_usage,
+              loss_coefficient: el.loss_coefficient ?? 0,
+              planned_usage_at: el.editState.plannedUsageAt,
+            })
+          } else {
+            await delMaterialDemandItemApi({ requirement_id: requirementId, id: el.id })
+          }
+        }
+      } else {
+        for (const materialsKey in materials) {
+          // 配合比对象
+          let item = materials[materialsKey]
+          // 子列表对象
+          let findSubItem = requirementItem!.proportions!.find(
+            (el) => el.dictionary_class_id == item.dictionary_class_id,
+          )
+
+          if (findSubItem) {
+            findSubItem.dictionary_id = item.dictionary_id
+            await putMaterialDemandItemApi({
+              id: findSubItem.id!,
+              dictionary_id: item.dictionary_id,
+              requirement_id: requirementId,
+              actual_usage: findSubItem.actual_usage,
+              loss_coefficient: findSubItem.loss_coefficient ?? 0,
+              planned_usage_at: findSubItem.editState.plannedUsageAt,
+            })
+          } else {
+            await postMaterialDemandItemApi({
+              class: "system",
+              requirement_id: requirementId,
+              parent_id: requirementItem.id,
+              ebs_id: requirementItem.ebs_id,
+              dictionary_id: item.dictionary_id,
+              actual_usage: requirementItem.actual_usage,
+              planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
+              loss_coefficient: 0,
+            })
+          }
+        }
       }
 
-      cloneList[index].editState.proportion = val
-      cloneList[index].proportions = arr
-      setRequirementList(cloneList)
+      getMaterialDemandItemList()
     }
   }
 
@@ -380,8 +516,10 @@ export default function DialogMaterialDemand(props: Props) {
         isSubEdit: true,
         dictionaryName: "",
         loss_coefficient: "",
+        class: "user",
         actual_usage: 0,
         planned_usage_at: dateToUTCCustom(cloneList[index].planned_usage_at, "YYYY-MM-DD"),
+        dictionary: {} as DictionaryWithDemand,
         editState: {
           lossCoefficient: "",
           actualUsage: 0,
@@ -398,7 +536,9 @@ export default function DialogMaterialDemand(props: Props) {
           isSubEdit: true,
           dictionaryName: "",
           loss_coefficient: "",
+          class: "user",
           actual_usage: 0,
+          dictionary: {} as DictionaryWithDemand,
           planned_usage_at: dateToUTCCustom(new Date(), "YYYY-MM-DD"),
           editState: {
             lossCoefficient: "",
@@ -425,22 +565,58 @@ export default function DialogMaterialDemand(props: Props) {
     type: keyof DemandEditState,
   ) => {
     const cloneList = structuredClone(requirementList)
+    let rowItem = cloneList[index]
+    let numArr: string[]
+    let materials: any[] = []
+    if (rowItem.material_proportion) {
+      numArr = rowItem.material_proportion.proportion.split(":")
+      materials = JSON.parse(rowItem.material_proportion.materials)
+    }
     // @ts-ignore
     if (type == "actualUsage") {
       // @ts-ignore
-      cloneList[index].editState[type] = val
+      rowItem.editState[type] = val
+
+      if (rowItem.proportions && rowItem.proportions!.length > 0) {
+        rowItem.proportions = rowItem.proportions!.map((subRow, subIndex) => {
+          if (numArr[subIndex]) {
+            let sum = materials[subIndex].quantity * (1 + Number(subRow.loss_coefficient) / 100)
+            subRow.editState.actualUsage = intoDoubleFixed3(
+              (rowItem.editState["actualUsage"] * sum) / 1000,
+            )
+          }
+          return subRow
+        })
+      }
     } else if (type == "plannedUsageAt") {
-      if (dayjs(val).unix() < dayjs(cloneList[index].planned_usage_at).unix()) {
+      if (dayjs(val).unix() < dayjs(rowItem.planned_usage_at).unix()) {
         return message.warning("计划使用时间需晚于施工计划时间")
       }
-      cloneList[index].editState["plannedUsageAt"] = dayJsToStr(val, "YYYY-MM-DD")
-    } else {
+      rowItem.editState["plannedUsageAt"] = dayJsToStr(val, "YYYY-MM-DD")
+    } else if (type == "lossCoefficient") {
       // @ts-ignore
-      cloneList[index].editState[type] = val
-      cloneList[index].editState["actualUsage"] = +(
-        (cloneList[index].design_usage / 1000) *
+      if (val < 0 || val > 100) return message.warning("损耗系数区间需在0-100")
+      // @ts-ignore
+      rowItem.editState[type] = val
+      rowItem.editState["actualUsage"] = +(
+        (rowItem.design_usage / 1000) *
         (1 + Number(val) / 100)
       ).toFixed(3)
+
+      if (rowItem.proportions && rowItem.proportions!.length > 0) {
+        rowItem.proportions = rowItem.proportions!.map((subRow, subIndex) => {
+          if (numArr[subIndex]) {
+            let sum = materials[subIndex].quantity * (1 + Number(subRow.loss_coefficient) / 100)
+            subRow.editState.actualUsage = intoDoubleFixed3(
+              (rowItem.editState["actualUsage"] * sum) / 1000,
+            )
+          }
+          return subRow
+        })
+      }
+    } else {
+      // @ts-ignore
+      rowItem.editState[type] = val
     }
     setRequirementList(cloneList)
   }
@@ -453,6 +629,7 @@ export default function DialogMaterialDemand(props: Props) {
       actual_usage: row.editState.actualUsage * 1000,
       loss_coefficient: row.editState.lossCoefficient,
       planned_usage_at: row.editState.plannedUsageAt,
+      dictionary_id: row.dictionary_id,
     } as PutMaterialDemandItemParams
     await putMaterialDemandItemApi(params)
 
@@ -485,6 +662,8 @@ export default function DialogMaterialDemand(props: Props) {
       requirement_id: requirementId,
       actual_usage: row.editState.actualUsage * 1000,
       loss_coefficient: row.editState.lossCoefficient,
+      dictionary_id: row.dictionary_id,
+      planned_usage_at: row.editState.plannedUsageAt,
     } as PutMaterialDemandItemParams
     if (row.editState.proportion) {
       params.proportion_id = row.editState.proportion
@@ -501,7 +680,8 @@ export default function DialogMaterialDemand(props: Props) {
     cloneList[index].proportions!.forEach((sub) => {
       if (
         sub.loss_coefficient != sub.editState.lossCoefficient ||
-        sub.actual_usage / 1000 != sub.editState.actualUsage
+        sub.actual_usage / 1000 != sub.editState.actualUsage ||
+        sub.planned_usage_at != sub.editState.plannedUsageAt
       ) {
         needEditItems.push(sub)
       }
@@ -512,42 +692,33 @@ export default function DialogMaterialDemand(props: Props) {
         let params = {
           id: item.id,
           requirement_id: requirementId,
-          actual_usage: item.actual_usage,
+          actual_usage: item.editState.actualUsage * 1000,
           loss_coefficient: item.editState.lossCoefficient,
+          dictionary_id: item.dictionary_id,
+          planned_usage_at: item.editState.plannedUsageAt,
         } as PutMaterialDemandItemParams
         return putMaterialDemandItemApi(params)
-      } else {
-        let postParams = {
-          parent_id: row.id,
-          requirement_id: requirementId,
-          dictionary_id: row.proportions![subIndex].dictionary_id,
-          actual_usage: row.proportions![subIndex].editState.actualUsage * 1000,
-          loss_coefficient: row.proportions![subIndex].editState.lossCoefficient,
-          ebs_id: row.ebs_id,
-          planned_usage_at: row.proportions![subIndex].editState.plannedUsageAt,
-        }
-
-        return postMaterialDemandItemApi(postParams)
       }
     })
 
     await Promise.all(axiosList)
 
-    cloneList[index].loss_coefficient = row.editState.lossCoefficient
-    cloneList[index].actual_usage = row.editState.actualUsage * 1000
-    cloneList[index].isEdit = false
-    cloneList[index].isConcreteEdit = false
-    cloneList[index].proportions = cloneList[index].proportions!.map((item) => {
-      const index = needEditItems.findIndex((needItem) => needItem.id == item.id)
-      if (index >= 0) {
-        item.loss_coefficient = item.editState.lossCoefficient
-        item.actual_usage = item.editState.actualUsage * 1000
-        item.planned_usage_at = item.editState.plannedUsageAt
-      }
-      item.isSubEdit = false
-      return item
-    })
-    setRequirementList(cloneList)
+    // cloneList[index].loss_coefficient = row.editState.lossCoefficient
+    // cloneList[index].actual_usage = row.editState.actualUsage * 1000
+    // cloneList[index].isEdit = false
+    // cloneList[index].isConcreteEdit = false
+    // cloneList[index].proportions = cloneList[index].proportions!.map((item) => {
+    //   const index = needEditItems.findIndex((needItem) => needItem.id == item.id)
+    //   if (index >= 0) {
+    //     item.loss_coefficient = item.editState.lossCoefficient
+    //     item.actual_usage = item.editState.actualUsage * 1000
+    //     item.planned_usage_at = item.editState.plannedUsageAt
+    //   }
+    //   item.isSubEdit = false
+    //   return item
+    // })
+    // setRequirementList(cloneList)
+    getMaterialDemandItemList()
   }
 
   const [allEdit, setAllEdit] = React.useState(false)
@@ -594,7 +765,8 @@ export default function DialogMaterialDemand(props: Props) {
     requirementList.forEach((item) => {
       if (
         item.loss_coefficient != item.editState.lossCoefficient ||
-        intoDoubleFixed3(item.actual_usage / 1000) != item.editState.actualUsage
+        intoDoubleFixed3(item.actual_usage / 1000) != item.editState.actualUsage ||
+        dayJsToStr(item.planned_usage_at, "YYYY-MM-DD") != item.editState.plannedUsageAt
       ) {
         needEditItems.push(item)
       }
@@ -609,6 +781,7 @@ export default function DialogMaterialDemand(props: Props) {
         requirement_id: requirementId,
         actual_usage: item.editState.actualUsage * 1000,
         loss_coefficient: item.editState.lossCoefficient,
+        dictionary_id: item.dictionary_id,
       } as PutMaterialDemandItemParams
       return putMaterialDemandItemApi(params)
     })
@@ -620,30 +793,18 @@ export default function DialogMaterialDemand(props: Props) {
           requirement_id: requirementId,
           actual_usage: item.editState.actualUsage * 1000,
           loss_coefficient: item.editState.lossCoefficient,
+          dictionary_id: item.dictionary_id,
         } as PutMaterialDemandItemParams
         return putMaterialDemandItemApi(params)
-      } else {
-        const row = requirementList.find((el) => el.id == item.parent_id)!
-
-        let postParams = {
-          parent_id: item.parent_id,
-          requirement_id: requirementId,
-          dictionary_id: item.dictionary_id,
-          actual_usage: item.editState.actualUsage * 1000,
-          loss_coefficient: item.editState.lossCoefficient,
-          ebs_id: row.ebs_id,
-          planned_usage_at: item.editState.plannedUsageAt,
-        }
-
-        return postMaterialDemandItemApi(postParams)
       }
     })
 
     let requestList = [...axiosList, ...subAxiosList]
 
     await Promise.all(requestList)
+    setAllEdit(false)
 
-    getMaterialDemandItemList()
+    getMaterialDemandItemList(false)
     // const cloneList = structuredClone(requirementList)
     //
     // cloneList.forEach((item) => {
@@ -665,7 +826,6 @@ export default function DialogMaterialDemand(props: Props) {
     // })
     //
     // setRequirementList(cloneList)
-    setAllEdit(false)
   }
 
   const handleChangeSelectSubDictionaryClass = async (
@@ -696,6 +856,7 @@ export default function DialogMaterialDemand(props: Props) {
     row: MaterialDemandItemListData,
   ) => {
     const res = await postMaterialDemandItemApi({
+      class: "user",
       parent_id: row.id,
       requirement_id: requirementId,
       dictionary_id: row.proportions![subIndex].dictionary_id,
@@ -705,7 +866,6 @@ export default function DialogMaterialDemand(props: Props) {
       planned_usage_at: row.proportions![subIndex].editState.plannedUsageAt,
     })
     // const cloneList = structuredClone(requirementList)
-    // cloneList[index].proportions![subIndex].isDel = true
     // cloneList[index].proportions![subIndex].id = res.id
     // cloneList[index].proportions![subIndex].isSelect = false
     // cloneList[index].proportions![subIndex].actual_usage =
@@ -746,18 +906,26 @@ export default function DialogMaterialDemand(props: Props) {
       // @ts-ignore
       rowItem.proportions![subIndex].editState[type] = val
     } else if (type == "lossCoefficient") {
+      if (val < 0 || val > 100) return message.warning("损耗系数区间需在0-100")
       rowItem.proportions![subIndex].editState["lossCoefficient"] = val
       // 下面判断有问题
       if (rowItem.material_proportion) {
         const numArr = rowItem.material_proportion.proportion.split(":")
         const materis = JSON.parse(rowItem.material_proportion.materials)
         if (numArr[subIndex]) {
-          rowItem.proportions![subIndex].editState["actualUsage"] =
-            rowItem.editState.actualUsage * materis[subIndex].quantity * (val / 100)
+          let sum = materis[subIndex].quantity * (1 + val / 100)
+
+          rowItem.proportions![subIndex].editState["actualUsage"] = intoDoubleFixed3(
+            (sum * rowItem.editState.actualUsage) / 1000,
+          )
         }
       }
     } else if (type == "plannedUsageAt") {
-      if (dayjs(val).unix() < dayjs(cloneList[index].planned_usage_at).unix()) {
+      if (
+        dayjs(val).unix() <
+          dayjs(cloneList[index].proportions![subIndex].planned_usage_at).unix() ||
+        dayjs(val).unix() > dayjs(cloneList[index].editState.plannedUsageAt).unix()
+      ) {
         return message.warning("计划使用时间需晚于施工计划时间")
       }
       rowItem.proportions![subIndex].editState["plannedUsageAt"] = dayJsToStr(val, "YYYY-MM-DD")
@@ -767,6 +935,66 @@ export default function DialogMaterialDemand(props: Props) {
     }
 
     setRequirementList(cloneList)
+  }
+
+  const { showConfirmationDialog } = useConfirmationDialog()
+
+  const checkListHaveEdit = () => {
+    return requirementList.some((item) => {
+      if (item.proportions && item.proportions.length > 0) {
+        return item.proportions.some((subItem) => subItem.isSubEdit)
+      }
+      return item.isEdit
+    })
+  }
+
+  const handlePaginationChange = (val: number, type: "page" | "limit") => {
+    let clonePage = structuredClone(pageState)
+    if (type == "limit") {
+      clonePage.page = 1
+      clonePage.limit = val
+    } else {
+      // if (clonePage.page == val) return
+      clonePage.page = val
+    }
+    // 判断是否有编辑
+    let flag = checkListHaveEdit()
+    if (flag) {
+      showConfirmationDialog("修改信息未保存，确认离开当前页面？", () => {
+        setAllEdit(false)
+        setPageState(clonePage)
+      })
+    } else {
+      setPageState(clonePage)
+    }
+  }
+
+  const handleCloseDialog = () => {
+    let flag = checkListHaveEdit()
+
+    if (flag) {
+      showConfirmationDialog("修改信息未保存，确认离开当前页面？", () => {
+        handleCloseDialogAddForm()
+      })
+    } else {
+      handleCloseDialogAddForm()
+    }
+  }
+
+  const handleExport = () => {
+    message.success("导出成功，可到“导出管理”中下载--（导出功能没实现）")
+  }
+
+  const handleConfirmPlan = () => {
+    showConfirmationDialog("需求计划生成后不可进行编辑，确认生成？", async () => {
+      await putMaterialDemandApi({ project_id: PROJECT_ID, id: requirementId, status: "confirmed" })
+    })
+  }
+
+  const handleAddProportion = () => {
+    showConfirmationDialog("即将跳转到配合比配置页面，当前页面数据将不被保存，确认跳转？", () => {
+      router.push("/proportion")
+    })
   }
 
   const CreateMaterialDemandBtn = () => (
@@ -780,18 +1008,21 @@ export default function DialogMaterialDemand(props: Props) {
   return (
     <>
       <Dialog
-        onClose={handleCloseDialogAddForm}
+        onClose={() => {
+          handleCloseDialog()
+        }}
         open={open}
         sx={{ zIndex: 1700, ".MuiPaper-root": { maxWidth: "none" } }}
         className="custom">
         <DialogTitle>
           {CurrentDate.getYear()}年{CurrentDate.getMonth()}月主要物资设计数量明细表
           <Button
+            disabled={"confirmed" == requirementStatus}
             className="ml-2 text-sm"
             onClick={() => {
               handleUploadMaterialDemand()
             }}>
-            更新数据
+            重新生成数据
             <Tooltip title="重新获取设计数据; " sx={{ zIndex: 1701 }}>
               <i className="iconfont icon-wenhao-xianxingyuankuang cursor-pointer"></i>
             </Tooltip>
@@ -802,7 +1033,6 @@ export default function DialogMaterialDemand(props: Props) {
           <div>
             {allEdit ? (
               <Button
-                className="text-railway_303"
                 onClick={() => {
                   handleAllSave()
                 }}>
@@ -810,18 +1040,23 @@ export default function DialogMaterialDemand(props: Props) {
               </Button>
             ) : (
               <Button
-                className="text-railway_303"
+                disabled={"confirmed" == requirementStatus}
                 onClick={() => {
                   handleAllEdit()
                 }}>
                 批量编辑
               </Button>
             )}
-            <Button>导出</Button>
+            {/*<Button*/}
+            {/*  onClick={() => {*/}
+            {/*    handleExport()*/}
+            {/*  }}>*/}
+            {/*  导出*/}
+            {/*</Button>*/}
           </div>
         </div>
         <DialogContent sx={{ width: "90vw", height: "80vh" }}>
-          {requirementList.length <= 0 ? (
+          {!requirementId ? (
             CreateMaterialDemandBtn()
           ) : (
             <div className="h-full overflow-hidden pb-[4.375rem] relative">
@@ -846,7 +1081,7 @@ export default function DialogMaterialDemand(props: Props) {
                               {row.ebs_desc}
                             </TableCell>
                             <TableCell align="center">
-                              {findDictionaryClassName(row.dictionary?.dictionary_class_id)}
+                              {row.dictionary?.dictionary_class?.name}
                             </TableCell>
                             <TableCell align="center">{row.dictionary?.name}</TableCell>
                             <TableCell align="center">
@@ -862,11 +1097,8 @@ export default function DialogMaterialDemand(props: Props) {
                                     className="outline outline-[#e0e0e0]"
                                     value={row.editState.lossCoefficient}
                                     onChange={(event) => {
-                                      handleChangeMainTableEditInput(
-                                        index,
-                                        event.target.value,
-                                        "lossCoefficient",
-                                      )
+                                      let str = event.target.value.replace(/[^0-9]/g, "")
+                                      handleChangeMainTableEditInput(index, str, "lossCoefficient")
                                     }}
                                   />
                                 </div>
@@ -881,11 +1113,8 @@ export default function DialogMaterialDemand(props: Props) {
                                     className="outline outline-[#e0e0e0]"
                                     value={row.editState.actualUsage}
                                     onChange={(event) => {
-                                      handleChangeMainTableEditInput(
-                                        index,
-                                        event.target.value,
-                                        "actualUsage",
-                                      )
+                                      let str = event.target.value.replace(/[^0-9.]/g, "")
+                                      handleChangeMainTableEditInput(index, str, "actualUsage")
                                     }}
                                   />
                                 </div>
@@ -915,6 +1144,7 @@ export default function DialogMaterialDemand(props: Props) {
                               <div className="flex justify-center gap-x-2 ">
                                 {!row.isEdit ? (
                                   <Button
+                                    disabled={"confirmed" == requirementStatus}
                                     variant="text"
                                     onClick={() => {
                                       handleEditMainTableNoConcrete(index)
@@ -944,7 +1174,7 @@ export default function DialogMaterialDemand(props: Props) {
                                       {row.ebs_desc}
                                     </TableCell>
                                     <TableCell align="center">
-                                      {findDictionaryClassName(row.dictionary?.dictionary_class_id)}
+                                      {row.dictionary?.dictionary_class?.name}
                                     </TableCell>
                                     <TableCell align="center">{row.dictionary?.name}</TableCell>
                                     <TableCell align="center">
@@ -960,9 +1190,10 @@ export default function DialogMaterialDemand(props: Props) {
                                             className="outline outline-[#e0e0e0]"
                                             value={row.editState.lossCoefficient}
                                             onChange={(event) => {
+                                              let str = event.target.value.replace(/[^0-9]/g, "")
                                               handleChangeMainTableEditInput(
                                                 index,
-                                                event.target.value,
+                                                str,
                                                 "lossCoefficient",
                                               )
                                             }}
@@ -979,9 +1210,10 @@ export default function DialogMaterialDemand(props: Props) {
                                             className="outline outline-[#e0e0e0]"
                                             value={row.editState.actualUsage}
                                             onChange={(event) => {
+                                              let str = event.target.value.replace(/[^0-9.]/g, "")
                                               handleChangeMainTableEditInput(
                                                 index,
-                                                event.target.value,
+                                                str,
                                                 "actualUsage",
                                               )
                                             }}
@@ -995,13 +1227,11 @@ export default function DialogMaterialDemand(props: Props) {
                                       {row.isEdit ? (
                                         <div>
                                           <DatePicker
-                                            locale={locale}
-                                            className="w-full"
                                             value={dayjs(row.editState.plannedUsageAt)}
-                                            onChange={(newValue) => {
+                                            onChange={(newVal) => {
                                               handleChangeMainTableEditInput(
                                                 index,
-                                                newValue ?? dayjs(new Date()),
+                                                newVal ?? dayjs(new Date()),
                                                 "plannedUsageAt",
                                               )
                                             }}
@@ -1015,6 +1245,7 @@ export default function DialogMaterialDemand(props: Props) {
                                       <div className="flex justify-center gap-x-2 ">
                                         {!row.isEdit ? (
                                           <Button
+                                            disabled={"confirmed" == requirementStatus}
                                             variant="text"
                                             onClick={() => {
                                               handleEditWithConcrete(index)
@@ -1045,9 +1276,10 @@ export default function DialogMaterialDemand(props: Props) {
                                     <TableCell align="center">
                                       <div className="text-left">包含物资</div>
                                       <Select
+                                        className="bg-white"
+                                        disabled={requirementStatus == "confirmed"}
                                         id="tags"
                                         fullWidth
-                                        disabled={!row.isConcreteEdit}
                                         size="small"
                                         MenuProps={{ sx: { zIndex: 1703 } }}
                                         value={
@@ -1059,9 +1291,13 @@ export default function DialogMaterialDemand(props: Props) {
                                         <MenuItem value={0} disabled>
                                           <i className="text-railway_gray">请选择一个配合比</i>
                                         </MenuItem>
-                                        {materialProportionList.map((item) => (
+                                        {findProportionSelf(
+                                          materialProportionList,
+                                          row,
+                                          item.engineering_listings[0].id,
+                                        ).map((item) => (
                                           <MenuItem value={item.id} key={item.id}>
-                                            {item.name}
+                                            {item.name}-{item.proportion}
                                           </MenuItem>
                                         ))}
                                         <div className="pl-3">
@@ -1069,6 +1305,7 @@ export default function DialogMaterialDemand(props: Props) {
                                             startIcon={<AddIcon />}
                                             onClick={(event) => {
                                               event.stopPropagation()
+                                              handleAddProportion()
                                             }}>
                                             添加配合比
                                           </Button>
@@ -1089,34 +1326,47 @@ export default function DialogMaterialDemand(props: Props) {
                                       <TableCell component="th" scope="row"></TableCell>
                                       <TableCell align="center">
                                         {subRow.isSelect ? (
-                                          <Select
-                                            fullWidth
-                                            MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
-                                            size="small"
-                                            value={subRow.dictionary_class_id}
-                                            onChange={(event) => {
+                                          // <Select
+                                          //   disabled={requirementStatus == "confirmed"}
+                                          //   fullWidth
+                                          //   MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
+                                          //   size="small"
+                                          //   value={subRow.dictionary_class_id}
+                                          //   onChange={(event) => {
+                                          //     handleChangeSelectSubDictionaryClass(
+                                          //       +event.target.value,
+                                          //       index,
+                                          //       subIndex,
+                                          //     )
+                                          //   }}>
+                                          //   <MenuItem value={0} disabled>
+                                          //     <i className="text-railway_gray">物资名称</i>
+                                          //   </MenuItem>
+                                          //   {subConcreteDictionaryClass.map((item: any) => (
+                                          //     <MenuItem value={item.id} key={item.id}>
+                                          //       {item.label}
+                                          //     </MenuItem>
+                                          //   ))}
+                                          // </Select>
+                                          <SelectDictionaryClass
+                                            disabled={requirementStatus == "confirmed"}
+                                            placeholder="请选择一个物资名称"
+                                            onChange={(id) => {
                                               handleChangeSelectSubDictionaryClass(
-                                                +event.target.value,
+                                                id,
                                                 index,
                                                 subIndex,
                                               )
-                                            }}>
-                                            <MenuItem value={0} disabled>
-                                              <i className="text-railway_gray">物资名称</i>
-                                            </MenuItem>
-                                            {subConcreteDictionaryClass.map((item: any) => (
-                                              <MenuItem value={item.id} key={item.id}>
-                                                {item.label}
-                                              </MenuItem>
-                                            ))}
-                                          </Select>
+                                            }}></SelectDictionaryClass>
                                         ) : (
-                                          findDictionaryClassName(subRow.dictionary_class_id)
+                                          subRow.dictionary?.dictionary_class?.name
                                         )}
                                       </TableCell>
                                       <TableCell align="center">
                                         {subRow.isSelect ? (
                                           <Select
+                                            className="bg-white"
+                                            disabled={requirementStatus == "confirmed"}
                                             fullWidth
                                             size="small"
                                             MenuProps={{ sx: { zIndex: 1703 } }}
@@ -1138,13 +1388,16 @@ export default function DialogMaterialDemand(props: Props) {
                                             ))}
                                           </Select>
                                         ) : (
-                                          subRow.dictionaryList.find(
-                                            (dict) => dict.id == subRow.dictionary_id,
-                                          )?.name
+                                          subRow.dictionaryName
                                         )}
                                       </TableCell>
                                       <TableCell align="center">-</TableCell>
-                                      <TableCell align="center"></TableCell>
+                                      <TableCell align="center">
+                                        {subRow.id &&
+                                          findConstUnitWithDictionary(
+                                            subRow.dictionary?.properties,
+                                          )}
+                                      </TableCell>
                                       <TableCell align="center">
                                         {subRow.isSubEdit ? (
                                           <div>
@@ -1152,8 +1405,9 @@ export default function DialogMaterialDemand(props: Props) {
                                               className="outline outline-[#e0e0e0]"
                                               value={subRow.editState.lossCoefficient}
                                               onChange={(event) => {
+                                                let str = event.target.value.replace(/[^0-9]/g, "")
                                                 handleChangeSubState(
-                                                  +event.target.value,
+                                                  +str,
                                                   index,
                                                   subIndex,
                                                   "lossCoefficient",
@@ -1172,8 +1426,9 @@ export default function DialogMaterialDemand(props: Props) {
                                               className="outline outline-[#e0e0e0]"
                                               value={subRow.editState.actualUsage}
                                               onChange={(event) => {
+                                                let str = event.target.value.replace(/[^0-9.]/g, "")
                                                 handleChangeSubState(
-                                                  +event.target.value,
+                                                  str,
                                                   index,
                                                   subIndex,
                                                   "actualUsage",
@@ -1193,10 +1448,7 @@ export default function DialogMaterialDemand(props: Props) {
                                             value={dayjs(subRow.editState.plannedUsageAt)}
                                             onChange={(newValue) => {
                                               handleChangeSubState(
-                                                dateToUTCCustom(
-                                                  newValue ?? new Date(),
-                                                  "YYYY-MM-DD",
-                                                ),
+                                                dayJsToStr(newValue ?? new Date(), "YYYY-MM-DD"),
                                                 index,
                                                 subIndex,
                                                 "plannedUsageAt",
@@ -1209,22 +1461,23 @@ export default function DialogMaterialDemand(props: Props) {
                                       </TableCell>
                                       <TableCell align="center">
                                         <div className="flex justify-center gap-x-2 ">
-                                          {(subRow.isSelect || subRow.isDel) &&
-                                            !subRow.isSubEdit && (
-                                              <Button
-                                                variant="text"
-                                                onClick={() => {
-                                                  handleDelSubMaterialWithConcrete(
-                                                    index,
-                                                    subIndex,
-                                                    row,
-                                                  )
-                                                }}>
-                                                删除
-                                              </Button>
-                                            )}
+                                          {subRow.class == "user" && !subRow.isSelect && (
+                                            <Button
+                                              disabled={"confirmed" == requirementStatus}
+                                              variant="text"
+                                              onClick={() => {
+                                                handleDelSubMaterialWithConcrete(
+                                                  index,
+                                                  subIndex,
+                                                  row,
+                                                )
+                                              }}>
+                                              删除
+                                            </Button>
+                                          )}
                                           {subRow.isSubEdit && subRow.isSelect && (
                                             <Button
+                                              disabled={"confirmed" == requirementStatus}
                                               variant="text"
                                               onClick={() => {
                                                 handleSaveSubMaterialWithConcrete(
@@ -1257,6 +1510,7 @@ export default function DialogMaterialDemand(props: Props) {
                                     <TableCell align="center">
                                       <div className="flex justify-center gap-x-2 ">
                                         <Button
+                                          disabled={"confirmed" == requirementStatus}
                                           variant="text"
                                           onClick={() => {
                                             handleAddConcreteMaterial(index)
@@ -1278,27 +1532,35 @@ export default function DialogMaterialDemand(props: Props) {
 
               <div className="absolute bottom-0 w-full">
                 <div className="overflow-hidden">
-                  <Button className="float-right" variant="contained">
+                  <Button
+                    disabled={"confirmed" == requirementStatus}
+                    className="float-right"
+                    variant="contained"
+                    onClick={() => {
+                      handleConfirmPlan()
+                    }}>
                     确认需求计划
                   </Button>
                 </div>
                 <div className="w-full flex justify-center items-center gap-x-2 bg-white border-t">
                   <span>共{pager.count}条</span>
                   <select
+                    value={pageState.limit}
                     className="border"
                     onChange={(event) => {
-                      // handlePaginationChange(event.target.value, "limit")
+                      handlePaginationChange(+event.target.value, "limit")
                     }}>
                     <option value={10}>10条/页</option>
                     <option value={20}>20条/页</option>
                     <option value={50}>50条/页</option>
                   </select>
                   <Pagination
+                    page={pageState.page}
                     count={pager.count ? Math.ceil(pager.count / pager.limit) : 1}
                     variant="outlined"
                     shape="rounded"
                     onChange={(event, page) => {
-                      // handlePaginationChange(page, "page")
+                      handlePaginationChange(page, "page")
                     }}
                   />
                 </div>

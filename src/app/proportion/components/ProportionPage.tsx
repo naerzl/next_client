@@ -28,6 +28,8 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { EngineeringListing } from "@/app/basic-engineering-management/types/index.d"
 import { reqGetEngineeringListing } from "@/app/basic-engineering-management/api"
 import { CLASS_OPTION } from "@/app/proportion/const"
+import { subConcreteDictionaryClass } from "@/app/material-processing/const"
+import { reqGetDictionary } from "@/app/material-approach/api"
 
 // 表格配置列
 const columns = [
@@ -63,33 +65,6 @@ const columns = [
   },
 ]
 
-function renderProperty(str: string, row: MaterialProportionListData) {
-  const arr: { key: string; value: string }[] | any = JSON.parse(str || "[]")
-
-  if (arr instanceof Array) {
-    return arr.map((item, index) => {
-      if (item.key == "配合比") {
-        return (
-          <div key={index}>
-            <span>
-              {item.key}： {row.proportion}
-            </span>
-          </div>
-        )
-      }
-      return (
-        <div key={index}>
-          <span>
-            {item.key}： {item.value}
-          </span>
-        </div>
-      )
-    })
-  } else {
-    return <></>
-  }
-}
-
 export default function ProportionPage() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
@@ -124,6 +99,8 @@ export default function ProportionPage() {
     "/engineering-listing",
     reqGetEngineeringListing,
   )
+
+  const { trigger: getDictionaryListApi } = useSWRMutation("/dictionary", reqGetDictionary)
 
   const [materialProportionList, setMaterialProportionList] = React.useState<
     MaterialProportionListData[]
@@ -218,6 +195,62 @@ export default function ProportionPage() {
     getDataList()
   }
 
+  const getProportionDictionary = async (row: MaterialProportionListData) => {
+    if (row.materials) {
+      let arr = JSON.parse(row.materials)
+      let attributes = []
+      for (const arrKey in arr) {
+        let arrItem = arr[arrKey]
+        let dictionaryClassName = subConcreteDictionaryClass.find(
+          (classItem) => classItem.id == arrItem.dictionary_class_id,
+        )!.label
+        const dictionaryData = await getDictionaryListApi({ class_id: arrItem.dictionary_class_id })
+
+        const dictionaryFindItem = dictionaryData.find((item) => item.id == arrItem.dictionary_id)
+        let dictionaryName = dictionaryFindItem ? dictionaryFindItem.name : ""
+        attributes.push({
+          key: dictionaryClassName,
+          value: `WZ-${dictionaryName}-${arrItem.quantity}`,
+        })
+      }
+      return attributes
+    }
+    return []
+  }
+
+  function renderProperty(str: string, row: MaterialProportionListData) {
+    const arr: { key: string; value: string }[] | any = JSON.parse(str || "[]")
+
+    if (arr instanceof Array) {
+      let filterProper = arr.filter((item) => {
+        return !item.value.startsWith("WZ")
+      })
+      // const attributes = await getProportionDictionary(row)
+      // filterProper.push(...attributes)
+
+      return filterProper.map((item, index) => {
+        if (item.key == "配合比") {
+          return (
+            <div key={index}>
+              <span>
+                {item.key}： {row.proportion}
+              </span>
+            </div>
+          )
+        }
+        return (
+          <div key={index}>
+            <span>
+              {item.key}： {item.value}
+            </span>
+          </div>
+        )
+      })
+    } else {
+      return <></>
+    }
+  }
+
   if (!permissionTagList.includes(permissionJson.material_approach_member_read)) {
     return <NoPermission />
   }
@@ -291,13 +324,13 @@ export default function ProportionPage() {
                         {
                           findEnumValueWithLabel(
                             CLASS_OPTION,
-                            row.dictionary.dictionary_class_id.toString(),
+                            row.dictionary?.dictionary_class_id.toString(),
                           )?.label
                         }
                       </TableCell>
-                      <TableCell align="left">{row.dictionary.name}</TableCell>
+                      <TableCell align="left">{row.dictionary?.name}</TableCell>
                       <TableCell align="left">
-                        {renderProperty(row?.dictionary.properties, row)}
+                        {renderProperty(row?.dictionary?.properties, row)}
                       </TableCell>
                       <TableCell align="left">{row.name}</TableCell>
                       <TableCell align="left">

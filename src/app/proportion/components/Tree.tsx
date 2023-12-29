@@ -11,6 +11,7 @@ interface Props {
   // eslint-disable-next-line no-unused-vars
   onChecked?: (checkedValue: any[], checked: boolean, checkedEBSList: TypeEBSDataList[]) => void
   checkArr: number[]
+  checkedEBSList: TypeEBSDataList[]
   editItem: null | MaterialProportionListData
 }
 
@@ -19,30 +20,30 @@ type Info = {
   pos: string
 }
 
-let checkArrItem: TypeEBSDataList[] = []
-const findCheckedId = (arr: TypeEBSDataList[], siID: number): number[] => {
-  let checkArr: number[] = []
-
-  arr.forEach((item) => {
-    if (
-      item.extend &&
-      item.extend.project_si_id == siID &&
-      item.is_can_select == 0 &&
-      item.name.includes("#墩")
-    ) {
-      checkArr.push(item.id)
-      checkArrItem.push(item)
-    }
-    if (item.children && item.children.length > 0) {
-      return checkArr.push(...findCheckedId(item.children, siID))
-    }
-  })
-
-  return checkArr
-}
-
 export default function Tree(props: Props) {
-  const { treeData, getSubEBSData, onChecked, editItem, checkArr } = props
+  const { treeData, getSubEBSData, onChecked, editItem, checkArr, checkedEBSList } = props
+
+  let checkArrItem = React.useRef<TypeEBSDataList[]>(checkedEBSList)
+  const findCheckedId = (arr: TypeEBSDataList[], siID: number): number[] => {
+    let checkArr: number[] = []
+
+    arr.forEach((item) => {
+      if (
+        item.extend &&
+        item.extend.project_si_id == siID &&
+        item.is_can_select == 0 &&
+        item.name.includes("#墩")
+      ) {
+        checkArr.push(item.id)
+        checkArrItem.current.push(item)
+      }
+      if (item.children && item.children.length > 0) {
+        return checkArr.push(...findCheckedId(item.children, siID))
+      }
+    })
+
+    return checkArr
+  }
 
   const searchParams = useSearchParams()
 
@@ -50,11 +51,11 @@ export default function Tree(props: Props) {
 
   React.useEffect(() => {
     if (IS_EDIT && treeData) {
-      checkArrItem = []
+      checkArrItem.current = []
       const editChecked = findCheckedId(treeData, +searchParams.get("siId")!)
       if (editChecked.length > 0) {
         setChecked(editChecked)
-        onChecked?.(editChecked, true, checkArrItem)
+        onChecked?.(editChecked, true, checkArrItem.current)
       }
     }
   }, [searchParams, treeData])
@@ -79,7 +80,7 @@ export default function Tree(props: Props) {
   }
 
   const [checked, setChecked] = React.useState<number[]>(!!editItem ? checkArr : [])
-  const [checkedEBSItem, setCheckEBSItem] = React.useState<TypeEBSDataList[]>([])
+  const [checkedEBSItem, setCheckEBSItem] = React.useState<TypeEBSDataList[]>(checkArrItem.current)
 
   const handleChecked = (value: number, type: boolean, item: TypeEBSDataList) => {
     const newChecked = structuredClone(checked)

@@ -27,6 +27,7 @@ import { reqGetEBS } from "@/app/ebs-data/api"
 import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
 import { subConcreteDictionaryClass } from "@/app/material-processing/const"
 import { reqPostMaterialProportion, reqPutMaterialProportion } from "@/app/proportion/api"
+import SelectDictionaryClass from "@/components/SelectDictionaryClass"
 
 interface Props {
   open: boolean
@@ -40,7 +41,7 @@ interface Props {
 type MaterialListType = {
   dictionary_class_id: number
   dictionary_id: number
-  quantity?: number
+  quantity: number | string
   dictionaryList: DictionaryData[]
 }
 
@@ -108,14 +109,16 @@ export default function AddOrEditProportion(props: Props) {
     classValue > 0 && handleGetDictionary()
   }, [classValue])
 
-  const handleEditSetValue = (item: MaterialProportionListData) => {
+  const handleEditSetValue = async (item: MaterialProportionListData) => {
     setValue("name", item.name)
     setClassValue(item.dictionary?.dictionary_class_id ?? 0)
     setDictionaryId(item.dictionary_id)
     setProportion(item.proportion)
     let materials = JSON.parse(item.materials)
     let arr: Array<MaterialListType> = []
-    materials.forEach(async (item: any) => {
+
+    for (const materialsKey in materials) {
+      let item = materials[materialsKey]
       const res = await getDictionaryListApi({ class_id: item.dictionary_class_id })
 
       let obj = {
@@ -126,23 +129,25 @@ export default function AddOrEditProportion(props: Props) {
       } as MaterialListType
 
       arr.push(obj)
-    })
+    }
+
     setMaterialList(arr)
     setEngineeringListingId(item.usages[0].engineeringListing_id)
     let ebsIds: number[] = []
     let ebsItems: TypeEBSDataList[] = []
-    item.usages.forEach(async (item) => {
-      ebsIds.push(item.ebs_id)
+    for (const usagesKey in item.usages) {
+      let el = item.usages[usagesKey]
+      ebsIds.push(el.ebs_id)
       const res = await getEBSApi({
-        id: item.ebs_id,
+        id: el.ebs_id,
         project_id: PROJECT_ID,
         is_hidden: 0,
-        engineering_listing_id: item.engineeringListing_id,
+        engineering_listing_id: el.engineeringListing_id,
       })
       if (res.length == 1) {
         ebsItems.push(res[0])
       }
-    })
+    }
 
     setCheckedArr(ebsIds)
     setCheckedEBSList(ebsItems)
@@ -171,7 +176,12 @@ export default function AddOrEditProportion(props: Props) {
 
     if (materialList.length != arr.length) {
       setMaterialList(
-        arr.map(() => ({ dictionary_id: 0, dictionary_class_id: 0, dictionaryList: [] })),
+        arr.map(() => ({
+          dictionary_id: 0,
+          dictionary_class_id: 0,
+          dictionaryList: [],
+          quantity: "",
+        })),
       )
     }
 
@@ -192,11 +202,7 @@ export default function AddOrEditProportion(props: Props) {
     setMaterialList(cloneList)
   }
 
-  const handleChangeMaterialListState = (
-    index: number,
-    type: keyof MaterialListType,
-    val: number,
-  ) => {
+  const handleChangeMaterialListState = (index: number, type: keyof MaterialListType, val: any) => {
     const proportionArr = proportion.split(":")
 
     if (type == "dictionary_class_id") {
@@ -222,28 +228,37 @@ export default function AddOrEditProportion(props: Props) {
         }
         return obj
       })
-      setMaterialList(newList)
+      if (proportionArr[0]) {
+        setMaterialList(newList)
+      } else {
+        const cloneList = structuredClone(materialList)
+        // @ts-ignore
+        cloneList[index][type] = val
+        setMaterialList(cloneList)
+      }
       return
     } else if (index == materialList.length - 1 && type == "quantity") {
       if (materialList.length != proportionArr.length) {
-        if (!!materialList[0].quantity) {
-          let num = val / materialList[0].quantity
-          let p = Number.isInteger(num) ? num : intoDoubleFixed3(num)
-
-          const cloneProportionArr = [...proportionArr, p.toString()]
-          setProportion(cloneProportionArr.join(":"))
+        let some = materialList.some((item) => !item.quantity)
+        if (!some) {
+          let num = val / Number(materialList[0].quantity)
+          let arr = materialList.map((el) => {
+            return Number(el.quantity) / num
+          })
+          setProportion(arr.join(":"))
         }
       } else {
-        if (!!materialList[0].quantity) {
-          let num = val / materialList[0].quantity
+        if (!!materialList[0].quantity && proportionArr.length == materialList.length) {
+          let num = val / Number(materialList[0].quantity)
           let p = Number.isInteger(num) ? num : intoDoubleFixed3(num)
           proportionArr[index] = p.toString()
           setProportion(proportionArr.join(":"))
         }
       }
     } else if (type == "quantity") {
-      if (!!materialList[0].quantity) {
-        let num = val / materialList[0].quantity
+      let proportionArr = proportion.split(":")
+      if (!!materialList[0].quantity && proportionArr.length == materialList.length) {
+        let num = val / Number(materialList[0].quantity)
         let p = Number.isInteger(num) ? num : intoDoubleFixed3(num)
         proportionArr[index] = p.toString()
         setProportion(proportionArr.join(":"))
@@ -252,6 +267,12 @@ export default function AddOrEditProportion(props: Props) {
     const cloneList = structuredClone(materialList)
     // @ts-ignore
     cloneList[index][type] = val
+    setMaterialList(cloneList)
+  }
+
+  const handleChangeQuantity = (index: number, val: number) => {
+    const cloneList = structuredClone(materialList)
+    cloneList[index].quantity = val
     setMaterialList(cloneList)
   }
 
@@ -343,7 +364,7 @@ export default function AddOrEditProportion(props: Props) {
 
       const materials = materialList.map((item) => ({
         dictionary_id: item.dictionary_id,
-        quantity: item.quantity,
+        quantity: Number(item.quantity),
         dictionary_class_id: item.dictionary_class_id,
       }))
 
@@ -380,6 +401,19 @@ export default function AddOrEditProportion(props: Props) {
       close()
     },
   )
+
+  const handleQuantity = (index: number) => {
+    if (materialList.length - 1 == index) {
+      let some = materialList.some((item) => !item.quantity)
+      if (!some) {
+        let unit = materialList[0].quantity
+        let proportionArr = materialList.map((item) => {
+          return intoDoubleFixed3(Number(item.quantity) / Number(unit))
+        })
+        setProportion(proportionArr.join(":"))
+      }
+    }
+  }
 
   return (
     <Drawer open={open} onClose={close} anchor="right">
@@ -512,6 +546,7 @@ export default function AddOrEditProportion(props: Props) {
                         dictionary_class_id: 0,
                         dictionary_id: 0,
                         dictionaryList: [],
+                        quantity: "",
                       } as MaterialListType,
                     ])
                   }}>
@@ -520,28 +555,34 @@ export default function AddOrEditProportion(props: Props) {
                 <ul className="w-full">
                   {materialList.map((item, index) => (
                     <li className="w-full flex gap-x-2 mb-2" key={index}>
-                      <Select
-                        MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
-                        sx={{ color: "#303133", zIndex: 1602, width: "11.25rem" }}
-                        id="role_list"
-                        size="small"
-                        value={item.dictionary_class_id}
-                        onChange={(event) => {
-                          handleChangeMaterialListState(
-                            index,
-                            "dictionary_class_id",
-                            +event.target.value,
-                          )
-                        }}>
-                        <MenuItem value={0} disabled>
-                          <i className="text-[#ababab]">请选择一个物资类别</i>
-                        </MenuItem>
-                        {subConcreteDictionaryClass.map((item: any) => (
-                          <MenuItem value={item.id} key={item.id}>
-                            {item.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
+                      {/*<Select*/}
+                      {/*  MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}*/}
+                      {/*  sx={{ color: "#303133", zIndex: 1602, width: "11.25rem" }}*/}
+                      {/*  id="role_list"*/}
+                      {/*  size="small"*/}
+                      {/*  value={item.dictionary_class_id}*/}
+                      {/*  onChange={(event) => {*/}
+                      {/*    handleChangeMaterialListState(*/}
+                      {/*      index,*/}
+                      {/*      "dictionary_class_id",*/}
+                      {/*      +event.target.value,*/}
+                      {/*    )*/}
+                      {/*  }}>*/}
+                      {/*  <MenuItem value={0} disabled>*/}
+                      {/*    <i className="text-[#ababab]">请选择一个物资类别</i>*/}
+                      {/*  </MenuItem>*/}
+                      {/*  {subConcreteDictionaryClass.map((item: any) => (*/}
+                      {/*    <MenuItem value={item.id} key={item.id}>*/}
+                      {/*      {item.label}*/}
+                      {/*    </MenuItem>*/}
+                      {/*  ))}*/}
+                      {/*</Select>*/}
+                      <div className="w-[11.25rem]">
+                        <SelectDictionaryClass
+                          onChange={(id: number) => {
+                            handleChangeMaterialListState(index, "dictionary_class_id", id)
+                          }}></SelectDictionaryClass>
+                      </div>
                       <Select
                         MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
                         sx={{ color: "#303133", zIndex: 1602, width: "12.5rem" }}
@@ -562,7 +603,6 @@ export default function AddOrEditProportion(props: Props) {
                       </Select>
                       <TextField
                         variant="outlined"
-                        id="manufacturer"
                         size="small"
                         className="w-[4.75rem]"
                         placeholder="数量"
@@ -570,7 +610,10 @@ export default function AddOrEditProportion(props: Props) {
                         value={item.quantity}
                         onChange={(event) => {
                           let str = event.target.value.replace(/[^0-9.]/g, "")
-                          handleChangeMaterialListState(index, "quantity", +str)
+                          handleChangeMaterialListState(index, "quantity", str)
+                        }}
+                        onBlur={() => {
+                          handleQuantity(index)
                         }}
                       />
                       <IconButton
@@ -645,6 +688,7 @@ export default function AddOrEditProportion(props: Props) {
                     style={{ width: `${anchorEl?.getBoundingClientRect().width}px` }}>
                     {engineeringListingId ? (
                       <Tree
+                        checkedEBSList={checkedEBSList}
                         editItem={editItem}
                         checkArr={checkedArr}
                         treeData={ebsAll}

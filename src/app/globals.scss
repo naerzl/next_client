@@ -174,3 +174,14 @@ input.custom[type="number"]{
 .ant-picker-dropdown{
   z-index: 1703 !important;
 }
+.ant-select-dropdown{
+  z-index: 1700 !important;
+}
+
+.ant-tree-select{
+  .ant-select-selector{
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+}

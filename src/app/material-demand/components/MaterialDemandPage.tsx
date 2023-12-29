@@ -1,6 +1,6 @@
 "use client"
 import React from "react"
-import { Breadcrumbs, Button, Pagination } from "@mui/material"
+import { Breadcrumbs, Button, Chip, Pagination } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import TableHead from "@mui/material/TableHead"
@@ -18,44 +18,50 @@ import NoPermission from "@/components/NoPermission"
 import { DatePicker } from "antd"
 import locale from "antd/es/date-picker/locale/zh_CN"
 import { BaseApiPager } from "@/types/api"
-import MaterialExport from "@/app/components/MaterialExport"
-import useMaterialExport from "@/hooks/useMaterialExport"
-import ExportForm from "@/app/material-approach/components/ExportForm"
 import { GetMaterialDemandParams, MaterialDemandListData } from "@/app/material-demand/types"
 import { reqDelMaterialDemand, reqGetMaterialDemand } from "@/app/material-demand/api"
+import useDialogMaterialDemand from "@/app/material-demand/hooks/useDialogMaterialDemand"
+import DialogMaterialDemand from "@/app/material-demand/components/DialogMaterialDemand"
 
+const columns = [
+  {
+    title: "单位工程名称",
+    dataIndex: "id",
+    key: "id",
+  },
+  {
+    title: "工点名称",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "日期",
+    dataIndex: "ebs_name",
+    key: "ebs_name",
+  },
+  {
+    title: "状态",
+    dataIndex: "class",
+    key: "class",
+  },
+  {
+    title: "操作",
+    key: "action",
+  },
+]
 export default function MaterialDemandPage() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   // 表格配置列
-  const columns = [
-    {
-      title: "单位工程名称",
-      dataIndex: "id",
-      key: "id",
-    },
-    {
-      title: "工点名称",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "月份",
-      dataIndex: "ebs_name",
-      key: "ebs_name",
-    },
-    {
-      title: "状态",
-      dataIndex: "class",
-      key: "class",
-    },
-    {
-      title: "操作",
-      key: "action",
-    },
-  ]
 
   const { showConfirmationDialog } = useConfirmationDialog()
+
+  const {
+    dialogOpen,
+    handleOpenDialogWithMaterialDemand,
+    handleCloseDialogWithMaterialDemand,
+    item: dialogItem,
+  } = useDialogMaterialDemand()
 
   const [swrState, setSWRState] = React.useState<GetMaterialDemandParams>({
     page: 1,
@@ -66,12 +72,6 @@ export default function MaterialDemandPage() {
   const { trigger: getMaterialDemandApi, isMutating } = useSWRMutation(
     "/project-material-requirement",
     reqGetMaterialDemand,
-    // fetcher,
-  )
-
-  const { trigger: delMaterialDemandApi } = useSWRMutation(
-    "/project-material-requirement",
-    reqDelMaterialDemand,
   )
 
   const [materialDemandList, setMaterialDemandList] = React.useState<MaterialDemandListData[]>([])
@@ -138,17 +138,6 @@ export default function MaterialDemandPage() {
     setPager(res.pager)
   }
 
-  // 删除物资进场数据
-  const handleDelMaterialApproach = (id: number) => {
-    showConfirmationDialog("确认要删除吗？", async () => {
-      await delMaterialDemandApi({ id, project_id: PROJECT_ID })
-      message.success("操作成功")
-      setMaterialDemandList((prevState) => prevState.filter((e) => e.id != id))
-    })
-  }
-
-  const { exportOpen, handleExportOpen, handleExportClose } = useMaterialExport()
-
   if (!permissionTagList.includes(permissionJson.material_approach_member_read)) {
     return <NoPermission />
   }
@@ -197,22 +186,32 @@ export default function MaterialDemandPage() {
                 <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
                   <TableRow>
                     {columns.map((col, index) => (
-                      <TableCell key={index}>{col.title}</TableCell>
+                      <TableCell align="center" key={index}>
+                        {col.title}
+                      </TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {materialDemandList.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell component="th" scope="row"></TableCell>
-                      <TableCell align="left"></TableCell>
-                      <TableCell align="left"></TableCell>
-                      <TableCell align="left"></TableCell>
-                      <TableCell align="left">
+                      <TableCell align="center">{row.project_sp?.name}</TableCell>
+                      <TableCell align="center">{row.project_si?.name}</TableCell>
+                      <TableCell align="center">{row.period}</TableCell>
+                      <TableCell align="center">
+                        {row.status == "confirmed" ? (
+                          <Chip label="已确认" color="success" />
+                        ) : (
+                          <Chip label="待确认" color="warning" />
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
                         <div className="flex justify-center gap-x-2">
-                          <Button onClick={() => {}}>查看</Button>
-                          <Button color="primary" onClick={() => {}}>
-                            下载
+                          <Button
+                            onClick={() => {
+                              handleOpenDialogWithMaterialDemand(row)
+                            }}>
+                            查看
                           </Button>
                         </div>
                       </TableCell>
@@ -246,11 +245,12 @@ export default function MaterialDemandPage() {
           </div>
         </div>
       )}
-
-      {exportOpen && (
-        <MaterialExport open={exportOpen} handleClose={handleExportClose}>
-          <ExportForm handleClose={handleExportClose} />
-        </MaterialExport>
+      {dialogOpen && (
+        <DialogMaterialDemand
+          open={dialogOpen}
+          item={dialogItem}
+          handleCloseDialogAddForm={handleCloseDialogWithMaterialDemand}
+        />
       )}
     </>
   )
