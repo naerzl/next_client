@@ -1,12 +1,17 @@
 import { fetcher } from "@/libs/fetch"
 import { FetchParams } from "@/types/api"
 import {
+  GetExportMaterialDemandParams,
   GetMaterialDemandItemParams,
   GetMaterialDemandItemResponse,
   GetMaterialDemandParams,
   GetMaterialDemandResponse,
+  GetProjectMaterialRequirementStaticDetailParams,
+  GetProjectMaterialRequirementStaticDetailResponse,
+  GetProjectMaterialRequirementStaticParams,
   PostMaterialDemandItemParams,
   PostMaterialDemandParams,
+  ProjectMaterialRequirementStaticListData,
   PutMaterialDemandItemParams,
   PutMaterialDemandParams,
 } from "@/app/material-demand/types"
@@ -48,3 +53,18 @@ export const reqDelMaterialDemandItem = (
   url: string,
   { arg }: FetchParams<{ id: number; requirement_id: number }>,
 ) => fetcher({ url, arg, method: "delete" })
+
+export const reqGetExportMaterialDemand = (
+  url: string,
+  { arg }: FetchParams<GetExportMaterialDemandParams>,
+) => fetcher({ url, arg })
+
+export const reqGetProjectMaterialRequirementStatic = (
+  url: string,
+  { arg }: FetchParams<GetProjectMaterialRequirementStaticParams>,
+): Promise<ProjectMaterialRequirementStaticListData[]> => fetcher({ url, arg })
+
+export const reqGetProjectMaterialRequirementStaticDetail = (
+  url: string,
+  { arg }: FetchParams<GetProjectMaterialRequirementStaticDetailParams>,
+): Promise<GetProjectMaterialRequirementStaticDetailResponse> => fetcher({ url, arg })

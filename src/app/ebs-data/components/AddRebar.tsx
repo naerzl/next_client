@@ -32,6 +32,12 @@ type IForm = {
   unit_weight: number
   number: number
 }
+
+const rebar_class = [
+  { value: 20, label: "圆钢" },
+  { value: 21, label: "螺纹钢" },
+]
+
 export default function AddRebar(props: Props) {
   const { open, handleCloseAddBridgeWithDrawer, cb, editItem } = props
 
@@ -48,9 +54,12 @@ export default function AddRebar(props: Props) {
   const [dictionaryList, setDictionaryList] = React.useState<DictionaryData[]>([])
 
   const getDictionary = async () => {
-    const res = await getDictionaryApi({ class_id: REBAR_DICTIONARY_CLASS_ID })
-    console.log(res)
-    setDictionaryList(res || [])
+    let list: DictionaryData[] = []
+    for (const key in rebar_class) {
+      const res = await getDictionaryApi({ class_id: rebar_class[key].value })
+      list.push(...res)
+    }
+    setDictionaryList(list)
   }
 
   React.useEffect(() => {
@@ -79,11 +88,8 @@ export default function AddRebar(props: Props) {
         const attribute = JSON.parse(item!.properties)
         const _mapItem = attribute.find((item: any) => item.key == "单位重")
         if (_mapItem) {
-          let a = 2
-
           setValue("unit_weight", Number(Number(_mapItem.value).toFixed(3)))
         }
-        console.log(attribute)
       }
     }
   }, [dictionaryId])

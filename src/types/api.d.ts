@@ -31,3 +31,18 @@ export interface DictionaryClassData {
   relationship: string
   children?: DictionaryClassData[]
 }
+
+export type Option = {
+  pId: number
+  id: number
+  value: string
+  title: string
+}
+
+export type TreeOption = {
+  pId: number
+  id: number
+  value: string
+  title: string
+  children?: option[]
+}

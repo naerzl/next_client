@@ -20,7 +20,7 @@ import TableCell from "@mui/material/TableCell"
 import TableRow from "@mui/material/TableRow"
 import TableBody from "@mui/material/TableBody"
 import { dateToUTCCustom } from "@/libs/methods"
-import { STATUS_ENUM } from "@/app/queue/const"
+import { CLASS_ENUM, STATUS_ENUM } from "@/app/queue/const"
 import { GetQueueParams, QueueList } from "@/app/queue/types"
 import { BaseApiPager } from "@/types/api"
 
@@ -124,7 +124,7 @@ export default function QueuePage() {
 
   React.useEffect(() => {
     getQueueList()
-  }, [])
+  }, [swrState])
 
   const handleSearch = async () => {
     let params = structuredClone(swrState)
@@ -178,9 +178,14 @@ export default function QueuePage() {
   const handleChangeSearchValue = (type: keyof GetQueueParams, value: string) => {
     const params = structuredClone(swrState)
     if (value == "all") {
-      delete params.status
+      if (type == "status") {
+        delete params.status
+      } else if (type == "class") {
+        return
+      }
     } else {
-      params.status = value
+      // @ts-ignore
+      params[type] = value
     }
     setSWRState(params)
   }
@@ -205,6 +210,7 @@ export default function QueuePage() {
             id="status"
             size="small"
             placeholder="请选择导出状态"
+            value={swrState.status ?? "all"}
             fullWidth
             onChange={(event) => {
               handleChangeSearchValue("status", event.target.value)
@@ -212,6 +218,24 @@ export default function QueuePage() {
             defaultValue="">
             <MenuItem value={"all"}>全部</MenuItem>
             {STATUS_ENUM.map((item) => (
+              <MenuItem value={item.value} key={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </Select>
+          <Select
+            sx={{ width: 150 }}
+            id="status"
+            size="small"
+            placeholder="请选择导出类型"
+            fullWidth
+            value={swrState.class}
+            onChange={(event) => {
+              handleChangeSearchValue("class", event.target.value)
+            }}
+            defaultValue="">
+            <MenuItem value={"all"}>全部</MenuItem>
+            {CLASS_ENUM.map((item) => (
               <MenuItem value={item.value} key={item.value}>
                 {item.label}
               </MenuItem>

@@ -253,7 +253,7 @@ export default function RootLayout({ children }: { children: React.ReactElement 
                         <div className="flex flex-col w-full">
                           <Nav />
                           <div className="flex-1 flex  bg-[#f8fafb] w-full overflow-hidden">
-                            <aside className="h-full w-60  min-w-[15rem]">
+                            <aside className="h-full w-60  min-w-[15rem] overflow-hidden">
                               <Side />
                             </aside>
                             <main

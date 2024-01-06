@@ -135,8 +135,6 @@ export interface TypeApiPostBridgeBoredBasicDataParams {
   pile_top_elevation: number
   pile_type: string
   rebar_cage_length: number
-  liner_dictionary_id: number
-  liner_number: number
   drill_mode: string
 }
 
@@ -148,8 +146,6 @@ export interface TypeApiPutBridgeBoredBasicDataParams {
   pile_top_elevation: number
   pile_type: string
   rebar_cage_length: number
-  liner_dictionary_id: number
-  liner_number: number
   drill_mode: string
 }
 

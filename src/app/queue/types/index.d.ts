@@ -19,6 +19,7 @@ export interface GetQueueResponse {
 export interface GetQueueParams {
   page?: number
   limit?: number
+  id?: number
   class: string
   project_id: number
   status?: string

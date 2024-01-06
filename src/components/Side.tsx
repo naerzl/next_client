@@ -81,6 +81,11 @@ const menuList: { [key: string]: any } = {
         title: "配合比设置",
         permissionTag: "receipt_of_materials_member_read",
       },
+      "material-loss-coefficient": {
+        path: "/material-loss-coefficient",
+        title: "损耗系数管理",
+        permissionTag: "receipt_of_materials_member_read",
+      },
     },
   },
   testManagement: {
@@ -203,6 +208,7 @@ function side() {
   return (
     <>
       <List
+        className="overflow-y-auto custom-scroll-bar"
         sx={{ width: "100%", maxWidth: "15rem", bgcolor: "background.paper", height: "100%" }}
         component="nav"
         aria-labelledby="nested-list-subheader">

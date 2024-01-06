@@ -16,3 +16,22 @@ export const STATUS_ENUM = [
     value: "exceptional",
   },
 ]
+
+export const CLASS_ENUM = [
+  {
+    label: "需求计划",
+    value: "material_requirement",
+  },
+  {
+    label: "检验批",
+    value: "inspection_lot",
+  },
+  {
+    label: "竣工文档",
+    value: "completion_archive",
+  },
+  {
+    label: "空",
+    value: "none",
+  },
+]

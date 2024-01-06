@@ -141,6 +141,10 @@ export function intoDoubleFixed3(val: string | number) {
   return +Number(val).toFixed(3)
 }
 
+export function intoDoubleFixed0(val: string | number) {
+  return +Number(val).toFixed(0)
+}
+
 export function findEnumValueWithLabel(arr: EnumType[], value: string) {
   return arr.find((item) => item.value == value)
 }

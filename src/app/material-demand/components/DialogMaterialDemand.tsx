@@ -1,6 +1,15 @@
 "use client"
 import React from "react"
-import { Button, Dialog, DialogContent, DialogTitle, Pagination } from "@mui/material"
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Menu,
+  Pagination,
+  Snackbar,
+} from "@mui/material"
 import Table from "@mui/material/Table"
 import TableHead from "@mui/material/TableHead"
 import TableRow from "@mui/material/TableRow"
@@ -14,51 +23,24 @@ import {
   DemandEditState,
   MaterialDemandItemListData,
   MaterialDemandListData,
+  MaterialListType,
   PostMaterialDemandItemParams,
 } from "@/app/material-demand/types"
 import { CONCRETE_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
-import { MaterialProportionListData } from "@/app/proportion/types"
 import { reqGetDictionary } from "@/app/material-approach/api"
-import { DictionaryData } from "@/app/material-approach/types"
-import { DictionaryClassOption } from "@/app/material-demand/const"
 import { message } from "antd"
 import "dayjs/locale/zh-cn"
 import { DICTIONARY_CLASS_ID } from "@/libs/const"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
+import { useRequest } from "ahooks"
+import { reqGetQueue } from "@/app/queue/api"
+import useSWRMutationHooks from "@/app/gantt/hooks/useSWRMutationHooks"
+import { LayoutContext } from "@/components/LayoutContext"
 
 type Props = {
   open: boolean
   handleCloseDialogAddForm: () => void
   item: MaterialDemandListData | null
-}
-
-type SubEditState = {
-  lossCoefficient: string
-  actualUsage: number // 需求用量
-  plannedUsageAt: string
-}
-
-export type MaterialListType = {
-  parent_id?: number
-  id?: number
-  dictionary_class_id: number
-  dictionary_id: number
-  quantity?: number
-  dictionaryName: string
-  dictionaryList: DictionaryData[]
-  dictionary: any
-  isSubEdit?: boolean
-  isSelect?: boolean
-  class: "user" | "system"
-  editState: SubEditState
-  loss_coefficient: string
-  actual_usage: number // 需求用量
-  planned_usage_at: string
-}
-
-function findDictionaryClassName(val: number) {
-  const obj = DictionaryClassOption.find((item) => item.id == val)
-  return obj ? obj.label : ""
 }
 
 const columns = [
@@ -87,8 +69,8 @@ const columns = [
     key: "损耗系数%",
   },
   {
-    title: "需求用量",
-    key: "需求用量",
+    title: "需用数量",
+    key: "需用数量",
   },
   {
     title: "计划使用时间",
@@ -103,31 +85,10 @@ function findConstUnitWithDictionary(str: string) {
   return obj ? obj.value : ""
 }
 
-function findProportionSelf(
-  arr: MaterialProportionListData[],
-  row: MaterialDemandItemListData,
-  engId: number,
-) {
-  return arr.filter((el) => {
-    let flag1 = el.dictionary_id == row.dictionary_id
-    let flag2 = false
-    if (el.usages) {
-      flag2 = !!el.usages.find(
-        (use) => use.ebs_id == row.ebs_id && use.engineeringListing_id == engId,
-      )
-    } else {
-      flag2 = false
-    }
-
-    return flag1 && flag2
-  })
-}
-
 function filterDictionaryWithWZAttribute(str: string) {
   let attributes = JSON.parse(str ?? "[]")
   if (attributes instanceof Array) {
-    let filterArr = attributes.filter((item) => item.value.startsWith("WZ"))
-    return filterArr
+    return attributes.filter((item) => item.value.startsWith("WZ"))
   }
   return []
 }
@@ -135,17 +96,15 @@ function filterDictionaryWithWZAttribute(str: string) {
 export default function DialogMaterialDemand(props: Props) {
   const { open, handleCloseDialogAddForm, item } = props
 
-  const { trigger: getMaterialDemandItemApi } = useSWRMutation(
-    "/project-material-requirement-item",
-    reqGetMaterialDemandItem,
-  )
+  const {
+    getMaterialDemandItemApi,
+    getExportMaterialDemandApi,
+    postMaterialDemandItemApi,
+    getQueueApi,
+    getDictionaryListApi,
+  } = useSWRMutationHooks()
 
-  const { trigger: postMaterialDemandItemApi } = useSWRMutation(
-    "/project-material-requirement-item",
-    reqPostMaterialDemandItem,
-  )
-
-  const { trigger: getDictionaryListApi } = useSWRMutation("/dictionary", reqGetDictionary)
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const [pageState, setPageState] = React.useState({
     page: 1,
@@ -158,7 +117,7 @@ export default function DialogMaterialDemand(props: Props) {
 
   const [requirementList, setRequirementList] = React.useState<MaterialDemandItemListData[]>([])
 
-  const getMaterialDemandItemList = async (flag?: boolean) => {
+  const getMaterialDemandItemList = async () => {
     const res = await getMaterialDemandItemApi({
       requirement_id: requirementId,
       page: pageState.page,
@@ -178,7 +137,6 @@ export default function DialogMaterialDemand(props: Props) {
         actualUsage: item.actual_usage / 1000,
         plannedUsageAt: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
       } as DemandEditState
-      item.isEdit = flag ?? allEdit
 
       let subR: MaterialDemandItemListData[] = []
       if (item.material_proportion) {
@@ -209,8 +167,8 @@ export default function DialogMaterialDemand(props: Props) {
             dictionaryName: subItem.dictionary.name,
             dictionary: subItem.dictionary,
             dictionary_class_id: subItem.dictionary.dictionary_class_id,
-            isSubEdit: item.isEdit,
             class: subItem.class,
+            material_loss_coefficient: subItem.material_loss_coefficient,
             editState: {
               plannedUsageAt: dateToUTCCustom(subItem.planned_usage_at, "YYYY-MM-DD"),
               lossCoefficient: subItem.loss_coefficient,
@@ -219,6 +177,7 @@ export default function DialogMaterialDemand(props: Props) {
             planned_usage_at: dateToUTCCustom(subItem.planned_usage_at, "YYYY-MM-DD"),
             loss_coefficient: subItem.loss_coefficient,
             actual_usage: subItem.actual_usage,
+            dictionaryClassName: "",
           } as MaterialListType
 
           subTableList.push(obj)
@@ -296,19 +255,6 @@ export default function DialogMaterialDemand(props: Props) {
 
   const handleCreateMaterialDemand = async () => {}
 
-  const [allEdit, setAllEdit] = React.useState(false)
-
-  const { showConfirmationDialog } = useConfirmationDialog()
-
-  const checkListHaveEdit = () => {
-    return requirementList.some((item) => {
-      if (item.proportions && item.proportions.length > 0) {
-        return item.proportions.some((subItem) => subItem.isSubEdit)
-      }
-      return item.isEdit
-    })
-  }
-
   const handlePaginationChange = (val: number, type: "page" | "limit") => {
     let clonePage = structuredClone(pageState)
     if (type == "limit") {
@@ -318,32 +264,57 @@ export default function DialogMaterialDemand(props: Props) {
       // if (clonePage.page == val) return
       clonePage.page = val
     }
-    // 判断是否有编辑
-    let flag = checkListHaveEdit()
-    if (flag) {
-      showConfirmationDialog("修改信息未保存，确认离开当前页面？", () => {
-        setAllEdit(false)
-        setPageState(clonePage)
-      })
-    } else {
-      setPageState(clonePage)
-    }
+    setPageState(clonePage)
   }
 
   const handleCloseDialog = () => {
-    let flag = checkListHaveEdit()
-
-    if (flag) {
-      showConfirmationDialog("修改信息未保存，确认离开当前页面？", () => {
-        handleCloseDialogAddForm()
-      })
-    } else {
-      handleCloseDialogAddForm()
-    }
+    handleCloseDialogAddForm()
   }
 
-  const handleExport = () => {
-    message.success("导出成功，可到“导出管理”中下载--（导出功能没实现）")
+  const [openSnackbar, setOpenSnackbar] = React.useState(false)
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false)
+  }
+
+  const getQueueList = (id: number) => {
+    return getQueueApi({ project_id: PROJECT_ID, class: "material_requirement", id })
+  }
+
+  const {
+    data: dataQueue,
+    run: runQueue,
+    cancel: cancelQueue,
+  } = useRequest<any, any[]>(getQueueList, {
+    pollingInterval: 1000,
+    manual: true,
+    pollingErrorRetryCount: 1,
+  })
+
+  React.useEffect(() => {
+    if (dataQueue) {
+      cancelQueue()
+    }
+  }, [dataQueue])
+
+  const handleExport = async () => {
+    const res = await getExportMaterialDemandApi({
+      project_id: PROJECT_ID,
+      period: `${CurrentDate.getYear()}-${CurrentDate.getMonth()}`,
+    })
+    setOpenSnackbar(true)
+    runQueue(res.id)
+  }
+
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+  const openMenu = Boolean(anchorEl)
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null)
+  }
+
+  const handleClickLossCoefficient = (event: React.MouseEvent<HTMLDivElement>, index: number) => {
+    setAnchorEl(event.currentTarget)
   }
 
   const CreateMaterialDemandBtn = () => (
@@ -412,7 +383,14 @@ export default function DialogMaterialDemand(props: Props) {
                             <TableCell align="center">
                               {findConstUnitWithDictionary(row.dictionary?.properties)}
                             </TableCell>
-                            <TableCell align="center">{row.loss_coefficient}</TableCell>
+                            <TableCell align="center">
+                              <div
+                                onClick={(event) => {
+                                  handleClickLossCoefficient(event, index)
+                                }}>
+                                {row.loss_coefficient}
+                              </div>
+                            </TableCell>
                             <TableCell align="center">
                               {intoDoubleFixed3(row.actual_usage / 1000)}
                             </TableCell>
@@ -440,7 +418,14 @@ export default function DialogMaterialDemand(props: Props) {
                                     <TableCell align="center">
                                       {findConstUnitWithDictionary(row.dictionary?.properties)}
                                     </TableCell>
-                                    <TableCell align="center">{row.loss_coefficient}</TableCell>
+                                    <TableCell align="center">
+                                      <div
+                                        onClick={(event) => {
+                                          handleClickLossCoefficient(event, index)
+                                        }}>
+                                        {row.loss_coefficient}
+                                      </div>
+                                    </TableCell>
                                     <TableCell align="center">
                                       {intoDoubleFixed3(row.actual_usage / 1000)}
                                     </TableCell>
@@ -470,7 +455,7 @@ export default function DialogMaterialDemand(props: Props) {
                                           )}
                                       </TableCell>
                                       <TableCell align="center">
-                                        {subRow.loss_coefficient}
+                                        <div>{subRow.loss_coefficient}</div>
                                       </TableCell>
                                       <TableCell align="center">
                                         {intoDoubleFixed3(subRow.actual_usage / 1000)}
@@ -516,6 +501,45 @@ export default function DialogMaterialDemand(props: Props) {
               </div>
             </div>
           )}
+          <Snackbar
+            sx={{ zIndex: 1720 }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            open={openSnackbar}
+            autoHideDuration={3000}
+            onClose={handleCloseSnackbar}>
+            {dataQueue ? (
+              <Alert severity="success">导出成功</Alert>
+            ) : (
+              <Alert severity="info">导出中</Alert>
+            )}
+          </Snackbar>
+
+          <Menu
+            sx={{ zIndex: 1700 }}
+            anchorEl={anchorEl}
+            open={openMenu}
+            onClose={handleCloseMenu}
+            MenuListProps={{
+              "aria-labelledby": "basic-button",
+              sx: { zIndex: 1700, width: "500px" },
+            }}>
+            <div className="max-h-[500px] overflow-y-auto w-full">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center">损耗系数名称</TableCell>
+                    <TableCell align="center">损耗系数</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell align="center">钢筋加工小型成品</TableCell>
+                    <TableCell align="center">123</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </Menu>
         </DialogContent>
       </Dialog>
     </>

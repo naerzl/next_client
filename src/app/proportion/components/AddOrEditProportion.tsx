@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { Button, Drawer, InputLabel, Menu, MenuItem, Select, TextField } from "@mui/material"
 import { ErrorMessage } from "@hookform/error-message"
 import {
@@ -25,9 +25,10 @@ import { LayoutContext } from "@/components/LayoutContext"
 import Tree from "@/app/proportion/components/Tree"
 import { reqGetEBS } from "@/app/ebs-data/api"
 import { TypeApiGetEBSParams, TypeEBSDataList } from "@/app/ebs-data/types"
-import { subConcreteDictionaryClass } from "@/app/material-processing/const"
 import { reqPostMaterialProportion, reqPutMaterialProportion } from "@/app/proportion/api"
 import SelectDictionaryClass from "@/components/SelectDictionaryClass"
+import { reqGetDictionaryClass } from "@/app/api"
+import useGetDictionaryClassHooks from "@/hooks/useGetDictionaryClassHooks"
 
 interface Props {
   open: boolean
@@ -43,6 +44,14 @@ type MaterialListType = {
   dictionary_id: number
   quantity: number | string
   dictionaryList: DictionaryData[]
+  name: string
+}
+
+type option = {
+  pId: number
+  id: number
+  value: string
+  title: string
 }
 
 export default function AddOrEditProportion(props: Props) {
@@ -65,6 +74,11 @@ export default function AddOrEditProportion(props: Props) {
     reqGetEngineeringListing,
   )
 
+  const { trigger: getDictionaryClassApi } = useSWRMutation(
+    "/dictionary-class",
+    reqGetDictionaryClass,
+  )
+
   const { trigger: getEBSApi } = useSWRMutation("/ebs", reqGetEBS)
 
   const { trigger: postMaterialProportionApi } = useSWRMutation(
@@ -78,6 +92,8 @@ export default function AddOrEditProportion(props: Props) {
   )
 
   const [engineeringList, setEngineeringList] = React.useState<EngineeringListing[]>([])
+
+  const { treeData, flatDate } = useGetDictionaryClassHooks({})
 
   const getEngineeringList = async () => {
     const res = await getEngineeringListingApi({ project_id: PROJECT_ID })
@@ -181,6 +197,7 @@ export default function AddOrEditProportion(props: Props) {
           dictionary_class_id: 0,
           dictionaryList: [],
           quantity: "",
+          name: "",
         })),
       )
     }
@@ -200,6 +217,17 @@ export default function AddOrEditProportion(props: Props) {
     setProportion(str)
     oldProportion.current = str
     setMaterialList(cloneList)
+  }
+
+  const handleChangeMaterialDictionaryClassState = (index: number, val: any, name: string) => {
+    getDictionaryListApi({ class_id: val }).then((res) => {
+      const cloneList = structuredClone(materialList)
+      cloneList[index]["dictionaryList"] = res
+      cloneList[index]["dictionary_class_id"] = val
+      cloneList[index]["dictionary_id"] = 0
+      cloneList[index]["name"] = name
+      setMaterialList(cloneList)
+    })
   }
 
   const handleChangeMaterialListState = (index: number, type: keyof MaterialListType, val: any) => {
@@ -298,12 +326,10 @@ export default function AddOrEditProportion(props: Props) {
 
     const engineeringItem = engineeringList.find((item) => item.id == engineering_listing_id)
 
-    console.log(engineeringItem)
     let arr = res
     if (engineeringItem) {
       arr = arr.filter((item) => item.id == engineeringItem.ebs_id)
     }
-
     setEBSAll(arr)
     return []
   }
@@ -363,9 +389,10 @@ export default function AddOrEditProportion(props: Props) {
       // 验证数据
 
       const materials = materialList.map((item) => ({
-        dictionary_id: item.dictionary_id,
+        dictionary_id: Number(item.dictionary_id),
         quantity: Number(item.quantity),
-        dictionary_class_id: item.dictionary_class_id,
+        dictionary_class_id: Number(item.dictionary_class_id),
+        name: item.name,
       }))
 
       if (!proportion || !dictionaryId || materials.length <= 0)
@@ -547,6 +574,7 @@ export default function AddOrEditProportion(props: Props) {
                         dictionary_id: 0,
                         dictionaryList: [],
                         quantity: "",
+                        name: "",
                       } as MaterialListType,
                     ])
                   }}>
@@ -579,8 +607,10 @@ export default function AddOrEditProportion(props: Props) {
                       {/*</Select>*/}
                       <div className="w-[11.25rem]">
                         <SelectDictionaryClass
-                          onChange={(id: number) => {
-                            handleChangeMaterialListState(index, "dictionary_class_id", id)
+                          treeData={treeData}
+                          value={item.dictionary_class_id}
+                          onChange={(id: number, label) => {
+                            handleChangeMaterialDictionaryClassState(index, id, label)
                           }}></SelectDictionaryClass>
                       </div>
                       <Select
@@ -636,6 +666,7 @@ export default function AddOrEditProportion(props: Props) {
               </InputLabel>
               <div className="w-full">
                 <Select
+                  disabled={!!editItem}
                   MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
                   sx={{ color: "#303133", zIndex: 1602, flex: 1 }}
                   id="role_list"
@@ -644,10 +675,8 @@ export default function AddOrEditProportion(props: Props) {
                   value={engineeringListingId}
                   onChange={(event) => {
                     setEngineeringListingId(Number(event.target.value))
-                    if (Number(event.target.value) == 0) {
-                      setCheckedArr([])
-                      setCheckedEBSList([])
-                    }
+                    setCheckedArr([])
+                    setCheckedEBSList([])
                   }}>
                   <MenuItem value={0}>
                     <i className="text-[#ababab]">请选择一个构筑物</i>

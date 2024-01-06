@@ -9,7 +9,7 @@ import { TypeApiGetEBSParams, TypeApiPutEBSParams, TypeEBSDataList } from "@/app
 import dayjs from "dayjs"
 import useSWRMutation from "swr/mutation"
 import { reqPutEBS, reqGetEBS } from "../api/index"
-import { Breadcrumbs, MenuItem, Select } from "@mui/material"
+import { Breadcrumbs, Button, MenuItem, Select } from "@mui/material"
 import { reqGetCodeCount } from "@/app/ebs-data/api"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import { reqGetProjectSubSection } from "@/app/working-point/api"
@@ -29,6 +29,10 @@ import type { queueAsPromised } from "fastq"
 import { VariantType, useSnackbar } from "notistack"
 import DialogMaterialDemand from "@/app/gantt/components/DialogMaterialDemand"
 import useDialogMaterialDemand from "@/app/gantt/hooks/useDialogMaterialDemand"
+import useDialogMaterialDemandWithUnitProject from "@/app/gantt/hooks/useDialogMaterialDemandWithUnitProject"
+import DialogMaterialDemandWithUnitProject from "@/app/gantt/components/DialogMaterialDemandWithUnitProject"
+import DialogMaterialDemandWithCollect from "@/app/gantt/components/DialogMaterialDemandWithCollect"
+import useDialogMaterialDemandWithCollect from "@/app/gantt/hooks/useDialogMaterialDemandWithCollect"
 
 // type GanttItemType = {
 //   id: number | string
@@ -450,6 +454,23 @@ const GanttPage = () => {
     item: dialogItem,
   } = useDialogMaterialDemand()
 
+  const {
+    demandUnitProjectItem,
+    demandWithUnitProjectOpen,
+    handleOpenDialogWithMaterialDemandWithUnitProject,
+    handleCloseDialogWithMaterialDemandWithUnitProject,
+  } = useDialogMaterialDemandWithUnitProject()
+
+  const {
+    demandWithCollectOpen,
+    handleOpenDialogWithMaterialDemandWithCollect,
+    handleCloseDialogWithMaterialDemandWithCollect,
+  } = useDialogMaterialDemandWithCollect()
+
+  const handleExportRequirePlan = () => {
+    handleOpenDialogWithMaterialDemandWithCollect()
+  }
+
   if (!permissionTagList.includes(permissionJson.construction_plan_member_read)) {
     return <NoPermission />
   }
@@ -493,19 +514,15 @@ const GanttPage = () => {
                 </MenuItem>
               ))}
             </Select>
+            <Button
+              variant="contained"
+              onClick={() => {
+                handleExportRequirePlan()
+              }}>
+              导出物资需求计划
+            </Button>
           </div>
           <div>
-            {/*<FormControlLabel*/}
-            {/*  control={*/}
-            {/*    <Checkbox*/}
-            {/*      value={apiParams.has_scheduled_start_at == 1}*/}
-            {/*      onChange={(event, checked) => {*/}
-            {/*        onCheckboxChange(checked, "has_scheduled_start_at")*/}
-            {/*      }}*/}
-            {/*    />*/}
-            {/*  }*/}
-            {/*  label="隐藏未施工"*/}
-            {/*/>*/}
             {/*<FormControlLabel*/}
             {/*  control={*/}
             {/*    <Checkbox*/}
@@ -549,6 +566,9 @@ const GanttPage = () => {
             getSubGanttList={getSubGanttList}
             handleOpenDrawerProcess={handleOpenDrawerProcess}
             handleOpenDialogWithMaterialDemand={handleOpenDialogWithMaterialDemand}
+            handleOpenDialogWithMaterialDemandWithUnitProject={
+              handleOpenDialogWithMaterialDemandWithUnitProject
+            }
           />
         </div>
         {drawerProcessOpen && (
@@ -563,6 +583,20 @@ const GanttPage = () => {
             open={dialogOpen}
             item={dialogItem}
             handleCloseDialogAddForm={handleCloseDialogWithMaterialDemand}
+          />
+        )}
+        {demandWithUnitProjectOpen && (
+          <DialogMaterialDemandWithUnitProject
+            open={demandWithUnitProjectOpen}
+            item={demandUnitProjectItem}
+            handleCloseDialogAddForm={handleCloseDialogWithMaterialDemandWithUnitProject}
+          />
+        )}
+
+        {demandWithCollectOpen && (
+          <DialogMaterialDemandWithCollect
+            open={demandWithCollectOpen}
+            handleCloseDialogAddForm={handleCloseDialogWithMaterialDemandWithCollect}
           />
         )}
       </div>
