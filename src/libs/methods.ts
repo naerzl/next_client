@@ -1,6 +1,6 @@
 import { OAUTH2_ACCESS_TOKEN } from "./const"
 import { getCookie } from "./cookies"
-import dayjs from "dayjs"
+import dayjs, { Dayjs } from "dayjs"
 import tz from "dayjs/plugin/timezone"
 import utc from "dayjs/plugin/utc"
 import { EnumType } from "@/types/api"
@@ -123,7 +123,11 @@ export function dateToYYYYMM(date: string | Date) {
   return dayjs(date).tz("UTC").format("YYYY-MM-DD HH:mm:ss")
 }
 
-export function dateToUTCCustom(date: string | Date, type: string) {
+export function dayJsToStr(date: string | Date | Dayjs, type: string) {
+  return dayjs(date).format(type)
+}
+
+export function dateToUTCCustom(date: string | Date | Dayjs, type: string) {
   dayjs.extend(tz)
   dayjs.extend(utc)
   return dayjs(date).tz("UTC").format(type)
@@ -137,6 +141,20 @@ export function intoDoubleFixed3(val: string | number) {
   return +Number(val).toFixed(3)
 }
 
+export function intoDoubleFixed0(val: string | number) {
+  return +Number(val).toFixed(0)
+}
+
 export function findEnumValueWithLabel(arr: EnumType[], value: string) {
   return arr.find((item) => item.value == value)
+}
+
+export class CurrentDate {
+  static getYear() {
+    return dayjs(Date.now() + 2592000000).year()
+  }
+
+  static getMonth() {
+    return dayjs(Date.now() + 2592000000).month() + 1
+  }
 }

@@ -175,7 +175,7 @@ export default function AcousticTubeForm() {
                     {row.quantity / 1000}
                   </TableCell>
                   <TableCell component="th" scope="row">
-                    {row.length ? row.length / 1000 : ""}
+                    {row.length ? row.length / 1000 : 0}
                   </TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">

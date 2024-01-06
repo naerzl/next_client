@@ -1,3 +1,5 @@
+import { DICTIONARY_CLASS_ID } from "@/libs/const"
+
 export const PROCESSING_RESULT = [
   {
     value: "unqualified",
@@ -21,56 +23,56 @@ export const CLASS_OPTION = [
   {
     value: "cement",
     label: "水泥",
-    id: 7,
+    id: DICTIONARY_CLASS_ID.cement,
     unit: "吨",
   },
   {
     value: "water",
     label: "水",
-    id: 8,
+    id: DICTIONARY_CLASS_ID.water,
     unit: "吨",
   },
   {
     value: "fine_aggregate",
     label: "细骨料",
-    id: 9,
+    id: DICTIONARY_CLASS_ID.fine_aggregate,
     unit: "吨",
   },
   {
     value: "coarse_aggregate",
     label: "粗骨料",
-    id: 10,
+    id: DICTIONARY_CLASS_ID.coarse_aggregate,
     unit: "吨",
   },
   {
     value: "mineral_admixture",
     label: "矿物掺和料",
-    id: 11,
+    id: DICTIONARY_CLASS_ID.mineral_admixture,
     unit: "吨",
   },
   {
     value: "additive",
     label: "外加剂",
-    id: 13,
+    id: DICTIONARY_CLASS_ID.additive,
     unit: "吨",
   },
   {
-    value: "sheng",
+    value: "acoustic_tube",
     label: "声测管",
-    id: 15,
+    id: DICTIONARY_CLASS_ID.acoustic_tube,
     unit: "米",
   },
   {
     value: "rebar",
     label: "钢筋",
-    id: 16,
+    id: DICTIONARY_CLASS_ID.rebar,
     unit: "吨",
   },
 
   {
-    value: "kuai",
+    value: "spacer",
     label: "垫块",
-    id: 17,
+    id: DICTIONARY_CLASS_ID.spacer,
     unit: "个",
   },
 ]

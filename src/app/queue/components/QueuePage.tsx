@@ -1,6 +1,16 @@
 "use client"
 import React from "react"
-import { Breadcrumbs, Button, Chip, InputBase, Table, TableHead } from "@mui/material"
+import {
+  Breadcrumbs,
+  Button,
+  Chip,
+  InputBase,
+  MenuItem,
+  Pagination,
+  Select,
+  Table,
+  TableHead,
+} from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import { LayoutContext } from "@/components/LayoutContext"
@@ -9,12 +19,10 @@ import { reqGetQueue, reqGetQueueExportFile } from "@/app/queue/api"
 import TableCell from "@mui/material/TableCell"
 import TableRow from "@mui/material/TableRow"
 import TableBody from "@mui/material/TableBody"
-import { dateToUTCCustom, findEnumValueWithLabel } from "@/libs/methods"
-import { STATUS_ENUM } from "@/app/queue/const"
-import { QueueList } from "@/app/queue/types"
-
-let STR =
-  "http://zctc-docs.oss-cn-beijing.aliyuncs.com/export%2F27%2F31%2F32795%2FInspection_lot_template%2F02%28%E8%AE%B0%29%E9%92%A2%E6%8A%A4%E7%AD%92%E5%AE%89%E8%A3%85%E8%B4%A8%E9%87%8F%E6%A3%80%E9%AA%8C%E8%AE%B0%E5%BD%95%E8%A1%A8.xlsx?Expires=601702620668&OSSAccessKeyId=LTAI5tRrhJmZ5QDdkcYk9h5C&Signature=D6FJ3uVEnknfP%2BSK3A2Gm416SV0%3D"
+import { dateToUTCCustom } from "@/libs/methods"
+import { CLASS_ENUM, STATUS_ENUM } from "@/app/queue/const"
+import { GetQueueParams, QueueList } from "@/app/queue/types"
+import { BaseApiPager } from "@/types/api"
 
 const columns = [
   // {
@@ -90,7 +98,7 @@ function renderRowCellName(fileName: string | null) {
 }
 
 export default function QueuePage() {
-  const { projectId: PROJECT_id } = React.useContext(LayoutContext)
+  const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { trigger: getQueueApi } = useSWRMutation("/queue", reqGetQueue)
   const { trigger: getQueueExportFileApi } = useSWRMutation(
@@ -99,17 +107,33 @@ export default function QueuePage() {
   )
 
   const [queueList, setQueueList] = React.useState<QueueList[]>([])
+  const [pager, setPager] = React.useState<BaseApiPager>({} as BaseApiPager)
+
+  const [swrState, setSWRState] = React.useState<GetQueueParams>({
+    page: 1,
+    limit: 10,
+    project_id: PROJECT_ID,
+    class: "inspection_lot",
+  })
 
   const getQueueList = async () => {
-    const res = await getQueueApi({ project_id: PROJECT_id, class: "inspection_lot" })
-    setQueueList(res)
+    const res = await getQueueApi(swrState)
+    setQueueList(res.items)
+    setPager(res.pager)
   }
 
   React.useEffect(() => {
     getQueueList()
-  }, [])
+  }, [swrState])
 
-  const handleSearch = () => {}
+  const handleSearch = async () => {
+    let params = structuredClone(swrState)
+    params.page = 1
+    setSWRState(params)
+    const res = await getQueueApi(swrState)
+    setQueueList(res.items)
+    setPager(res.pager)
+  }
 
   const handleClickDownLoad = async (item: QueueList) => {
     if (item.file_names == null) return
@@ -123,21 +147,47 @@ export default function QueuePage() {
 
     const a = document.createElement("a")
     for (const index in fileUrlArr) {
-      let r = await fetch(STR)
-      let blob = await r.blob()
-      let localUrl = URL.createObjectURL(blob)
-      console.log(localUrl)
-      const fr = new FileReader()
-      fr.readAsDataURL(blob)
-      fr.onload = (e) => {
-        console.log(e.target?.result)
-        a.href = e.target!.result as string
-        a.click()
-      }
-      // console.log(localUrl)
+      a.href = fileUrlArr[index].replace("http", "https") as string
+      a.click()
     }
 
     a.remove()
+  }
+
+  const handlePaginationChange = async (val: any, type: keyof GetQueueParams) => {
+    let params = {} as GetQueueParams
+    for (let swrStateKey in swrState) {
+      // @ts-ignore
+      if (swrState[swrStateKey] && swrState[swrStateKey] != "null") {
+        // @ts-ignore
+        params[swrStateKey] = swrState[swrStateKey]
+      }
+    }
+    if (type == "limit") {
+      params.page = 1
+    }
+    // @ts-ignore
+    params[type] = val
+    setSWRState(params)
+    const res = await getQueueApi(params)
+
+    setQueueList(res.items)
+    setPager(res.pager)
+  }
+
+  const handleChangeSearchValue = (type: keyof GetQueueParams, value: string) => {
+    const params = structuredClone(swrState)
+    if (value == "all") {
+      if (type == "status") {
+        delete params.status
+      } else if (type == "class") {
+        return
+      }
+    } else {
+      // @ts-ignore
+      params[type] = value
+    }
+    setSWRState(params)
   }
 
   return (
@@ -155,24 +205,49 @@ export default function QueuePage() {
       </div>
       <header className="flex justify-between mb-4">
         <div className="flex gap-x-2">
-          {/*<InputBase*/}
-          {/*  className="w-[12rem] h-10 border px-2 shadow bg-white"*/}
-          {/*  placeholder="请输入单位工程名称"*/}
-          {/*  onChange={(event) => {}}*/}
-          {/*/>*/}
-
-          {/*<InputBase*/}
-          {/*  className="w-[12rem] h-10 border px-2 shadow bg-white"*/}
-          {/*  placeholder="请输入节点名称"*/}
-          {/*  onChange={(event) => {}}*/}
-          {/*/>*/}
-          {/*<Button*/}
-          {/*  className="bg-railway_blue text-white"*/}
-          {/*  onClick={() => {*/}
-          {/*    handleSearch()*/}
-          {/*  }}>*/}
-          {/*  搜索*/}
-          {/*</Button>*/}
+          <Select
+            sx={{ width: 150 }}
+            id="status"
+            size="small"
+            placeholder="请选择导出状态"
+            value={swrState.status ?? "all"}
+            fullWidth
+            onChange={(event) => {
+              handleChangeSearchValue("status", event.target.value)
+            }}
+            defaultValue="">
+            <MenuItem value={"all"}>全部</MenuItem>
+            {STATUS_ENUM.map((item) => (
+              <MenuItem value={item.value} key={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </Select>
+          <Select
+            sx={{ width: 150 }}
+            id="status"
+            size="small"
+            placeholder="请选择导出类型"
+            fullWidth
+            value={swrState.class}
+            onChange={(event) => {
+              handleChangeSearchValue("class", event.target.value)
+            }}
+            defaultValue="">
+            <MenuItem value={"all"}>全部</MenuItem>
+            {CLASS_ENUM.map((item) => (
+              <MenuItem value={item.value} key={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </Select>
+          <Button
+            className="bg-railway_blue text-white"
+            onClick={() => {
+              handleSearch()
+            }}>
+            搜索
+          </Button>
         </div>
         <div></div>
       </header>
@@ -220,6 +295,28 @@ export default function QueuePage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+          <div className="absolute bottom-0 w-full flex justify-center items-center gap-x-2 bg-white border-t">
+            <span>共{pager.count}条</span>
+            <select
+              value={swrState.limit}
+              className="border"
+              onChange={(event) => {
+                handlePaginationChange(event.target.value, "limit")
+              }}>
+              <option value={10}>10条/页</option>
+              <option value={20}>20条/页</option>
+              <option value={50}>50条/页</option>
+            </select>
+            <Pagination
+              page={swrState.page}
+              count={pager.count ? Math.ceil(pager.count / pager.limit) : 1}
+              variant="outlined"
+              shape="rounded"
+              onChange={(event, page) => {
+                handlePaginationChange(page, "page")
+              }}
+            />
           </div>
         </div>
       </div>

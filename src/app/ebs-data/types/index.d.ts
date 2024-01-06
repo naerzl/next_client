@@ -1,5 +1,6 @@
 /*获取EBS结构列表 请求参数*/
 export interface TypeApiGetEBSParams {
+  id?: number
   project_id?: number
   code?: string
   level?: number
@@ -134,8 +135,6 @@ export interface TypeApiPostBridgeBoredBasicDataParams {
   pile_top_elevation: number
   pile_type: string
   rebar_cage_length: number
-  liner_dictionary_id: number
-  liner_number: number
   drill_mode: string
 }
 
@@ -147,8 +146,6 @@ export interface TypeApiPutBridgeBoredBasicDataParams {
   pile_top_elevation: number
   pile_type: string
   rebar_cage_length: number
-  liner_dictionary_id: number
-  liner_number: number
   drill_mode: string
 }
 

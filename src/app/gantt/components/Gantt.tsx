@@ -26,6 +26,10 @@ type Props = {
   getSubGanttList: (item: any) => void
   // eslint-disable-next-line no-unused-vars
   handleOpenDrawerProcess: (item: any) => void
+  // eslint-disable-next-line no-unused-vars
+  handleOpenDialogWithMaterialDemand: (item: any) => void
+  // eslint-disable-next-line no-unused-vars
+  handleOpenDialogWithMaterialDemandWithUnitProject: (item: any) => void
 }
 
 function getGanttTopLevelParentId(id: string | number): string | number {
@@ -37,7 +41,6 @@ let updatedParentTasks: Task[] = []
 function updateParentTask(task: Task) {
   // 找到父级任务进行对象
   const parentTask = gantt.getTask(gantt.getParent(task.id))
-  console.log(parentTask)
 
   if (String(parentTask.id).startsWith("w") || String(parentTask.id).startsWith("p")) return
   // 深拷贝一个父级任务
@@ -110,7 +113,15 @@ function updateChildrenTask(task: Task, duration?: number) {
 }
 
 const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
-  const { zoom, onDataUpdated, editGanttItem, getSubGanttList, handleOpenDrawerProcess } = props
+  const {
+    zoom,
+    onDataUpdated,
+    editGanttItem,
+    getSubGanttList,
+    handleOpenDrawerProcess,
+    handleOpenDialogWithMaterialDemand,
+    handleOpenDialogWithMaterialDemandWithUnitProject,
+  } = props
 
   const { trigger: getProcessApi } = useSWRMutation("/process", reqGetProcess)
 
@@ -258,7 +269,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       const topLevelParentId = getGanttTopLevelParentId(id)
       const topTask = gantt.getTask(topLevelParentId)
       const secondTask = gantt.getTask(gantt.getChildren(topLevelParentId)[0])
-      console.log(task)
       try {
         editGanttItem(task, topTask, secondTask)
         updateParentTask(task)
@@ -294,8 +304,6 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
       //   task.end_date = new Date(dateToUTCCustom(new Date(), "YYYY-MM-DD"))
       //   task.duration = 0
       // }
-      console.log(dayjs(parentTask.start_date).unix(), dayjs(task.start_date).unix())
-      console.log(dayjs(parentTask.end_date).unix(), dayjs(task.end_date).unix())
       if (!parentTask.duration) return true
       if (
         dayjs(parentTask.start_date).unix() > dayjs(task.start_date).unix() ||
@@ -332,6 +340,7 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
     })
 
     gantt.attachEvent("onTaskClick", function (taskId, e) {
+      console.log(gantt.getTask(taskId))
       if (/^\d/.test(taskId)) {
         if (e.target.className.includes("gantt_task_content")) {
           const task = gantt.getTask(taskId)
@@ -351,6 +360,14 @@ const Gantt = React.forwardRef(function Gantt(props: Props, ref) {
 
         if (e.target.className.includes("iconfont")) {
         }
+      }
+      if (String(taskId).startsWith("w") && !e.target.className.includes("gantt_tree_icon")) {
+        const task = gantt.getTask(taskId)
+        handleOpenDialogWithMaterialDemand(task)
+      }
+      if (String(taskId).startsWith("p") && !e.target.className.includes("gantt_tree_icon")) {
+        const task = gantt.getTask(taskId)
+        handleOpenDialogWithMaterialDemandWithUnitProject(task)
       }
       return true
     })

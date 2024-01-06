@@ -18,6 +18,8 @@ export interface TestDataList {
   creator_unionid: string
   created_at: string
   updated_at: string
+  machine: null | any
+  material: null | any
 }
 
 export interface ReqGetTestListResponse {

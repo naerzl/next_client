@@ -147,7 +147,7 @@ export default function ConcreteForm() {
             {tableList &&
               tableList.map((row: ConcreteData, index: number) => (
                 <TableRow key={row.id}>
-                  <TableCell align="left">{renderProperty(row.dictionary.properties)}</TableCell>
+                  <TableCell align="left">{renderProperty(row.dictionary?.properties)}</TableCell>
                   <TableCell align="left">{row.quantity ? row.quantity / 1000 : ""}</TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                   <TableCell align="left">

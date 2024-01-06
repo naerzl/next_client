@@ -1,7 +1,7 @@
 import { Button, Drawer } from "@mui/material"
 import React from "react"
 import { TestDataList } from "@/app/test/types"
-import { dateToYYYYMM } from "@/libs/methods"
+import { dateToUTCCustom, dateToYYYYMM } from "@/libs/methods"
 import { classOptions, TEST_TYPE_OPTION } from "@/app/test/const"
 
 interface Props {
@@ -408,21 +408,15 @@ export default function LookTestDetaill(props: Props) {
                       <li key={index}>
                         <div>
                           <b className="mr-1.5 text-railway_gray">试件号:</b>
-                          <span className="font-bold text-railway_303">
-                            {dateToYYYYMM(subItem.date_of_determination)}
-                          </span>
+                          <span className="font-bold text-railway_303">{subItem.number}</span>
                         </div>
                         <div>
                           <b className="mr-1.5 text-railway_gray">A值(mm):</b>
-                          <span className="font-bold text-railway_303">
-                            {dateToYYYYMM(subItem.a_value)}
-                          </span>
+                          <span className="font-bold text-railway_303">{subItem.a_value}</span>
                         </div>
                         <div>
                           <b className="mr-1.5 text-railway_gray">C值(mm):</b>
-                          <span className="font-bold text-railway_303">
-                            {dateToYYYYMM(subItem.c_value)}
-                          </span>
+                          <span className="font-bold text-railway_303">{subItem.c_value}</span>
                         </div>
                       </li>
                     ))}
@@ -1277,7 +1271,9 @@ export default function LookTestDetaill(props: Props) {
                           <div key={subIndex}>
                             <ul>
                               <li className="mt-1.5">
-                                <b className="mr-1.5 text-railway_gray">数据{index + 1}:</b>
+                                <b className="mr-1.5 text-railway_gray">
+                                  混凝土拌和物含气量测定值{subIndex + 1}:
+                                </b>
                                 <span className="font-bold text-railway_303">{subItem}</span>
                               </li>
                             </ul>
@@ -1380,12 +1376,12 @@ export default function LookTestDetaill(props: Props) {
               <ul>
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">时间:</b>
-                  <span className="font-bold text-railway_303">{item.duration}</span>
+                  <span className="font-bold text-railway_303">{item.duration}分钟</span>
                 </li>
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">试验日期:</b>
                   <span className="font-bold text-railway_303">
-                    {dateToYYYYMM(item.date_of_determination)}
+                    {dateToUTCCustom(item.date_of_determination, "YYYY-MM-DD")}
                   </span>
                 </li>
 
@@ -1406,7 +1402,7 @@ export default function LookTestDetaill(props: Props) {
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">试验日期:</b>
                   <span className="font-bold text-railway_303">
-                    {dateToYYYYMM(item.date_of_determination)}
+                    {dateToUTCCustom(item.date_of_determination, "YYYY-MM-DD")}
                   </span>
                 </li>
                 <li className="mt-1.5">
@@ -1442,7 +1438,7 @@ export default function LookTestDetaill(props: Props) {
                 <li className="mt-1.5">
                   <b className="mr-1.5 text-railway_gray">试验日期:</b>
                   <span className="font-bold text-railway_303">
-                    {dateToYYYYMM(item.date_of_determination)}
+                    {dateToUTCCustom(item.date_of_determination, "YYYY-MM-DD")}
                   </span>
                 </li>
                 <li className="mt-1.5">

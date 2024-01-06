@@ -18,5 +18,31 @@ export interface PermissionData {
 
 export interface EnumType {
   label: string
+  value: string | number
+}
+
+// 数据字典类型数据
+export interface DictionaryClassData {
+  id: number
+  parent_id?: number
+  name: string
+  serial: number
+  icon: string
+  relationship: string
+  children?: DictionaryClassData[]
+}
+
+export type Option = {
+  pId: number
+  id: number
   value: string
+  title: string
+}
+
+export type TreeOption = {
+  pId: number
+  id: number
+  value: string
+  title: string
+  children?: option[]
 }

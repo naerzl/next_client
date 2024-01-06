@@ -155,3 +155,33 @@ input.custom[type="number"]{
     }
   }
 }
+
+.rotating {
+  display: inline-block;
+  animation-name: rotating;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+}
+@keyframes rotating {
+  from { transform: rotate(0deg);}
+  to { transform: rotate(360deg);}
+}
+
+.MuiTooltip-popper{
+  z-index: 1701 !important;
+}
+
+.ant-picker-dropdown{
+  z-index: 1703 !important;
+}
+.ant-select-dropdown{
+  z-index: 1700 !important;
+}
+
+.ant-tree-select{
+  .ant-select-selector{
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+}

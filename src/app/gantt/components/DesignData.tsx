@@ -49,14 +49,6 @@ const baseFormHeaders = [
     title: "钢筋笼长度(m)",
     key: "rebar_cage_length",
   },
-  {
-    title: "垫块规格型号",
-    key: "liner_dictionary_id",
-  },
-  {
-    title: "垫块数量",
-    key: "liner_number",
-  },
 ]
 
 const concreteFormHeaders = [
@@ -72,10 +64,6 @@ const concreteFormHeaders = [
 
 const acousticTubeDataFormHeaders = [
   {
-    title: "编号",
-    key: "rebar_no",
-  },
-  {
     title: "声测管型号",
     key: "dictionaryName",
   },
@@ -90,6 +78,10 @@ const acousticTubeDataFormHeaders = [
 ]
 
 const rebarFormHeaders = [
+  {
+    title: "钢筋编号",
+    key: "rebar_no",
+  },
   {
     title: "钢筋型号",
     key: "dictionaryName",
@@ -119,12 +111,7 @@ function renderCellDrillMode(item: BridgeBoredBasicData) {
   return Drill_Mode_Enum.find((el) => el.value == item.drill_mode)?.label
 }
 
-function baseDataToDesignTableData(arr: any[], dictionaryList: DictionaryData[]) {
-  function findDictionaryItem(id: number): string {
-    const item = dictionaryList.find((item) => item.id == id)
-    return item ? item.properties : "[]"
-  }
-
+function baseDataToDesignTableData(arr: any[]) {
   return arr.map((row) => {
     return {
       pile_diameter: row.pile_diameter / 1000,
@@ -133,8 +120,6 @@ function baseDataToDesignTableData(arr: any[], dictionaryList: DictionaryData[])
       pile_type: renderCellType(row),
       dill_mode: renderCellDrillMode(row),
       rebar_cage_length: row.rebar_cage_length / 1000,
-      liner_dictionary_id: renderProperty(findDictionaryItem(row.liner_dictionary_id)),
-      liner_number: row.liner_number / 1000,
     }
   })
 }
@@ -217,15 +202,13 @@ export default function DesignData() {
   const [rebarData, setRebarData] = React.useState<any[]>([])
 
   const getBaseFormListData = async () => {
-    const dictionaryData = await getDictionaryApi({ class_id: BASIC_DICTIONARY_CLASS_ID })
-
     const res = await getBridgeBoredBasicDataApi({
       ebs_id: parseInt(ctx.ebsItem.id),
       project_id: PROJECT_ID,
       engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
     })
 
-    setBaseData(baseDataToDesignTableData(res, dictionaryData))
+    setBaseData(baseDataToDesignTableData(res))
   }
 
   const getConcreteListData = async () => {
@@ -253,14 +236,15 @@ export default function DesignData() {
   }
 
   const getRebarListData = async () => {
-    const dictionaryData = await getDictionaryApi({ class_id: REBAR_DICTIONARY_CLASS_ID })
+    const dictionaryData1 = await getDictionaryApi({ class_id: REBAR_DICTIONARY_CLASS_ID + 1 })
+    const dictionaryData2 = await getDictionaryApi({ class_id: REBAR_DICTIONARY_CLASS_ID + 2 })
 
     const res = await getRebarDataApi({
       ebs_id: parseInt(ctx.ebsItem.id),
       project_id: PROJECT_ID,
       engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
     })
-    setRebarData(rebarDataToDesignTableData(res, dictionaryData))
+    setRebarData(rebarDataToDesignTableData(res, [...dictionaryData1, ...dictionaryData2]))
   }
 
   const [loading, setLoading] = React.useState(false)

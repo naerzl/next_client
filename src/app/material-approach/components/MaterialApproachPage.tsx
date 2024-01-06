@@ -39,6 +39,10 @@ import NoPermission from "@/components/NoPermission"
 import { DatePicker } from "antd"
 import locale from "antd/es/date-picker/locale/zh_CN"
 import { BaseApiPager } from "@/types/api"
+import MaterialExport from "@/app/components/MaterialExport"
+import useMaterialExport from "@/hooks/useMaterialExport"
+import ExitToAppIcon from "@mui/icons-material/ExitToApp"
+import ExportForm from "@/app/material-approach/components/ExportForm"
 
 function renderStatus(label: string): React.ReactNode {
   switch (label) {
@@ -76,7 +80,9 @@ function renderProperty(str: string) {
 function renderQuantity(item: MaterialApproachData) {
   const obj = CLASS_OPTION.find((el) => el.value == item.class)
 
-  return obj ? item.arrivaled_quantity + obj.unit : item.arrivaled_quantity
+  return obj
+    ? (item.arrivaled_quantity / 1000).toFixed(3) + obj.unit
+    : (item.arrivaled_quantity / 1000).toFixed(3)
 }
 export default function MaterialApproachPage() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
@@ -129,10 +135,10 @@ export default function MaterialApproachPage() {
       dataIndex: "parent_name",
       key: "parent_name",
     },
-    // {
-    //   title: "操作",
-    //   key: "action",
-    // },
+    {
+      title: "操作",
+      key: "action",
+    },
   ]
 
   const {
@@ -244,6 +250,7 @@ export default function MaterialApproachPage() {
   const handleEditMaterialApproach = (materialData: MaterialApproachData) => {
     handleEditMaterial(materialData)
   }
+  const { exportOpen, handleExportOpen, handleExportClose } = useMaterialExport()
 
   if (!permissionTagList.includes(permissionJson.material_approach_member_read)) {
     return <NoPermission />
@@ -328,23 +335,23 @@ export default function MaterialApproachPage() {
           {/*</Button>*/}
         </div>
         <div>
-          {/*<Button*/}
-          {/*  style={displayWithPermission(*/}
-          {/*    permissionTagList,*/}
-          {/*    permissionJson.material_approach_member_write,*/}
-          {/*  )}*/}
-          {/*  className="bg-railway_blue text-white"*/}
-          {/*  onClick={() => {*/}
-          {/*    handleAddMaterial()*/}
-          {/*  }}>*/}
-          {/*  添加*/}
-          {/*</Button>*/}
+          <Button
+            style={displayWithPermission(
+              permissionTagList,
+              permissionJson.material_approach_member_write,
+            )}
+            className="bg-railway_blue text-white"
+            onClick={() => {
+              handleAddMaterial()
+            }}>
+            添加
+          </Button>
         </div>
       </header>
       {isMutating ? (
         <Loading />
       ) : (
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           <div className="h-full relative border">
             <div
               className="bg-white  custom-scroll-bar shadow-sm overflow-y-auto "
@@ -377,35 +384,43 @@ export default function MaterialApproachPage() {
                       <TableCell align="left">{renderStatus(row.status)}</TableCell>
                       <TableCell align="left">{dateToYYYYMM(row.created_at)}</TableCell>
                       <TableCell align="left">{row.creator}</TableCell>
-                      {/*<TableCell align="left">*/}
-                      {/*  <div className="flex justify-between">*/}
-                      {/*    <Button*/}
-                      {/*      style={displayWithPermission(*/}
-                      {/*        permissionTagList,*/}
-                      {/*        permissionJson.material_approach_member_update,*/}
-                      {/*      )}*/}
-                      {/*      variant="outlined"*/}
-                      {/*      onClick={() => {*/}
-                      {/*        handleEditMaterialApproach(row)*/}
-                      {/*      }}*/}
-                      {/*      startIcon={<EditOutlinedIcon />}>*/}
-                      {/*      编辑*/}
-                      {/*    </Button>*/}
-                      {/*    <Button*/}
-                      {/*      style={displayWithPermission(*/}
-                      {/*        permissionTagList,*/}
-                      {/*        permissionJson.material_approach_member_delete,*/}
-                      {/*      )}*/}
-                      {/*      variant="outlined"*/}
-                      {/*      color="error"*/}
-                      {/*      onClick={() => {*/}
-                      {/*        handleDelMaterialApproach(row.id)*/}
-                      {/*      }}*/}
-                      {/*      startIcon={<DeleteOutlineIcon />}>*/}
-                      {/*      删除*/}
-                      {/*    </Button>*/}
-                      {/*  </div>*/}
-                      {/*</TableCell>*/}
+                      <TableCell align="left">
+                        <div className="flex justify-between">
+                          <Button
+                            variant="outlined"
+                            onClick={() => {
+                              handleExportOpen()
+                            }}
+                            startIcon={<ExitToAppIcon />}>
+                            导出
+                          </Button>
+                          {/*<Button*/}
+                          {/*  style={displayWithPermission(*/}
+                          {/*    permissionTagList,*/}
+                          {/*    permissionJson.material_approach_member_update,*/}
+                          {/*  )}*/}
+                          {/*  variant="outlined"*/}
+                          {/*  onClick={() => {*/}
+                          {/*    handleEditMaterialApproach(row)*/}
+                          {/*  }}*/}
+                          {/*  startIcon={<EditOutlinedIcon />}>*/}
+                          {/*  编辑*/}
+                          {/*</Button>*/}
+                          {/*<Button*/}
+                          {/*  style={displayWithPermission(*/}
+                          {/*    permissionTagList,*/}
+                          {/*    permissionJson.material_approach_member_delete,*/}
+                          {/*  )}*/}
+                          {/*  variant="outlined"*/}
+                          {/*  color="error"*/}
+                          {/*  onClick={() => {*/}
+                          {/*    handleDelMaterialApproach(row.id)*/}
+                          {/*  }}*/}
+                          {/*  startIcon={<DeleteOutlineIcon />}>*/}
+                          {/*  删除*/}
+                          {/*</Button>*/}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -444,6 +459,12 @@ export default function MaterialApproachPage() {
           editItem={editItem}
           getDataList={getDataList}
         />
+      )}
+
+      {exportOpen && (
+        <MaterialExport open={exportOpen} handleClose={handleExportClose}>
+          <ExportForm handleClose={handleExportClose} />
+        </MaterialExport>
       )}
     </>
   )

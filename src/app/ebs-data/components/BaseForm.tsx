@@ -65,18 +65,6 @@ const columns = [
     key: "rebar_cage_length",
     align: "left",
   },
-  {
-    title: "垫块规格型号",
-    dataIndex: "liner_dictionary_id",
-    key: "liner_dictionary_id",
-    align: "left",
-  },
-  {
-    title: "垫块数量",
-    dataIndex: "liner_number",
-    key: "liner_number",
-    align: "left",
-  },
 
   {
     width: "150px",
@@ -204,10 +192,7 @@ export default function BaseForm() {
                   <TableCell align="left">{renderCellType(row)}</TableCell>
                   <TableCell align="left">{renderCellDrillMode(row)}</TableCell>
                   <TableCell align="left">{row.rebar_cage_length / 1000}</TableCell>
-                  <TableCell align="left">
-                    {renderProperty(findDictionaryItem(row.liner_dictionary_id))}
-                  </TableCell>
-                  <TableCell align="left">{row.liner_number / 1000}</TableCell>
+
                   <TableCell align="left">
                     <div className="flex justify-start">
                       <IconButton

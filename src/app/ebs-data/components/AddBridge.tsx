@@ -58,22 +58,6 @@ export default function AddBridge(props: Props) {
     handleCloseAddBridgeWithDrawer()
   }
 
-  const { trigger: getDictionaryApi } = useSWRMutation("/dictionary", reqGetDictionary)
-
-  const [dictionaryListOptions, setDictionaryListOptions] = React.useState<DictionaryData[]>([])
-
-  const getDictionary = async () => {
-    const res = await getDictionaryApi({ class_id: BASIC_DICTIONARY_CLASS_ID })
-    console.log(res)
-    setDictionaryListOptions(res || [])
-  }
-
-  React.useEffect(() => {
-    getDictionary()
-  }, [])
-
-  const [dictionarySelect, setDictionarySelect] = React.useState<number>(0)
-
   const {
     handleSubmit,
     formState: { errors },
@@ -99,9 +83,6 @@ export default function AddBridge(props: Props) {
     setValue("pile_top_elevation", item.pile_top_elevation / 1000)
     setValue("pile_diameter", item.pile_diameter / 1000)
     setValue("rebar_cage_length", item.rebar_cage_length / 1000)
-    setValue("liner_number", item.liner_number / 1000)
-    // setValue("liner_dictionary_id", item.liner_dictionary_id)
-    setDictionarySelect(item.liner_dictionary_id)
     setDrillModeState(item.drill_mode)
     setPileTypeState(item.pile_type)
   }
@@ -113,7 +94,6 @@ export default function AddBridge(props: Props) {
   }, [editItem])
 
   const { run: onSubmit }: { run: SubmitHandler<IForm> } = useDebounce(async (values: IForm) => {
-    if (dictionarySelect <= 0) return message.error("请选择一个垫块字典")
     let params = {
       ebs_id: ctx.ebsItem.id,
       engineering_listing_id: ctx.ebsItem.engineering_listing_id,
@@ -122,8 +102,6 @@ export default function AddBridge(props: Props) {
       pile_length: intoDoubleFixed3(values.pile_length) * 1000,
       pile_top_elevation: intoDoubleFixed3(values.pile_top_elevation) * 1000,
       rebar_cage_length: intoDoubleFixed3(values.rebar_cage_length) * 1000,
-      liner_dictionary_id: dictionarySelect,
-      liner_number: intoDoubleFixed3(values.liner_number) * 1000,
       pile_type: pileTypeState,
       drill_mode: drillModeState,
     } as TypeApiPostBridgeBoredBasicDataParams & { id: number }
@@ -289,67 +267,6 @@ export default function AddBridge(props: Props) {
               <ErrorMessage
                 errors={errors}
                 name="rebar_cage_length"
-                render={({ message }) => (
-                  <p className="text-railway_error text-sm absolute">{message}</p>
-                )}
-              />
-            </div>
-
-            <div className="mb-8 relative">
-              <div className="flex items-start flex-col">
-                <InputLabel
-                  htmlFor="liner_dictionary_id"
-                  className="mr-3 w-full text-left mb-2.5"
-                  required>
-                  垫块规格型号:
-                </InputLabel>
-                <Select
-                  MenuProps={{ sx: { zIndex: 1602 } }}
-                  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
-                  id="drill_mode"
-                  size="small"
-                  value={dictionarySelect}
-                  onChange={(event) => {
-                    setDictionarySelect(+event.target.value)
-                  }}
-                  fullWidth>
-                  {dictionaryListOptions.map((type) => (
-                    <MenuItem value={type.id} key={type.id}>
-                      {type.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </div>
-              <ErrorMessage
-                errors={errors}
-                name="liner_dictionary_id"
-                render={({ message }) => (
-                  <p className="text-railway_error text-sm absolute">{message}</p>
-                )}
-              />
-            </div>
-
-            <div className="mb-8 relative">
-              <div className="flex items-start flex-col">
-                <InputLabel htmlFor="liner_number" className="mr-3 w-20 text-left mb-2.5" required>
-                  垫块数量:
-                </InputLabel>
-                <TextField
-                  variant="outlined"
-                  id="liner_number"
-                  size="small"
-                  fullWidth
-                  error={Boolean(errors.liner_number)}
-                  {...register("liner_number", {
-                    required: "请输入垫块数量",
-                  })}
-                  placeholder="请输入垫块数量"
-                  className="flex-1"
-                />
-              </div>
-              <ErrorMessage
-                errors={errors}
-                name="liner_number"
                 render={({ message }) => (
                   <p className="text-railway_error text-sm absolute">{message}</p>
                 )}

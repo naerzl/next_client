@@ -26,39 +26,48 @@ import locale from "antd/es/date-picker/locale/zh_CN"
 import { BaseApiPager } from "@/types/api"
 import { GetMaterialReceiveParams } from "@/app/material-receipt/types"
 import dayjs from "dayjs"
+import MaterialExport from "@/app/components/MaterialExport"
+import ExportForm from "@/app/test/components/ExportForm"
+import useMaterialExport from "@/hooks/useMaterialExport"
+import ExitToAppIcon from "@mui/icons-material/ExitToApp"
 
 const columns = [
-  {
-    title: "委托单编号",
-    dataIndex: "entrust_number",
-    key: "entrust_number",
-  },
-  {
-    title: "委托单文件地址",
-    dataIndex: "entrust_file_url",
-    key: "entrust_file_url",
-  },
-  {
-    title: "试验报告编号",
-    dataIndex: "test_number",
-    key: "test_number",
-  },
-
-  {
-    title: "试验报告文件地址",
-    dataIndex: "test_report_file_url",
-    key: "test_report_file_url",
-  },
   {
     title: "试验类型",
     dataIndex: "class",
     key: "class",
   },
   {
+    title: "试验物资名称",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "试验报告编号",
+    dataIndex: "test_number",
+    key: "test_number",
+  },
+  {
+    title: "委托单编号",
+    dataIndex: "entrust_number",
+    key: "entrust_number",
+  },
+  {
     title: "试验时间",
     dataIndex: "tested_at",
     key: "tested_at",
   },
+  {
+    title: "试验报告文件地址",
+    dataIndex: "test_report_file_url",
+    key: "test_report_file_url",
+  },
+  {
+    title: "委托单文件地址",
+    dataIndex: "entrust_file_url",
+    key: "entrust_file_url",
+  },
+
   {
     title: "试验员",
     dataIndex: "tested_by",
@@ -78,6 +87,16 @@ const columns = [
 function findClassName(value: string) {
   const testItem = TEST_TYPE_OPTION.find((item) => item.value == value)
   return testItem ? testItem.label : ""
+}
+
+function findTestName(row: TestDataList) {
+  if (row.machine) {
+    return row.machine.name
+  }
+
+  if (row.material) {
+    return row.material.dictionary ? row.material.dictionary.name : ""
+  }
 }
 
 export default function TestPage() {
@@ -127,6 +146,8 @@ export default function TestPage() {
     setTestList(newArr)
     setPager(res.pager)
   }
+
+  const { exportOpen, handleExportOpen, handleExportClose } = useMaterialExport()
 
   if (!permissionTagList.includes(permissionJson.test_list_member_read)) {
     return <NoPermission />
@@ -180,12 +201,12 @@ export default function TestPage() {
         <div></div>
       </header>
       <div className="flex-1 flex flex-col relative overflow-hidden">
-        <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-y-auto">
+        <div className="bg-white border custom-scroll-bar shadow-sm flex-1 overflow-y-auto pb-8">
           <Table sx={{ minWidth: 650 }} aria-label="simple table" stickyHeader>
             <TableHead sx={{ position: "sticky", top: "0", zIndex: 5 }}>
               <TableRow>
                 {columns.map((col, index) => (
-                  <TableCell key={index} sx={{ width: col.key == "action" ? "210px" : "auto" }}>
+                  <TableCell key={index} sx={{ width: col.key == "action" ? "280px" : "auto" }}>
                     {col.title}
                   </TableCell>
                 ))}
@@ -194,16 +215,25 @@ export default function TestPage() {
             <TableBody>
               {testList.map((row, index) => (
                 <TableRow sx={{ "&:last-child td, &:last-child th": { border: 0 } }} key={row.id}>
-                  <TableCell>{row.entrust_number}</TableCell>
-                  <TableCell align="left">{row.entrust_file_url}</TableCell>
-                  <TableCell align="left">{row.test_number}</TableCell>
-                  <TableCell align="left">{row.test_report_file_url}</TableCell>
                   <TableCell align="left">{findClassName(row.class)}</TableCell>
+                  <TableCell align="left">{findTestName(row)}</TableCell>
+                  <TableCell align="left">{row.test_number}</TableCell>
+                  <TableCell>{row.entrust_number}</TableCell>
                   <TableCell align="left">{dateToYYYYMM(row.tested_at)}</TableCell>
+                  <TableCell align="left">{row.test_report_file_url}</TableCell>
+                  <TableCell align="left">{row.entrust_file_url}</TableCell>
                   <TableCell align="left">{row.tested_by}</TableCell>
                   <TableCell align="left">{row.creator}</TableCell>
                   <TableCell align="left">
-                    <div className="flex justify-between">
+                    <div className="flex justify-center gap-x-2">
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          handleExportOpen()
+                        }}
+                        startIcon={<ExitToAppIcon />}>
+                        导出
+                      </Button>
                       <Button
                         variant="outlined"
                         style={displayWithPermission(
@@ -222,13 +252,6 @@ export default function TestPage() {
               ))}
             </TableBody>
           </Table>
-          {drawerOpen && (
-            <LookTestDetaill
-              editItem={detailItem}
-              open={drawerOpen}
-              close={handleCloseLookTestDetailDrawer}
-            />
-          )}
         </div>
         <div className="absolute bottom-0 w-full flex justify-center items-center gap-x-2 bg-white">
           <span>共{pager.count}条</span>
@@ -253,6 +276,20 @@ export default function TestPage() {
           />
         </div>
       </div>
+
+      {drawerOpen && (
+        <LookTestDetaill
+          editItem={detailItem}
+          open={drawerOpen}
+          close={handleCloseLookTestDetailDrawer}
+        />
+      )}
+
+      {exportOpen && (
+        <MaterialExport open={exportOpen} handleClose={handleExportClose}>
+          <ExportForm handleClose={handleExportClose} />
+        </MaterialExport>
+      )}
     </>
   )
 }

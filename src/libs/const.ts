@@ -1,6 +1,4 @@
 // 大小写数字 字符串 包含两种正则
-import { getCookie } from "@/libs/cookies"
-
 export const REGEXP_PASSWORD =
   /^(?![\d]+$)(?![a-z]+$)(?![A-Z]+$)(?![!#$%^&*]+$)[\da-zA-z!#$%^&@+_*]{6,8}$/
 
@@ -27,3 +25,16 @@ export const MINTE5 = 300000
 
 // 邮箱正则
 export const REGEXP_MAIL = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+
+export enum DICTIONARY_CLASS_ID {
+  cement = 2,
+  water = 3,
+  fine_aggregate = 4,
+  coarse_aggregate = 12,
+  mineral_admixture = 14,
+  additive = 16,
+  acoustic_tube = 18,
+  rebar = 19,
+  spacer = 22,
+  concrete = 24,
+}

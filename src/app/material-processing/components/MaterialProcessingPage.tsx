@@ -38,7 +38,7 @@ function renderPerson(classes: "rebar" | "concrete", row: MaterialProcessingData
 
   if (classes == "rebar") {
     return (
-      <div>
+      <div className="flex gap-x-1">
         <span>下料人员： {jsonData.blanking_personnel}</span>
         <span>焊接员： {jsonData.welder}</span>
         <span>加工员： {jsonData.processors}</span>
@@ -256,8 +256,10 @@ export default function MaterialProcessingPage() {
                     <TableCell align="center" scope="row">
                       {CLASS_OPTION.find((ele) => ele.value == row.class)?.label}
                     </TableCell>
-                    <TableCell align="center"></TableCell>
-                    <TableCell align="center">{row.quantity}</TableCell>
+                    <TableCell align="center">{row.name}</TableCell>
+                    <TableCell align="center">
+                      {row.quantity && (row.quantity / 1000).toFixed(3)}
+                    </TableCell>
 
                     <TableCell align="center">{renderPerson(row.class as any, row)}</TableCell>
 
