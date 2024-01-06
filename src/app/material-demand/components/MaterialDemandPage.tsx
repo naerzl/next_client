@@ -157,21 +157,21 @@ export default function MaterialDemandPage() {
       </div>
       <header className="flex justify-between mb-4">
         <div className="flex gap-x-2">
-          <DatePicker.RangePicker
-            onChange={(_, dateString) => {
-              let str = dateString.join(",")
-              handleChangeSearchOption(str, "period")
-            }}
-            locale={locale}
-          />
+          {/*<DatePicker.RangePicker*/}
+          {/*  onChange={(_, dateString) => {*/}
+          {/*    let str = dateString.join(",")*/}
+          {/*    handleChangeSearchOption(str, "period")*/}
+          {/*  }}*/}
+          {/*  locale={locale}*/}
+          {/*/>*/}
 
-          <Button
-            className="bg-railway_blue text-white"
-            onClick={() => {
-              handleSearchMaterialApproachList()
-            }}>
-            搜索
-          </Button>
+          {/*<Button*/}
+          {/*  className="bg-railway_blue text-white"*/}
+          {/*  onClick={() => {*/}
+          {/*    handleSearchMaterialApproachList()*/}
+          {/*  }}>*/}
+          {/*  搜索*/}
+          {/*</Button>*/}
         </div>
       </header>
       {isMutating ? (
