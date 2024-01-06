@@ -181,7 +181,7 @@ export default function QueuePage() {
       if (type == "status") {
         delete params.status
       } else if (type == "class") {
-        return
+        delete params.class
       }
     } else {
       // @ts-ignore
@@ -229,7 +229,7 @@ export default function QueuePage() {
             size="small"
             placeholder="请选择导出类型"
             fullWidth
-            value={swrState.class}
+            value={swrState.class ?? "all"}
             onChange={(event) => {
               handleChangeSearchValue("class", event.target.value)
             }}

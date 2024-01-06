@@ -20,7 +20,7 @@ export interface GetQueueParams {
   page?: number
   limit?: number
   id?: number
-  class: string
+  class?: string
   project_id: number
   status?: string
 }

@@ -26,6 +26,9 @@ import {
   ProjectMaterialRequirementStaticListData,
 } from "@/app/material-demand/types"
 import dayjs from "dayjs"
+import { QueueList } from "@/app/queue/types"
+import useSWRMutation from "swr/mutation"
+import { reqGetQueueExportFile } from "@/app/queue/api"
 
 type Props = {
   open: boolean
@@ -82,6 +85,11 @@ export default function DialogMaterialDemandWithCollect(props: Props) {
     getProjectMaterialRequirementStaticApi,
     getProjectMaterialRequirementStaticDetailApi,
   } = useSWRMutationHooks()
+
+  const { trigger: getQueueExportFileApi } = useSWRMutation(
+    "/queue/export/file",
+    reqGetQueueExportFile,
+  )
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
@@ -173,6 +181,25 @@ export default function DialogMaterialDemandWithCollect(props: Props) {
     getProjectMaterialRequirementStaticDetailListData(row.dictionary_id)
   }
 
+  const handleClickDownLoad = async (item: QueueList) => {
+    if (item.file_names == null) return
+
+    const fileNameArr: string[] = JSON.parse(item.file_names)
+    const fileUrlArr: string[] = []
+    for (let index in fileNameArr) {
+      let res = await getQueueExportFileApi({ filePath: fileNameArr[index] })
+      fileUrlArr.push(res.file_url)
+    }
+
+    const a = document.createElement("a")
+    for (const index in fileUrlArr) {
+      a.href = fileUrlArr[index].replace("http", "https") as string
+      a.click()
+    }
+
+    a.remove()
+  }
+
   return (
     <>
       <Dialog
@@ -247,6 +274,14 @@ export default function DialogMaterialDemandWithCollect(props: Props) {
             {dataQueue && dataQueue.items[0].status == "done" ? (
               <Alert severity="success" onClose={handleCloseSnackbar}>
                 导出成功
+                <a
+                  className="ml-2 cursor-pointer"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    handleClickDownLoad(dataQueue.items[0])
+                  }}>
+                  下载
+                </a>
               </Alert>
             ) : (
               <Alert severity="info" onClose={handleCloseSnackbar}>
