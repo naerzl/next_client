@@ -15,3 +15,6 @@ NEXT_PUBLIC_ORIGIN_PATH="http://local-client.zctc.cc"
 
 # 官网地址
 NEXT_PUBLIC_WEB_PATH="http://local-home.zctc.cc"
+
+# 正式环境需要隐藏的控制 '1'显示 '0'隐藏
+NEXT_PUBLIC_CONTROL='1'

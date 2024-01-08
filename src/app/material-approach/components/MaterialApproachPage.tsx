@@ -1,15 +1,6 @@
 "use client"
 import React from "react"
-import {
-  Breadcrumbs,
-  Button,
-  Chip,
-  InputAdornment,
-  InputBase,
-  Select,
-  MenuItem,
-  Pagination,
-} from "@mui/material"
+import { Breadcrumbs, Chip, Pagination } from "@mui/material"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import TableHead from "@mui/material/TableHead"
@@ -19,25 +10,18 @@ import TableBody from "@mui/material/TableBody"
 import Table from "@mui/material/Table"
 import AddOrEditMaterial from "@/app/material-approach/components/AddOrEditMaterial"
 import { useAddOrEditMaterial } from "@/app/material-approach/hooks/useAddOrEditMaterial"
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
 import { GetMaterialApproachParams, MaterialApproachData } from "@/app/material-approach/types"
 import { reqDelMaterialApproach, reqGetMaterialApproach } from "@/app/material-approach/api"
 import Loading from "@/components/loading"
-import { CLASS_OPTION, PROCESSING_RESULT } from "@/app/material-approach/const/enum"
+import { CLASS_OPTION } from "@/app/material-approach/const/enum"
 import useSWRMutation from "swr/mutation"
-import { dateToYYYYMM, displayWithPermission } from "@/libs/methods"
+import { dateToYYYYMM } from "@/libs/methods"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import { OAUTH2_ACCESS_TOKEN } from "@/libs/const"
 import { message } from "antd"
 import { LayoutContext } from "@/components/LayoutContext"
-import IconButton from "@mui/material/IconButton"
-import SearchIcon from "@mui/icons-material/Search"
 import dayjs from "dayjs"
 import permissionJson from "@/config/permission.json"
 import NoPermission from "@/components/NoPermission"
-import { DatePicker } from "antd"
-import locale from "antd/es/date-picker/locale/zh_CN"
 import { BaseApiPager } from "@/types/api"
 import MaterialExport from "@/app/components/MaterialExport"
 import useMaterialExport from "@/hooks/useMaterialExport"
@@ -335,17 +319,17 @@ export default function MaterialApproachPage() {
           {/*</Button>*/}
         </div>
         <div>
-          <Button
-            style={displayWithPermission(
-              permissionTagList,
-              permissionJson.material_approach_member_write,
-            )}
-            className="bg-railway_blue text-white"
-            onClick={() => {
-              handleAddMaterial()
-            }}>
-            添加
-          </Button>
+          {/*<Button*/}
+          {/*  style={displayWithPermission(*/}
+          {/*    permissionTagList,*/}
+          {/*    permissionJson.material_approach_member_write,*/}
+          {/*  )}*/}
+          {/*  className="bg-railway_blue text-white"*/}
+          {/*  onClick={() => {*/}
+          {/*    handleAddMaterial()*/}
+          {/*  }}>*/}
+          {/*  添加*/}
+          {/*</Button>*/}
         </div>
       </header>
       {isMutating ? (
@@ -386,14 +370,14 @@ export default function MaterialApproachPage() {
                       <TableCell align="left">{row.creator}</TableCell>
                       <TableCell align="left">
                         <div className="flex justify-between">
-                          <Button
-                            variant="outlined"
-                            onClick={() => {
-                              handleExportOpen()
-                            }}
-                            startIcon={<ExitToAppIcon />}>
-                            导出
-                          </Button>
+                          {/*<Button*/}
+                          {/*  variant="outlined"*/}
+                          {/*  onClick={() => {*/}
+                          {/*    handleExportOpen()*/}
+                          {/*  }}*/}
+                          {/*  startIcon={<ExitToAppIcon />}>*/}
+                          {/*  导出*/}
+                          {/*</Button>*/}
                           {/*<Button*/}
                           {/*  style={displayWithPermission(*/}
                           {/*    permissionTagList,*/}
