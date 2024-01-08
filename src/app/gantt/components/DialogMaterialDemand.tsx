@@ -349,6 +349,7 @@ export default function DialogMaterialDemand(props: Props) {
               actual_usage: subActualUsage,
               loss_coefficient: +item.loss_coefficient,
               ebs_id: item.ebs_id,
+              ebs_desc: item.ebs_desc,
               planned_usage_at: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
               material_class: findClassItem ? findClassItem.value : "none",
             } as PostMaterialDemandItemParams
@@ -380,6 +381,7 @@ export default function DialogMaterialDemand(props: Props) {
                 actual_usage: subActualUsage,
                 loss_coefficient: +item.loss_coefficient,
                 ebs_id: item.ebs_id,
+                ebs_desc: item.ebs_desc,
                 planned_usage_at: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
                 material_class: findClassItem ? findClassItem.value : "none",
               } as PostMaterialDemandItemParams
@@ -493,6 +495,7 @@ export default function DialogMaterialDemand(props: Props) {
               requirement_id: requirementId,
               parent_id: requirementItem.id,
               ebs_id: requirementItem.ebs_id,
+              ebs_desc: requirementItem.ebs_desc,
               dictionary_id: materialItem.dictionary_id,
               actual_usage: Math.round(
                 intoDoubleFixed3(materialItem.quantity / 1000) * requirementItem.actual_usage,
@@ -541,6 +544,7 @@ export default function DialogMaterialDemand(props: Props) {
               requirement_id: requirementId,
               parent_id: requirementItem.id,
               ebs_id: requirementItem.ebs_id,
+              ebs_desc: requirementItem.ebs_desc,
               dictionary_id: item.dictionary_id,
               actual_usage: Math.round(
                 intoDoubleFixed3(item.quantity / 1000) * requirementItem.actual_usage,
