@@ -131,6 +131,13 @@ const columns = [
 
 type Status = "waiting" | "confirmed"
 
+type ProportionMaterial = {
+  name: string
+  quantity: number
+  dictionary_id: number
+  dictionary_class_id: number
+}
+
 function findConstUnitWithDictionary(str: string) {
   const arr: { key: string; value: string }[] | any = JSON.parse(str || "[]")
 
@@ -449,31 +456,60 @@ export default function DialogMaterialDemand(props: Props) {
         loss_coefficient: requirementItem.loss_coefficient,
         planned_usage_at: requirementItem.editState.plannedUsageAt,
       })
-      let materials: any[] = JSON.parse(obj.materials ?? "[]")
+
+      let materials: ProportionMaterial[] = JSON.parse(obj.materials ?? "[]")
 
       const filterWithUserAddArr = requirementItem.proportions?.filter((el) => el.class != "user")
 
       // 判断子项和配比的对象数量是不是一样
       if (filterWithUserAddArr!.length > materials.length) {
-        for (const key in filterWithUserAddArr) {
-          // @ts-ignore
-          let el = filterWithUserAddArr[key]
-          let findItem = materials.find(
-            (_material) => _material.dictionary_class_id == el.dictionary_class_id,
+        let remainingList: MaterialListType[] = []
+        for (const materialsKey in materials) {
+          let materialItem = materials[materialsKey]
+          let findSubItem = filterWithUserAddArr!.find(
+            (el) => el.dictionary_class_id == materialItem.dictionary_class_id,
           )
-          if (findItem) {
+          findSubItem && remainingList.push(findSubItem)
+          //
+          if (findSubItem) {
+            let sumActualUsage =
+              (1 + Number(findSubItem.loss_coefficient) / 100) * materialItem.quantity
+
             await putMaterialDemandItemApi({
-              id: el.id!,
-              dictionary_id: findItem.dictionary_id,
+              id: findSubItem.id!,
+              dictionary_id: materialItem.dictionary_id,
               requirement_id: requirementId,
-              actual_usage: el.actual_usage,
-              loss_coefficient: el.loss_coefficient ?? 0,
-              planned_usage_at: el.editState.plannedUsageAt,
+              actual_usage: Math.round(
+                intoDoubleFixed3(sumActualUsage / 1000) * requirementItem.actual_usage,
+              ),
+              loss_coefficient: findSubItem.loss_coefficient ?? 0,
+              planned_usage_at: findSubItem.editState.plannedUsageAt,
             })
           } else {
-            await delMaterialDemandItemApi({ requirement_id: requirementId, id: el.id })
+            const findClassItem = CLASS_OPTION.find((classItem) => classItem.label == item.name)
+
+            await postMaterialDemandItemApi({
+              class: "system",
+              requirement_id: requirementId,
+              parent_id: requirementItem.id,
+              ebs_id: requirementItem.ebs_id,
+              dictionary_id: materialItem.dictionary_id,
+              actual_usage: Math.round(
+                intoDoubleFixed3(materialItem.quantity / 1000) * requirementItem.actual_usage,
+              ),
+              planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
+              loss_coefficient: 0,
+              material_class: findClassItem ? findClassItem.value : "none",
+            })
           }
         }
+        const needDelItems = filterWithUserAddArr!.filter(
+          (ele) => !remainingList.find((subEle) => subEle.id == ele.id),
+        )
+        let axiosList = needDelItems.map((ele) =>
+          delMaterialDemandItemApi({ requirement_id: requirementId, id: ele.id! }),
+        )
+        await Promise.all(axiosList)
       } else {
         for (const materialsKey in materials) {
           // 配合比对象
@@ -485,11 +521,15 @@ export default function DialogMaterialDemand(props: Props) {
 
           if (findSubItem) {
             findSubItem.dictionary_id = item.dictionary_id
+            let sumActualUsage = (1 + Number(findSubItem.loss_coefficient) / 100) * item.quantity
+
             await putMaterialDemandItemApi({
               id: findSubItem.id!,
               dictionary_id: item.dictionary_id,
               requirement_id: requirementId,
-              actual_usage: findSubItem.actual_usage,
+              actual_usage: Math.round(
+                intoDoubleFixed3(sumActualUsage / 1000) * requirementItem.actual_usage,
+              ),
               loss_coefficient: findSubItem.loss_coefficient ?? 0,
               planned_usage_at: findSubItem.editState.plannedUsageAt,
             })
@@ -502,7 +542,9 @@ export default function DialogMaterialDemand(props: Props) {
               parent_id: requirementItem.id,
               ebs_id: requirementItem.ebs_id,
               dictionary_id: item.dictionary_id,
-              actual_usage: requirementItem.actual_usage,
+              actual_usage: Math.round(
+                intoDoubleFixed3(item.quantity / 1000) * requirementItem.actual_usage,
+              ),
               planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
               loss_coefficient: 0,
               material_class: findClassItem ? findClassItem.value : "none",
@@ -1942,7 +1984,7 @@ export default function DialogMaterialDemand(props: Props) {
                                           </TableCell>
                                         </TableRow>
                                       )}
-                                      {!subIsAdd && (
+                                      {!subIsAdd && process.env.NEXT_PUBLIC_CONTROL == "1" && (
                                         <TableRow
                                           className="grid-cols-8 grid"
                                           sx={{
@@ -2091,7 +2133,7 @@ export default function DialogMaterialDemand(props: Props) {
                       </TableRow>
                     )}
 
-                    {!mainIsAdd && (
+                    {!mainIsAdd && process.env.NEXT_PUBLIC_CONTROL == "1" && (
                       <TableRow
                         className="grid-cols-8 grid"
                         sx={{

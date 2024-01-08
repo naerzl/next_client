@@ -9,6 +9,7 @@ import {
   Drill_Mode_Enum,
   Pile_Type_Enum,
   REBAR_DICTIONARY_CLASS_ID,
+  SPACER_DICTIONARY_CLASS_ID,
 } from "@/app/ebs-data/const"
 import useSWRMutation from "swr/mutation"
 import {
@@ -17,6 +18,7 @@ import {
   reqGetConcreteData,
   reqGetDictionary,
   reqGetRebarData,
+  reqGetSpacerData,
 } from "@/app/ebs-data/api"
 import ganttContext from "@/app/gantt/context/ganttContext"
 import { LayoutContext } from "@/components/LayoutContext"
@@ -103,6 +105,18 @@ const rebarFormHeaders = [
     key: "unit_length",
   },
 ]
+
+const spacerFormHeaders = [
+  {
+    title: "规格型号",
+    key: "properties",
+  },
+  {
+    title: "数量",
+    key: "quantity",
+  },
+]
+
 function renderCellType(item: BridgeBoredBasicData) {
   return Pile_Type_Enum.find((el) => el.value == item.pile_type)?.label
 }
@@ -172,6 +186,21 @@ function rebarDataToDesignTableData(arr: any[], dictionaryList: DictionaryData[]
   })
 }
 
+function spacerDataToDesignTableData(arr: any[], dictionaryList: DictionaryData[]) {
+  function findDictionaryItem(id: number, type: "name" | "properties"): string {
+    const item = dictionaryList.find((item) => item.id == id)
+
+    return type == "name" ? (item ? item.name : "") : item ? item.properties : "[]"
+  }
+
+  return arr.map((item) => {
+    return {
+      properties: renderProperty(findDictionaryItem(item.dictionary_id, "properties")),
+      quantity: item.quantity / 1000,
+    }
+  })
+}
+
 export default function DesignData() {
   const ctx = React.useContext(ganttContext)
 
@@ -189,6 +218,8 @@ export default function DesignData() {
     reqGetAcousticTubeData,
   )
 
+  const { trigger: getSpacerDataApi } = useSWRMutation("/material-spacer", reqGetSpacerData)
+
   const { trigger: getRebarDataApi } = useSWRMutation("/material-rebar", reqGetRebarData)
 
   const { trigger: getDictionaryApi } = useSWRMutation("/dictionary", reqGetDictionary)
@@ -200,6 +231,8 @@ export default function DesignData() {
   const [acousticTubeData, setAcousticTubeData] = React.useState<any[]>([])
 
   const [rebarData, setRebarData] = React.useState<any[]>([])
+
+  const [spacerData, setSpacerData] = React.useState<any[]>([])
 
   const getBaseFormListData = async () => {
     const res = await getBridgeBoredBasicDataApi({
@@ -247,6 +280,18 @@ export default function DesignData() {
     setRebarData(rebarDataToDesignTableData(res, [...dictionaryData1, ...dictionaryData2]))
   }
 
+  const getSpacerListData = async () => {
+    const dictionaryData1 = await getDictionaryApi({ class_id: SPACER_DICTIONARY_CLASS_ID })
+
+    const res = await getSpacerDataApi({
+      ebs_id: parseInt(ctx.ebsItem.id),
+      project_id: PROJECT_ID,
+      engineering_listing_id: ctx.ebsItem.engineering_listing_id!,
+    })
+
+    setSpacerData(spacerDataToDesignTableData(res, dictionaryData1))
+  }
+
   const [loading, setLoading] = React.useState(false)
 
   const getData = async () => {
@@ -258,6 +303,7 @@ export default function DesignData() {
         getConcreteListData(),
         getAcousticTubeListData(),
         getRebarListData(),
+        getSpacerListData(),
       ])
     } finally {
       setLoading(false)
@@ -289,6 +335,10 @@ export default function DesignData() {
       </div>
       <div className="mb-6">
         <TableDesignData headers={rebarFormHeaders} data={rebarData} title="钢筋数量表" />
+      </div>
+
+      <div className="mb-6">
+        <TableDesignData headers={spacerFormHeaders} data={spacerData} title="垫块数量表" />
       </div>
     </div>
   )

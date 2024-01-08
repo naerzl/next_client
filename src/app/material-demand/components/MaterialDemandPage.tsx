@@ -15,13 +15,13 @@ import { message } from "antd"
 import { LayoutContext } from "@/components/LayoutContext"
 import permissionJson from "@/config/permission.json"
 import NoPermission from "@/components/NoPermission"
-import { DatePicker } from "antd"
-import locale from "antd/es/date-picker/locale/zh_CN"
 import { BaseApiPager } from "@/types/api"
 import { GetMaterialDemandParams, MaterialDemandListData } from "@/app/material-demand/types"
 import { reqDelMaterialDemand, reqGetMaterialDemand } from "@/app/material-demand/api"
 import useDialogMaterialDemand from "@/app/material-demand/hooks/useDialogMaterialDemand"
 import DialogMaterialDemand from "@/app/material-demand/components/DialogMaterialDemand"
+import { QueueList } from "@/app/queue/types"
+import { reqGetQueue, reqGetQueueExportFile } from "@/app/queue/api"
 
 const columns = [
   {
@@ -73,6 +73,13 @@ export default function MaterialDemandPage() {
     "/project-material-requirement",
     reqGetMaterialDemand,
   )
+
+  const { trigger: getQueueExportFileApi } = useSWRMutation(
+    "/queue/export/file",
+    reqGetQueueExportFile,
+  )
+
+  const { trigger: getQueueApi } = useSWRMutation("/queue", reqGetQueue)
 
   const [materialDemandList, setMaterialDemandList] = React.useState<MaterialDemandListData[]>([])
   const [pager, setPager] = React.useState<BaseApiPager>({} as BaseApiPager)
@@ -136,6 +143,31 @@ export default function MaterialDemandPage() {
 
     setMaterialDemandList(res.items)
     setPager(res.pager)
+  }
+
+  const handleClickDownLoad = async (item: MaterialDemandListData) => {
+    const queueList = await getQueueApi({
+      project_id: PROJECT_ID,
+      class: "material_requirement",
+      id: item.id,
+    })
+
+    if (!queueList.items[0]?.file_names) return
+
+    const fileNameArr: string[] = JSON.parse(queueList.items[0].file_names)
+    const fileUrlArr: string[] = []
+    for (let index in fileNameArr) {
+      let res = await getQueueExportFileApi({ filePath: fileNameArr[index] })
+      fileUrlArr.push(res.file_url)
+    }
+
+    const a = document.createElement("a")
+    for (const index in fileUrlArr) {
+      a.href = fileUrlArr[index].replace("http", "https") as string
+      a.click()
+    }
+
+    a.remove()
   }
 
   if (!permissionTagList.includes(permissionJson.material_approach_member_read)) {
@@ -213,6 +245,15 @@ export default function MaterialDemandPage() {
                             }}>
                             查看
                           </Button>
+                          {row.status == "confirmed" && (
+                            <Button
+                              variant="text"
+                              onClick={() => {
+                                handleClickDownLoad(row)
+                              }}>
+                              下载
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

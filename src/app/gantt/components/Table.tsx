@@ -32,7 +32,7 @@ export default function TableDesignData(props: Props) {
           </TableHead>
           <TableBody>
             {data.map((row, index) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id ?? index}>
                 {headers.map((head) => (
                   <TableCell key={head.key + row.id} align="left">
                     {row[head.key]}

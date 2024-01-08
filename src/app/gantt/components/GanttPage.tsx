@@ -392,7 +392,7 @@ const GanttPage = () => {
     if (item.is_can_select == 1) {
       newRes = newArr.filter((ele) => {
         if (ele.extend) {
-          if (item.is_loop == 1) return false
+          if (ele.is_loop == 1) return false
           return (
             +ele.extend.project_si_id == item.siId.substring(1) &&
             ele.extend.project_sp_id == item.spId.substring(1)
