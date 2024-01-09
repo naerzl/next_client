@@ -55,6 +55,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import { MaterialLossCoefficientListData } from "@/app/material-loss-coefficient/types"
+import Decimal from "decimal.js"
 
 type Props = {
   open: boolean
@@ -254,7 +255,7 @@ export default function DialogMaterialDemand(props: Props) {
         // 给主列表编辑的数据保留一份
         item.editState = {
           lossCoefficient: item.loss_coefficient,
-          actualUsage: item.actual_usage / 1000,
+          actualUsage: Decimal.div(Number(item.actual_usage), 1000).toNumber(),
           plannedUsageAt: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
         } as DemandEditState
 
@@ -302,7 +303,7 @@ export default function DialogMaterialDemand(props: Props) {
               editState: {
                 plannedUsageAt: dateToUTCCustom(subItem.planned_usage_at, "YYYY-MM-DD"),
                 lossCoefficient: subItem.loss_coefficient,
-                actualUsage: subItem.actual_usage / 1000, // 需求用量
+                actualUsage: Decimal.div(subItem.actual_usage, 1000).toNumber(), // 需求用量
               },
               planned_usage_at: dateToUTCCustom(subItem.planned_usage_at, "YYYY-MM-DD"),
               loss_coefficient: subItem.loss_coefficient,
@@ -336,8 +337,10 @@ export default function DialogMaterialDemand(props: Props) {
           for (const materialsKey in materials) {
             let itemWithMaterial = materials[materialsKey]
 
-            let subActualUsage =
-              item.actual_usage * intoDoubleFixed3(itemWithMaterial.quantity / 1000)
+            let subActualUsage = Decimal.mul(
+              item.actual_usage,
+              intoDoubleFixed3(itemWithMaterial.quantity / 1000),
+            ).toNumber()
 
             let findClassItem = findDictionaryClassEnum(itemWithMaterial.name)
             // 需要计算数据
@@ -368,8 +371,10 @@ export default function DialogMaterialDemand(props: Props) {
           for (const wzArrKey in _WZArr) {
             let wzItem = _WZArr[wzArrKey]
             let valueSplitArr = wzItem.value.split("!")
-            let subActualUsage =
-              item.actual_usage * intoDoubleFixed3(Number(valueSplitArr[2]) / 1000)
+            let subActualUsage = Decimal.mul(
+              item.actual_usage,
+              intoDoubleFixed3(Number(valueSplitArr[2]) / 1000),
+            ).toNumber()
             let dictionaryLists = await getDictionaryListApi({ name: valueSplitArr[1].trim() })
             if (dictionaryLists.length > 0) {
               const findClassItem = findDictionaryClassEnum(wzItem.key)
@@ -474,15 +479,20 @@ export default function DialogMaterialDemand(props: Props) {
           findSubItem && remainingList.push(findSubItem)
           //
           if (findSubItem) {
-            let sumActualUsage =
-              (1 + Number(findSubItem.loss_coefficient) / 100) * materialItem.quantity
+            let sumActualUsage = Decimal.add(1, Number(findSubItem.loss_coefficient) / 100)
+              .mul(materialItem.quantity)
+              .toNumber()
+            // (1 + Number(findSubItem.loss_coefficient) / 100) * materialItem.quantity
 
             await putMaterialDemandItemApi({
               id: findSubItem.id!,
               dictionary_id: materialItem.dictionary_id,
               requirement_id: requirementId,
               actual_usage: Math.round(
-                intoDoubleFixed3(sumActualUsage / 1000) * requirementItem.actual_usage,
+                Decimal.mul(
+                  intoDoubleFixed3(sumActualUsage / 1000),
+                  requirementItem.actual_usage,
+                ).toNumber(),
               ),
               loss_coefficient: findSubItem.loss_coefficient ?? 0,
               planned_usage_at: findSubItem.editState.plannedUsageAt,
@@ -498,7 +508,10 @@ export default function DialogMaterialDemand(props: Props) {
               ebs_desc: requirementItem.ebs_desc,
               dictionary_id: materialItem.dictionary_id,
               actual_usage: Math.round(
-                intoDoubleFixed3(materialItem.quantity / 1000) * requirementItem.actual_usage,
+                Decimal.mul(
+                  intoDoubleFixed3(materialItem.quantity / 1000),
+                  requirementItem.actual_usage,
+                ).toNumber(),
               ),
               planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
               loss_coefficient: 0,
@@ -524,14 +537,20 @@ export default function DialogMaterialDemand(props: Props) {
 
           if (findSubItem) {
             findSubItem.dictionary_id = item.dictionary_id
-            let sumActualUsage = (1 + Number(findSubItem.loss_coefficient) / 100) * item.quantity
+            let sumActualUsage = Decimal.add(1, Number(findSubItem.loss_coefficient) / 100)
+              .mul(item.quantity)
+              .toNumber()
+            // (1 + Number(findSubItem.loss_coefficient) / 100) * item.quantity
 
             await putMaterialDemandItemApi({
               id: findSubItem.id!,
               dictionary_id: item.dictionary_id,
               requirement_id: requirementId,
               actual_usage: Math.round(
-                intoDoubleFixed3(sumActualUsage / 1000) * requirementItem.actual_usage,
+                Decimal.mul(
+                  intoDoubleFixed3(sumActualUsage / 1000),
+                  requirementItem.actual_usage,
+                ).toNumber(),
               ),
               loss_coefficient: findSubItem.loss_coefficient ?? 0,
               planned_usage_at: findSubItem.editState.plannedUsageAt,
@@ -547,7 +566,10 @@ export default function DialogMaterialDemand(props: Props) {
               ebs_desc: requirementItem.ebs_desc,
               dictionary_id: item.dictionary_id,
               actual_usage: Math.round(
-                intoDoubleFixed3(item.quantity / 1000) * requirementItem.actual_usage,
+                Decimal.mul(
+                  intoDoubleFixed3(item.quantity / 1000),
+                  requirementItem.actual_usage,
+                ).toNumber(),
               ),
               planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
               loss_coefficient: 0,
@@ -623,7 +645,9 @@ export default function DialogMaterialDemand(props: Props) {
         let params = {
           id: item.id,
           requirement_id: requirementId,
-          actual_usage: Math.round(intoDoubleFixed3(item.editState.actualUsage) * 1000),
+          actual_usage: Math.round(
+            Decimal.mul(intoDoubleFixed3(item.editState.actualUsage), 1000).toNumber(),
+          ),
           loss_coefficient: item.editState.lossCoefficient,
           dictionary_id: item.dictionary_id,
           planned_usage_at: item.editState.plannedUsageAt,
@@ -683,16 +707,25 @@ export default function DialogMaterialDemand(props: Props) {
       )
       if (findMaterialItem) {
         // 找到配比计算（父级需求 * 子集配比的量*（1+损耗系数））
-        let sum = findMaterialItem.quantity * (1 + Number(subRow.loss_coefficient) / 100)
+        let sum = Decimal.add(1, Number(subRow.loss_coefficient) / 100)
+          .mul(findMaterialItem.quantity)
+          .toNumber()
+        // findMaterialItem.quantity * (1 + Number(subRow.loss_coefficient) / 100)
+
         subRow.editState.actualUsage = intoDoubleFixed3(
-          (rowItem.editState.actualUsage * sum) / 1000,
+          Decimal.mul(rowItem.editState.actualUsage, sum).div(1000).toNumber(),
         )
-        subRow.actual_usage = subRow.editState.actualUsage * 1000
+
+        subRow.actual_usage = Decimal.mul(subRow.editState.actualUsage, 1000).toNumber()
       } else {
         // 找不到哦啊（父级需求 * 1+损耗系数）
-        let sum = rowItem.editState.actualUsage * (1 + Number(subRow.loss_coefficient) / 100)
+        let sum = Decimal.add(1, Number(subRow.loss_coefficient) / 100)
+          .mul(rowItem.editState.actualUsage)
+          .toNumber()
+        // rowItem.editState.actualUsage * (1 + Number(subRow.loss_coefficient) / 100)
         subRow.editState.actualUsage = intoDoubleFixed3(sum)
-        subRow.actual_usage = subRow.editState.actualUsage * 1000
+        subRow.actual_usage = Decimal.mul(subRow.editState.actualUsage, 1000).toNumber()
+        // subRow.editState.actualUsage * 1000
       }
       return subRow
     })
@@ -709,16 +742,23 @@ export default function DialogMaterialDemand(props: Props) {
       let findWzItem = wzWithSplit.find((wzSplitItem) => wzSplitItem[1] == subRow.dictionaryName)
       if (findWzItem) {
         // 找到配比计算（父级需求 * 子集配比的量*（1+损耗系数））
-        let sum = findWzItem[2] * (1 + Number(subRow.loss_coefficient) / 100)
+        let sum = Decimal.add(1, Number(subRow.loss_coefficient) / 100)
+          .mul(Number(findWzItem[2]))
+          .toNumber()
+        // findWzItem[2] * (1 + Number(subRow.loss_coefficient) / 100)
         subRow.editState.actualUsage = intoDoubleFixed3(
-          (rowItem.editState.actualUsage * sum) / 1000,
+          Decimal.mul(rowItem.editState.actualUsage, sum).div(1000).toNumber(),
         )
-        subRow.actual_usage = subRow.editState.actualUsage * 1000
+        subRow.actual_usage = Decimal.mul(subRow.editState.actualUsage, 1000).toNumber()
+        // subRow.editState.actualUsage * 1000
       } else {
         // 找不到哦啊（父级需求 * 1+损耗系数）
-        let sum = rowItem.editState.actualUsage * (1 + Number(subRow.loss_coefficient) / 100)
+
+        let sum = Decimal.add(1, Number(subRow.loss_coefficient) / 100)
+          .mul(rowItem.editState.actualUsage)
+          .toNumber()
         subRow.editState.actualUsage = intoDoubleFixed3(sum)
-        subRow.actual_usage = subRow.editState.actualUsage * 1000
+        subRow.actual_usage = Decimal.mul(subRow.editState.actualUsage, 1000).toNumber()
       }
       return subRow
     })
@@ -729,7 +769,7 @@ export default function DialogMaterialDemand(props: Props) {
     let rowItem = cloneList[index]
 
     rowItem.editState.actualUsage = Number(val)
-    rowItem.actual_usage = Math.round(Number(val) * 1000)
+    rowItem.actual_usage = Math.round(Decimal.mul(Number(val), 1000).toNumber())
 
     // 配合比子物料列表
     let materials: any[] = []
@@ -762,7 +802,13 @@ export default function DialogMaterialDemand(props: Props) {
   ) => {
     if (rowItem.dictionary.dictionary_class.name == "声测管") {
     }
-    return intoDoubleFixed3((rowItem.design_usage * (1 + Number(val) / 100)) / 1000)
+    return intoDoubleFixed3(
+      Decimal.add(1, Number(val) / 100)
+        .mul(rowItem.design_usage)
+        .div(1000)
+        .toNumber(),
+    )
+    // return intoDoubleFixed3((rowItem.design_usage * (1 + Number(val) / 100)) / 1000)
   }
 
   const handleChangeMainTableEditInputWithLossCoefficient = (index: number, val: any) => {
@@ -776,7 +822,7 @@ export default function DialogMaterialDemand(props: Props) {
       rowItem,
       String(val),
     )
-    rowItem.actual_usage = Math.round(rowItem.editState.actualUsage * 1000)
+    rowItem.actual_usage = Math.round(Decimal.mul(rowItem.editState.actualUsage, 1000).toNumber())
 
     // 配合比子物料列表
     let materials: any[] = []
@@ -972,15 +1018,25 @@ export default function DialogMaterialDemand(props: Props) {
           material.dictionary_class_id == subItem.dictionary_class_id,
       )
       if (findMaterialItem) {
-        let sum = findMaterialItem.quantity * (1 + val / 100)
+        let sum = Decimal.add(1, Number(val) / 100)
+          .mul(findMaterialItem.quantity)
+          .toNumber()
+        // findMaterialItem.quantity * (1 + val / 100)
         subItem.editState["actualUsage"] = intoDoubleFixed3(
-          (sum * rowItem.editState.actualUsage) / 1000,
+          Decimal.mul(sum, rowItem.editState.actualUsage).div(1000).toNumber(),
         )
-        subItem.actual_usage = Math.round(subItem.editState.actualUsage * 1000)
+        subItem.actual_usage = Math.round(
+          Decimal.mul(subItem.editState.actualUsage, 1000).toNumber(),
+        )
       } else {
-        let sum = rowItem.editState.actualUsage * (1 + Number(val) / 100)
-        subItem.editState.actualUsage = intoDoubleFixed3(sum / 1000)
-        subItem.actual_usage = Math.round(subItem.editState.actualUsage * 1000)
+        let sum = Decimal.add(1, Number(val) / 100)
+          .mul(rowItem.editState.actualUsage)
+          .toNumber()
+        // rowItem.editState.actualUsage * (1 + Number(val) / 100)
+        subItem.editState.actualUsage = intoDoubleFixed3(Decimal.div(sum, 1000).toNumber())
+        subItem.actual_usage = Math.round(
+          Decimal.mul(subItem.editState.actualUsage, 1000).toNumber(),
+        )
       }
     } else if (
       rowItem.dictionary &&
@@ -991,15 +1047,25 @@ export default function DialogMaterialDemand(props: Props) {
         const wzWithSplit = _WZArr.map((wzItem) => wzItem.value.split("!"))
         const findWzItem = wzWithSplit.find((wzItem) => wzItem[1] == subItem.dictionaryName)
         if (findWzItem) {
-          let sum = findWzItem[2] * (1 + val / 100)
+          let sum = Decimal.add(1, Number(val) / 100)
+            .mul(findWzItem[2])
+            .toNumber()
+          // findWzItem[2] * (1 + val / 100)
           subItem.editState["actualUsage"] = intoDoubleFixed3(
-            (sum * rowItem.editState.actualUsage) / 1000,
+            Decimal.mul(sum, rowItem.editState.actualUsage).div(1000).toNumber(),
           )
-          subItem.actual_usage = Math.round(subItem.editState.actualUsage * 1000)
+          subItem.actual_usage = Math.round(
+            Decimal.mul(subItem.editState.actualUsage, 1000).toNumber(),
+          )
         } else {
-          let sum = rowItem.editState.actualUsage * (1 + Number(val) / 100)
-          subItem.editState.actualUsage = intoDoubleFixed3(sum / 1000)
-          subItem.actual_usage = Math.round(subItem.editState.actualUsage * 1000)
+          let sum = Decimal.add(1, Number(val) / 100)
+            .mul(rowItem.editState.actualUsage)
+            .toNumber()
+          // rowItem.editState.actualUsage * (1 + Number(val) / 100)
+          subItem.editState.actualUsage = intoDoubleFixed3(Decimal.div(sum, 1000).toNumber())
+          subItem.actual_usage = Math.round(
+            Decimal.mul(subItem.editState.actualUsage, 1000).toNumber(),
+          )
         }
       }
     }
@@ -1016,11 +1082,11 @@ export default function DialogMaterialDemand(props: Props) {
       id: subItem.id!,
       dictionary_id: subItem.dictionary_id,
       requirement_id: requirementId,
-      actual_usage: subItem.editState.actualUsage * 1000,
+      actual_usage: Decimal.mul(subItem.editState.actualUsage, 1000).toNumber(),
       loss_coefficient: subItem.loss_coefficient,
       planned_usage_at: subItem.planned_usage_at,
     })
-    subItem.actual_usage = subItem.editState.actualUsage * 1000
+    subItem.actual_usage = Decimal.mul(subItem.editState.actualUsage, 1000).toNumber()
     setEditPos({} as EditPosStateType)
     setRequirementList(cloneList)
   }
@@ -1196,7 +1262,7 @@ export default function DialogMaterialDemand(props: Props) {
       class: "user",
       planned_usage_at: mainEditState.planned_usage_at,
       loss_coefficient: mainEditState.loss_coefficient,
-      actual_usage: mainEditState.actual_usage * 1000,
+      actual_usage: Decimal.mul(mainEditState.actual_usage, 1000).toNumber(),
       dictionary_id: mainEditState.dictionary_id,
       ebs_id: mainEditState.ebs_id,
       material_class: findItem ? findItem.value : "none",
@@ -1215,7 +1281,7 @@ export default function DialogMaterialDemand(props: Props) {
       parent_id: row.id,
       planned_usage_at: subEditState.planned_usage_at,
       loss_coefficient: subEditState.loss_coefficient,
-      actual_usage: subEditState.actual_usage * 1000,
+      actual_usage: Decimal.mul(subEditState.actual_usage, 1000).toNumber(),
       dictionary_id: subEditState.dictionary_id,
       material_class: findItem ? findItem.value : "none",
       requirement_id: requirementId,
@@ -1264,7 +1330,10 @@ export default function DialogMaterialDemand(props: Props) {
           ? currentValue.project_loss_coefficient.loss_coefficient
           : currentValue.loss_coefficient
 
-        return previousValue * (1 + Number(lossCoefficient) / 100)
+        return Decimal.add(1, Number(lossCoefficient) / 100)
+          .mul(previousValue)
+          .toNumber()
+        // previousValue * (1 + Number(lossCoefficient) / 100)
       },
       row.design_usage,
     )

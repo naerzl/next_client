@@ -65,8 +65,8 @@ function renderQuantity(item: MaterialApproachData) {
   const obj = CLASS_OPTION.find((el) => el.value == item.class)
 
   return obj
-    ? (item.arrivaled_quantity / 1000).toFixed(3) + obj.unit
-    : (item.arrivaled_quantity / 1000).toFixed(3)
+    ? parseFloat((item.arrivaled_quantity / 1000).toFixed(3)) + obj.unit
+    : parseFloat((item.arrivaled_quantity / 1000).toFixed(3))
 }
 export default function MaterialApproachPage() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
