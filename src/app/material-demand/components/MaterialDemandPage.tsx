@@ -245,15 +245,6 @@ export default function MaterialDemandPage() {
                             }}>
                             查看
                           </Button>
-                          {row.status == "confirmed" && (
-                            <Button
-                              variant="text"
-                              onClick={() => {
-                                handleClickDownLoad(row)
-                              }}>
-                              下载
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
