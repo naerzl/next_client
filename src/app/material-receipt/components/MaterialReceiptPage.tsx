@@ -249,14 +249,14 @@ export default function MaterialReceiptPage() {
                     <TableCell align="left">{row.creator}</TableCell>
                     <TableCell align="left">
                       <div className="flex justify-center gap-x-2">
-                        <Button
-                          variant="outlined"
-                          onClick={() => {
-                            handleExportOpen()
-                          }}
-                          startIcon={<ExitToAppIcon />}>
-                          导出
-                        </Button>
+                        {/*<Button*/}
+                        {/*  variant="outlined"*/}
+                        {/*  onClick={() => {*/}
+                        {/*    handleExportOpen()*/}
+                        {/*  }}*/}
+                        {/*  startIcon={<ExitToAppIcon />}>*/}
+                        {/*  导出*/}
+                        {/*</Button>*/}
                         {/*<Button*/}
                         {/*  style={displayWithPermission(*/}
                         {/*    permissionTagList,*/}
