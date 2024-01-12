@@ -1,5 +1,5 @@
 import React from "react"
-import { BridgeBoredBasicData } from "@/app/gantt/types"
+import { BridgeBoredBasicData } from "@/app/ebs-data/types"
 
 const useAddBridgeBoredWithDrawer = () => {
   const [open, setOpen] = React.useState(false)

@@ -19,7 +19,7 @@ export type MaterialListType = {
   material_loss_coefficient: null | MaterialLossCoefficient
   dictionary: any
   isSelect?: boolean
-  class: "user" | "system"
+  class: "user" | "system" | "incremental"
   editState: SubEditState
   loss_coefficient: string
   actual_usage: number // 需求用量
@@ -79,7 +79,7 @@ export interface PutMaterialDemandParams {
 }
 
 export interface PostMaterialDemandItemParams {
-  class: "user" | "system"
+  class: "user" | "system" | "incremental"
   requirement_id: number
   parent_id?: number
   ebs_id: number

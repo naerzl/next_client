@@ -72,4 +72,5 @@ export interface PostMaterialLossCoefficientParams {
   engineering_listing_id: number
   ebs_id: number
   loss_coefficient: number
+  service_conditions: string
 }

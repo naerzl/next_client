@@ -7,7 +7,6 @@ import TableBody from "@mui/material/TableBody"
 import { Button, IconButton } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/DeleteOutlined"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined"
-import useSWR from "swr"
 import {
   reqDelBridgeBoredBasicData,
   reqGetBridgeBoredBasicData,
@@ -17,8 +16,12 @@ import { BridgeBoredBasicData } from "@/app/ebs-data/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
 import useAddBridgeBoredWithDrawer from "@/app/ebs-data/hooks/useAddBridgeBoredWithDrawer"
 import AddBridge from "./AddBridge"
-import { Pile_Type_Enum, Drill_Mode_Enum, BASIC_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
-import useHooksConfirm from "@/hooks/useHooksConfirm"
+import {
+  Pile_Type_Enum,
+  DRILL_MODE,
+  BASIC_DICTIONARY_CLASS_ID,
+  CONSTRUCTION_TECHNOLOGY,
+} from "@/app/ebs-data/const"
 import useSWRMutation from "swr/mutation"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
@@ -54,6 +57,12 @@ const columns = [
     align: "left",
   },
   {
+    title: "施工工艺",
+    dataIndex: "construction_technology",
+    key: "construction_technology",
+    align: "left",
+  },
+  {
     title: "钻孔方式",
     dataIndex: "dill_mode",
     key: "dill_mode",
@@ -74,11 +83,23 @@ const columns = [
 ]
 
 function renderCellType(item: BridgeBoredBasicData) {
-  return Pile_Type_Enum.find((el) => el.value == item.pile_type)?.label
+  const _metadata = JSON.parse(item.metadata)
+  return Pile_Type_Enum.find((el) => el.value == _metadata.pile_type)?.label
 }
 
 function renderCellDrillMode(item: BridgeBoredBasicData) {
-  return Drill_Mode_Enum.find((el) => el.value == item.drill_mode)?.label
+  const _metadata = JSON.parse(item.metadata)
+  return DRILL_MODE.find((el) => el.value == _metadata.drill_mode)?.label
+}
+
+function renderConstruction(item: BridgeBoredBasicData) {
+  const _metadata = JSON.parse(item.metadata)
+  return CONSTRUCTION_TECHNOLOGY.find((el) => el.value == _metadata.construction_technology)?.label
+}
+
+function renderBaseCell(item: BridgeBoredBasicData, type: string) {
+  const _metadata = JSON.parse(item.metadata)
+  return _metadata[type] / 1000
 }
 
 export default function BaseForm() {
@@ -87,12 +108,12 @@ export default function BaseForm() {
   const { projectId: PROJECT_ID, permissionTagList } = React.useContext(LayoutContext)
 
   const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation(
-    "/bridge-bored-basic-datum",
+    "/basic-datum",
     reqGetBridgeBoredBasicData,
   )
 
   const { trigger: delBridgeBoredBasicDataApi } = useSWRMutation(
-    "/bridge-bored-basic-datum",
+    "/basic-datum",
     reqDelBridgeBoredBasicData,
   )
 
@@ -184,14 +205,15 @@ export default function BaseForm() {
           </TableHead>
           <TableBody>
             {tableList &&
-              tableList.map((row: BridgeBoredBasicData, index: number) => (
+              tableList.map((row: BridgeBoredBasicData) => (
                 <TableRow key={row.id}>
-                  <TableCell align="left">{row.pile_diameter / 1000}</TableCell>
-                  <TableCell align="left">{row.pile_length / 1000}</TableCell>
-                  <TableCell align="left">{row.pile_top_elevation / 1000}</TableCell>
+                  <TableCell align="left">{renderBaseCell(row, columns[0].key)}</TableCell>
+                  <TableCell align="left">{renderBaseCell(row, columns[1].key)}</TableCell>
+                  <TableCell align="left">{renderBaseCell(row, columns[2].key)}</TableCell>
                   <TableCell align="left">{renderCellType(row)}</TableCell>
+                  <TableCell align="left">{renderConstruction(row)}</TableCell>
                   <TableCell align="left">{renderCellDrillMode(row)}</TableCell>
-                  <TableCell align="left">{row.rebar_cage_length / 1000}</TableCell>
+                  <TableCell align="left">{renderBaseCell(row, columns[6].key)}</TableCell>
 
                   <TableCell align="left">
                     <div className="flex justify-start">

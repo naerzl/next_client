@@ -12,7 +12,7 @@ import useSWR from "swr"
 import { reqDelConcreteData, reqGetConcreteData } from "@/app/ebs-data/api"
 import { BridgeBoredBasicData, ConcreteData } from "@/app/ebs-data/types"
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
-import { Pile_Type_Enum, Drill_Mode_Enum } from "@/app/ebs-data/const"
+import { DRILL_MODE, Pile_Type_Enum } from "@/app/ebs-data/const"
 import useHooksConfirm from "@/hooks/useHooksConfirm"
 import useSWRMutation from "swr/mutation"
 import useAddConcreteWithDrawer from "../hooks/useAddConcreteWithDrawer"
@@ -51,14 +51,6 @@ const columns = [
     key: "action",
   },
 ]
-
-function renderCellType(item: BridgeBoredBasicData) {
-  return Pile_Type_Enum.find((el) => el.value == item.pile_type)?.label
-}
-
-function renderCellDrillMode(item: BridgeBoredBasicData) {
-  return Drill_Mode_Enum.find((el) => el.value == item.drill_mode)?.label
-}
 
 export default function ConcreteForm() {
   const ctx = React.useContext(ebsDataContext)

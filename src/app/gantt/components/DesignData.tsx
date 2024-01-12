@@ -1,12 +1,11 @@
 import React from "react"
-import { Box, Tab, Tabs } from "@mui/material"
 import TableDesignData from "@/app/gantt/components/Table"
 import { BridgeBoredBasicData } from "@/app/ebs-data/types"
 import {
   ACOUSTIC_TUBE_DICTIONARY_CLASS_ID,
-  BASIC_DICTIONARY_CLASS_ID,
   CONCRETE_DICTIONARY_CLASS_ID,
-  Drill_Mode_Enum,
+  CONSTRUCTION_TECHNOLOGY,
+  DRILL_MODE,
   Pile_Type_Enum,
   REBAR_DICTIONARY_CLASS_ID,
   SPACER_DICTIONARY_CLASS_ID,
@@ -42,6 +41,10 @@ const baseFormHeaders = [
   {
     title: "桩型",
     key: "pile_type",
+  },
+  {
+    title: "施工工艺",
+    key: "construction_technology",
   },
   {
     title: "钻孔方式",
@@ -118,22 +121,35 @@ const spacerFormHeaders = [
 ]
 
 function renderCellType(item: BridgeBoredBasicData) {
-  return Pile_Type_Enum.find((el) => el.value == item.pile_type)?.label
+  const _metadata = JSON.parse(item.metadata)
+  return Pile_Type_Enum.find((el) => el.value == _metadata.pile_type)?.label
 }
 
 function renderCellDrillMode(item: BridgeBoredBasicData) {
-  return Drill_Mode_Enum.find((el) => el.value == item.drill_mode)?.label
+  const _metadata = JSON.parse(item.metadata)
+  return DRILL_MODE.find((el) => el.value == _metadata.drill_mode)?.label
+}
+
+function renderConstruction(item: BridgeBoredBasicData) {
+  const _metadata = JSON.parse(item.metadata)
+  return CONSTRUCTION_TECHNOLOGY.find((el) => el.value == _metadata.construction_technology)?.label
+}
+
+function renderBaseCell(item: BridgeBoredBasicData, type: string) {
+  const _metadata = JSON.parse(item.metadata)
+  return _metadata[type] / 1000
 }
 
 function baseDataToDesignTableData(arr: any[]) {
   return arr.map((row) => {
     return {
-      pile_diameter: row.pile_diameter / 1000,
-      pile_length: row.pile_length / 1000,
-      pile_top_elevation: row.pile_top_elevation / 1000,
+      pile_diameter: renderBaseCell(row, "pile_diameter"),
+      pile_length: renderBaseCell(row, "pile_length"),
+      pile_top_elevation: renderBaseCell(row, "pile_top_elevation"),
       pile_type: renderCellType(row),
       dill_mode: renderCellDrillMode(row),
-      rebar_cage_length: row.rebar_cage_length / 1000,
+      construction_technology: renderConstruction(row),
+      rebar_cage_length: renderBaseCell(row, "rebar_cage_length"),
     }
   })
 }
@@ -207,7 +223,7 @@ export default function DesignData() {
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
 
   const { trigger: getBridgeBoredBasicDataApi } = useSWRMutation(
-    "/bridge-bored-basic-datum",
+    "/basic-datum",
     reqGetBridgeBoredBasicData,
   )
 

@@ -186,9 +186,9 @@ export default function MaterialLossCoefficientPage() {
                   {materialDemandList.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell align="center">{row.name}</TableCell>
-                      <TableCell align="center"></TableCell>
-                      <TableCell align="center"></TableCell>
-                      <TableCell align="center"></TableCell>
+                      <TableCell align="center">{row.ebses?.[0]?.name}</TableCell>
+                      <TableCell align="center">{row.dictionary_class?.name}</TableCell>
+                      <TableCell align="center">{row.loss_coefficient}</TableCell>
                       <TableCell align="center"></TableCell>
                     </TableRow>
                   ))}

@@ -128,44 +128,27 @@ export interface TypeApiPostBridgeBoredBasicDataParams {
   project_id: number
   ebs_id: number
   engineering_listing_id: number
-  project_sp_id?: number
-  project_si_id?: number
-  pile_diameter: number
-  pile_length: number
-  pile_top_elevation: number
-  pile_type: string
-  rebar_cage_length: number
-  drill_mode: string
+  class: string
+  metadata: string
 }
 
 export interface TypeApiPutBridgeBoredBasicDataParams {
   id: number
   project_id: number
-  pile_diameter: number
-  pile_length: number
-  pile_top_elevation: number
-  pile_type: string
-  rebar_cage_length: number
-  drill_mode: string
+  class: string
+  metadata: string
 }
 
 export interface BridgeBoredBasicData {
   id: number
   project_id: number
   ebs_id: number
-  project_sp_id: number
-  project_si_id: number
-  pile_diameter: number
-  pile_length: number
-  pile_top_elevation: number
-  pile_type: string
-  rebar_cage_length: number
-  liner_dictionary_id: number
-  liner_number: number
+  engineering_listing_id: number
+  class: string
+  metadata: string
   creator: string
   created_at: string
   updated_at: string
-  drill_mode: string
 }
 
 export interface RebarData {

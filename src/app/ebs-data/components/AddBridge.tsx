@@ -1,8 +1,6 @@
 import React from "react"
 import {
-  Autocomplete,
   Button,
-  Chip,
   DialogActions,
   Drawer,
   InputLabel,
@@ -14,17 +12,9 @@ import { ErrorMessage } from "@hookform/error-message"
 import { SubmitHandler, useForm } from "react-hook-form"
 import useDebounce from "@/hooks/useDebounce"
 import useSWRMutation from "swr/mutation"
-import {
-  reqGetDictionary,
-  reqPostBridgeBoredBasicData,
-  reqPutBridgeBoredBasicData,
-} from "@/app/ebs-data/api"
-import {
-  BridgeBoredBasicData,
-  TypeApiPostBridgeBoredBasicDataParams,
-  TypeEBSDataList,
-} from "@/app/ebs-data/types"
-import { BASIC_DICTIONARY_CLASS_ID, Drill_Mode_Enum, Pile_Type_Enum } from "@/app/ebs-data/const"
+import { reqPostBridgeBoredBasicData, reqPutBridgeBoredBasicData } from "@/app/ebs-data/api"
+import { BridgeBoredBasicData, TypeApiPostBridgeBoredBasicDataParams } from "@/app/ebs-data/types"
+import { CONSTRUCTION_TECHNOLOGY, DRILL_MODE, Pile_Type_Enum } from "@/app/ebs-data/const"
 import { LayoutContext } from "@/components/LayoutContext"
 import ebsDataContext from "@/app/ebs-data/context/ebsDataContext"
 import { DictionaryData } from "@/app/gantt/types"
@@ -66,25 +56,30 @@ export default function AddBridge(props: Props) {
   } = useForm<IForm>({})
 
   const [pileTypeState, setPileTypeState] = React.useState("FRICTION")
-  const [drillModeState, setDrillModeState] = React.useState("MANUAL_HOLE_DIGGING")
+  const [drillModeState, setDrillModeState] = React.useState("percussion_drill")
+
+  const [constructionTechnology, setConstructionTechnology] =
+    React.useState("dry_construction_drill")
 
   const { trigger: postBridgeBoredBasicDataApi } = useSWRMutation(
-    "/bridge-bored-basic-datum",
+    "/basic-datum",
     reqPostBridgeBoredBasicData,
   )
 
   const { trigger: putBridgeBoredBasicDataApi } = useSWRMutation(
-    "/bridge-bored-basic-datum",
+    "/basic-datum",
     reqPutBridgeBoredBasicData,
   )
 
   const handleSetFormValue = (item: BridgeBoredBasicData) => {
-    setValue("pile_length", item.pile_length / 1000)
-    setValue("pile_top_elevation", item.pile_top_elevation / 1000)
-    setValue("pile_diameter", item.pile_diameter / 1000)
-    setValue("rebar_cage_length", item.rebar_cage_length / 1000)
-    setDrillModeState(item.drill_mode)
-    setPileTypeState(item.pile_type)
+    const _metadata = JSON.parse(item.metadata)
+    setValue("pile_length", _metadata.pile_length / 1000)
+    setValue("pile_top_elevation", _metadata.pile_top_elevation / 1000)
+    setValue("pile_diameter", _metadata.pile_diameter / 1000)
+    setValue("rebar_cage_length", _metadata.rebar_cage_length / 1000)
+    setDrillModeState(_metadata.drill_mode)
+    setPileTypeState(_metadata.pile_type)
+    setConstructionTechnology(_metadata.construction_technology)
   }
 
   React.useEffect(() => {
@@ -94,16 +89,22 @@ export default function AddBridge(props: Props) {
   }, [editItem])
 
   const { run: onSubmit }: { run: SubmitHandler<IForm> } = useDebounce(async (values: IForm) => {
-    let params = {
-      ebs_id: ctx.ebsItem.id,
-      engineering_listing_id: ctx.ebsItem.engineering_listing_id,
-      project_id: PROJECT_ID,
+    const _metadata = {
       pile_diameter: intoDoubleFixed3(values.pile_diameter) * 1000,
       pile_length: intoDoubleFixed3(values.pile_length) * 1000,
       pile_top_elevation: intoDoubleFixed3(values.pile_top_elevation) * 1000,
       rebar_cage_length: intoDoubleFixed3(values.rebar_cage_length) * 1000,
       pile_type: pileTypeState,
+      construction_technology: constructionTechnology,
       drill_mode: drillModeState,
+    }
+
+    let params = {
+      ebs_id: ctx.ebsItem.id,
+      engineering_listing_id: ctx.ebsItem.engineering_listing_id,
+      project_id: PROJECT_ID,
+      class: "bridge",
+      metadata: JSON.stringify(_metadata),
     } as TypeApiPostBridgeBoredBasicDataParams & { id: number }
 
     if (Boolean(editItem)) {
@@ -112,7 +113,6 @@ export default function AddBridge(props: Props) {
       cb(Object.assign(params), false)
     } else {
       const res = await postBridgeBoredBasicDataApi(params)
-      console.log(res)
       cb(Object.assign({}, params, res), true)
     }
 
@@ -222,6 +222,30 @@ export default function AddBridge(props: Props) {
             <div className="mb-8 relative">
               <div className="flex items-start flex-col">
                 <InputLabel htmlFor="drill_mode" className="mr-3 w-20 text-left mb-2.5" required>
+                  施工工艺:
+                </InputLabel>
+                <Select
+                  MenuProps={{ sx: { zIndex: 1602 } }}
+                  sx={{ flex: 1, color: "#303133", zIndex: 1602 }}
+                  id="drill_mode"
+                  size="small"
+                  value={constructionTechnology}
+                  onChange={(event) => {
+                    setConstructionTechnology(event.target.value)
+                  }}
+                  fullWidth>
+                  {CONSTRUCTION_TECHNOLOGY.map((type) => (
+                    <MenuItem value={type.value} key={type.value}>
+                      {type.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+            </div>
+
+            <div className="mb-8 relative">
+              <div className="flex items-start flex-col">
+                <InputLabel htmlFor="drill_mode" className="mr-3 w-20 text-left mb-2.5" required>
                   钻孔方式:
                 </InputLabel>
                 <Select
@@ -234,7 +258,7 @@ export default function AddBridge(props: Props) {
                     setDrillModeState(event.target.value)
                   }}
                   fullWidth>
-                  {Drill_Mode_Enum.map((type) => (
+                  {DRILL_MODE.map((type) => (
                     <MenuItem value={type.value} key={type.value}>
                       {type.label}
                     </MenuItem>

@@ -1,14 +1,5 @@
-import React from "react"
-import {
-  Button,
-  Drawer,
-  InputLabel,
-  Menu,
-  MenuItem,
-  Select,
-  Switch,
-  TextField,
-} from "@mui/material"
+import React, { useState } from "react"
+import { Button, Drawer, InputLabel, Menu, MenuItem, Select, TextField } from "@mui/material"
 import { ErrorMessage } from "@hookform/error-message"
 import {
   MaterialProportionListData,
@@ -23,6 +14,9 @@ import { CLASS_OPTION } from "@/app/proportion/const"
 import { RequireTag } from "@/libs/other"
 import useSWRMutation from "swr/mutation"
 import { reqGetDictionary } from "@/app/material-approach/api"
+import AddIcon from "@mui/icons-material/Add"
+import IconButton from "@mui/material/IconButton"
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import { intoDoubleFixed3 } from "@/libs/methods"
 import { reqGetEngineeringListing } from "@/app/basic-engineering-management/api"
 import { EngineeringListing } from "@/app/basic-engineering-management/types/index.d"
@@ -35,8 +29,6 @@ import { reqPostMaterialProportion, reqPutMaterialProportion } from "@/app/propo
 import SelectDictionaryClass from "@/components/SelectDictionaryClass"
 import { reqGetDictionaryClass } from "@/app/api"
 import useGetDictionaryClassHooks from "@/hooks/useGetDictionaryClassHooks"
-import { DICTIONARY_CLASS_ID } from "@/libs/const"
-import Decimal from "decimal.js"
 
 interface Props {
   open: boolean
@@ -53,9 +45,13 @@ type MaterialListType = {
   quantity: number | string
   dictionaryList: DictionaryData[]
   name: string
-  proportion: string
-  isSwitch: boolean
-  ingredients: { dictionary_id: number; quantity: number | string }[]
+}
+
+type option = {
+  pId: number
+  id: number
+  value: string
+  title: string
 }
 
 export default function AddOrEditProportion(props: Props) {
@@ -97,7 +93,7 @@ export default function AddOrEditProportion(props: Props) {
 
   const [engineeringList, setEngineeringList] = React.useState<EngineeringListing[]>([])
 
-  const { treeData } = useGetDictionaryClassHooks({})
+  const { treeData, flatDate } = useGetDictionaryClassHooks({})
 
   const getEngineeringList = async () => {
     const res = await getEngineeringListingApi({ project_id: PROJECT_ID })
@@ -137,33 +133,16 @@ export default function AddOrEditProportion(props: Props) {
     let materials = JSON.parse(item.materials)
     let arr: Array<MaterialListType> = []
 
-    console.log(materials)
     for (const materialsKey in materials) {
       let item = materials[materialsKey]
-      const res = await getDictionaryListApi({ class_id: item.ingredients[0].dictionary_class_id })
-
-      const sumQuantity = item.ingredients.reduce((pre: number, item: any) => {
-        return Decimal.add(pre, item.quantity).toNumber()
-      }, 0)
+      const res = await getDictionaryListApi({ class_id: item.dictionary_class_id })
 
       let obj = {
-        dictionary_id: item.ingredients[0].dictionary_id,
-        quantity: sumQuantity,
+        dictionary_id: item.dictionary_id,
+        quantity: item.quantity,
         dictionaryList: res,
-        dictionary_class_id: item.ingredients[0].dictionary_class_id,
-        isSwitch: item.is_single != 1,
-        proportion: item.proportion ?? "",
+        dictionary_class_id: item.dictionary_class_id,
       } as MaterialListType
-      if (item.is_single == 1) {
-        obj.ingredients = []
-      } else {
-        obj.ingredients = item.ingredients.map((el: any) => {
-          return {
-            dictionary_id: el.dictionary_id,
-            quantity: el.quantity,
-          }
-        })
-      }
 
       arr.push(obj)
     }
@@ -208,41 +187,36 @@ export default function AddOrEditProportion(props: Props) {
   }
 
   const oldProportion = React.useRef<String>("")
-  const handleBlurProportionState = async (val: string) => {
+  const handleBlurProportionState = (val: string) => {
     const arr = val.split(":")
-
-    const res = await getDictionaryListApi({ class_id: DICTIONARY_CLASS_ID.cement })
 
     if (materialList.length != arr.length) {
       setMaterialList(
-        arr.map((str, index) => {
-          if (index == 0) {
-            return {
-              dictionary_id: 0,
-              dictionary_class_id: DICTIONARY_CLASS_ID.cement,
-              dictionaryList: res,
-              quantity: "",
-              name: "水泥",
-              proportion: "",
-              isSwitch: false,
-              ingredients: [],
-            }
-          }
-          return {
-            dictionary_id: 0,
-            dictionary_class_id: 0,
-            dictionaryList: [],
-            quantity: "",
-            proportion: "",
-            name: "",
-            isSwitch: false,
-            ingredients: [],
-          }
-        }),
+        arr.map(() => ({
+          dictionary_id: 0,
+          dictionary_class_id: 0,
+          dictionaryList: [],
+          quantity: "",
+          name: "",
+        })),
       )
     }
 
     oldProportion.current = val
+  }
+
+  const handleClickMaterialDel = (index: number) => {
+    const cloneList = structuredClone(materialList)
+    cloneList.splice(index, 1)
+
+    const proportionArr = proportion.split(":")
+    proportionArr.splice(index, 1)
+
+    const str = proportionArr.join(":")
+
+    setProportion(str)
+    oldProportion.current = str
+    setMaterialList(cloneList)
   }
 
   const handleChangeMaterialDictionaryClassState = (index: number, val: any, name: string) => {
@@ -252,12 +226,6 @@ export default function AddOrEditProportion(props: Props) {
       cloneList[index]["dictionary_class_id"] = val
       cloneList[index]["dictionary_id"] = 0
       cloneList[index]["name"] = name
-      if (cloneList[index].isSwitch && cloneList[index].ingredients.length > 0) {
-        cloneList[index].ingredients = cloneList[index].ingredients.map((ing) => {
-          ing.dictionary_id = 0
-          return ing
-        })
-      }
       setMaterialList(cloneList)
     })
   }
@@ -286,14 +254,6 @@ export default function AddOrEditProportion(props: Props) {
           let flag = Number.isInteger(num)
           obj.quantity = flag ? num : intoDoubleFixed3(num)
         }
-
-        if (obj.isSwitch && obj.ingredients.length > 0) {
-          let proArr = obj.proportion.split(":")
-          obj.ingredients = obj.ingredients.map((ing, index) => {
-            ing.quantity = Decimal.div(Number(proArr[index]), 10).mul(obj.quantity).toNumber()
-            return ing
-          })
-        }
         return obj
       })
       if (proportionArr[0]) {
@@ -305,6 +265,32 @@ export default function AddOrEditProportion(props: Props) {
         setMaterialList(cloneList)
       }
       return
+    } else if (index == materialList.length - 1 && type == "quantity") {
+      if (materialList.length != proportionArr.length) {
+        let some = materialList.some((item) => !item.quantity)
+        if (!some) {
+          let num = val / Number(materialList[0].quantity)
+          let arr = materialList.map((el) => {
+            return Number(el.quantity) / num
+          })
+          setProportion(arr.join(":"))
+        }
+      } else {
+        if (!!materialList[0].quantity && proportionArr.length == materialList.length) {
+          let num = val / Number(materialList[0].quantity)
+          let p = Number.isInteger(num) ? num : intoDoubleFixed3(num)
+          proportionArr[index] = p.toString()
+          setProportion(proportionArr.join(":"))
+        }
+      }
+    } else if (type == "quantity") {
+      let proportionArr = proportion.split(":")
+      if (!!materialList[0].quantity && proportionArr.length == materialList.length) {
+        let num = val / Number(materialList[0].quantity)
+        let p = Number.isInteger(num) ? num : intoDoubleFixed3(num)
+        proportionArr[index] = p.toString()
+        setProportion(proportionArr.join(":"))
+      }
     }
     const cloneList = structuredClone(materialList)
     // @ts-ignore
@@ -312,45 +298,9 @@ export default function AddOrEditProportion(props: Props) {
     setMaterialList(cloneList)
   }
 
-  const handleChangeSwitch = (checked: boolean, index: number) => {
+  const handleChangeQuantity = (index: number, val: number) => {
     const cloneList = structuredClone(materialList)
-    cloneList[index].isSwitch = checked
-    setMaterialList(cloneList)
-  }
-
-  const handleChangeSubDictionary = (val: number, index: number, subIndex: number) => {
-    const cloneList = structuredClone(materialList)
-    cloneList[index].ingredients[subIndex].dictionary_id = val
-    setMaterialList(cloneList)
-  }
-
-  const handleChangeSubProportion = (val: string, index: number) => {
-    const cloneList = structuredClone(materialList)
-    cloneList[index].proportion = val
-    setMaterialList(cloneList)
-  }
-  const handleBlurSubProportion = (index: number) => {
-    const cloneList = structuredClone(materialList)
-    const row = cloneList[index]
-    if (!row.proportion) return
-    const arr = row.proportion.split(":")
-
-    const sum = arr.reduce((previousValue, currentValue) => {
-      return Decimal.add(previousValue, Number(currentValue)).toNumber()
-    }, 0)
-    if (sum != 10) return message.warning("配比需等于10")
-
-    row.ingredients = arr.map((str) => {
-      let obj: any = {
-        quantity: "",
-        dictionary_id: 0,
-      }
-      if (row.quantity) {
-        obj.quantity = Decimal.div(Number(str), 10).mul(row.quantity).toNumber()
-      }
-
-      return obj
-    })
+    cloneList[index].quantity = val
     setMaterialList(cloneList)
   }
 
@@ -438,35 +388,12 @@ export default function AddOrEditProportion(props: Props) {
     async (values: PostMaterialProportionParams) => {
       // 验证数据
 
-      const materials = materialList.map((item) => {
-        const obj: any = {
-          name: item.name,
-          is_single: item.isSwitch ? 0 : 1,
-          proportion: item.proportion,
-          ingredients: [],
-        }
-        if (item.isSwitch) {
-          obj.ingredients = item.ingredients.map((ing, index) => {
-            return {
-              position: index + 1,
-              quantity: ing.quantity,
-              dictionary_id: ing.dictionary_id,
-              dictionary_class_id: item.dictionary_class_id,
-            }
-          })
-        } else {
-          obj.ingredients = [
-            {
-              position: 1,
-              quantity: Number(item.quantity),
-              dictionary_id: item.dictionary_id,
-              dictionary_class_id: item.dictionary_class_id,
-            },
-          ]
-        }
-
-        return obj
-      })
+      const materials = materialList.map((item) => ({
+        dictionary_id: Number(item.dictionary_id),
+        quantity: Number(item.quantity),
+        dictionary_class_id: Number(item.dictionary_class_id),
+        name: item.name,
+      }))
 
       if (!proportion || !dictionaryId || materials.length <= 0)
         return message.warning("数据请填写完整")
@@ -501,6 +428,19 @@ export default function AddOrEditProportion(props: Props) {
       close()
     },
   )
+
+  const handleQuantity = (index: number) => {
+    if (materialList.length - 1 == index) {
+      let some = materialList.some((item) => !item.quantity)
+      if (!some) {
+        let unit = materialList[0].quantity
+        let proportionArr = materialList.map((item) => {
+          return intoDoubleFixed3(Number(item.quantity) / Number(unit))
+        })
+        setProportion(proportionArr.join(":"))
+      }
+    }
+  }
 
   return (
     <Drawer open={open} onClose={close} anchor="right">
@@ -624,166 +564,96 @@ export default function AddOrEditProportion(props: Props) {
                 <RequireTag> 所需物资:</RequireTag>
               </InputLabel>
               <div className="w-full">
+                <div
+                  className="bg-railway_blue w-10 h-10 rounded-full flex justify-center items-center shadow cursor-pointer mb-3"
+                  onClick={() => {
+                    setMaterialList((prevState) => [
+                      ...prevState,
+                      {
+                        dictionary_class_id: 0,
+                        dictionary_id: 0,
+                        dictionaryList: [],
+                        quantity: "",
+                        name: "",
+                      } as MaterialListType,
+                    ])
+                  }}>
+                  <AddIcon className="text-[2.15rem] text-white" />
+                </div>
                 <ul className="w-full">
-                  {materialList.map((item, index) =>
-                    index == 0 ? (
-                      <li className="w-full flex gap-x-2 mb-2" key={index}>
-                        <div className="w-[11.25rem]">
-                          <SelectDictionaryClass
-                            treeData={treeData}
-                            value={item.dictionary_class_id}
-                            onChange={(id: number, label) => {
-                              handleChangeMaterialDictionaryClassState(index, id, label)
-                            }}></SelectDictionaryClass>
-                        </div>
-                        <Select
-                          MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
-                          sx={{ color: "#303133", zIndex: 1602, width: "12.5rem" }}
-                          id="role_list"
-                          size="small"
-                          value={item.dictionary_id}
-                          onChange={(event) => {
-                            handleChangeMaterialListState(
-                              index,
-                              "dictionary_id",
-                              +event.target.value,
-                            )
-                          }}>
-                          <MenuItem value={0} disabled>
-                            <i className="text-[#ababab]">请选择一个规格型号</i>
+                  {materialList.map((item, index) => (
+                    <li className="w-full flex gap-x-2 mb-2" key={index}>
+                      {/*<Select*/}
+                      {/*  MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}*/}
+                      {/*  sx={{ color: "#303133", zIndex: 1602, width: "11.25rem" }}*/}
+                      {/*  id="role_list"*/}
+                      {/*  size="small"*/}
+                      {/*  value={item.dictionary_class_id}*/}
+                      {/*  onChange={(event) => {*/}
+                      {/*    handleChangeMaterialListState(*/}
+                      {/*      index,*/}
+                      {/*      "dictionary_class_id",*/}
+                      {/*      +event.target.value,*/}
+                      {/*    )*/}
+                      {/*  }}>*/}
+                      {/*  <MenuItem value={0} disabled>*/}
+                      {/*    <i className="text-[#ababab]">请选择一个物资类别</i>*/}
+                      {/*  </MenuItem>*/}
+                      {/*  {subConcreteDictionaryClass.map((item: any) => (*/}
+                      {/*    <MenuItem value={item.id} key={item.id}>*/}
+                      {/*      {item.label}*/}
+                      {/*    </MenuItem>*/}
+                      {/*  ))}*/}
+                      {/*</Select>*/}
+                      <div className="w-[11.25rem]">
+                        <SelectDictionaryClass
+                          treeData={treeData}
+                          value={item.dictionary_class_id}
+                          onChange={(id: number, label) => {
+                            handleChangeMaterialDictionaryClassState(index, id, label)
+                          }}></SelectDictionaryClass>
+                      </div>
+                      <Select
+                        MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
+                        sx={{ color: "#303133", zIndex: 1602, width: "12.5rem" }}
+                        id="role_list"
+                        size="small"
+                        value={item.dictionary_id}
+                        onChange={(event) => {
+                          handleChangeMaterialListState(index, "dictionary_id", +event.target.value)
+                        }}>
+                        <MenuItem value={0} disabled>
+                          <i className="text-[#ababab]">请选择一个规格型号</i>
+                        </MenuItem>
+                        {item.dictionaryList.map((item: any) => (
+                          <MenuItem value={item.id} key={item.id}>
+                            {item.name}
                           </MenuItem>
-                          {item.dictionaryList.map((item: any) => (
-                            <MenuItem value={item.id} key={item.id}>
-                              {item.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        <TextField
-                          variant="outlined"
-                          size="small"
-                          className="w-[4.75rem]"
-                          placeholder="数量"
-                          autoComplete="off"
-                          value={item.quantity}
-                          onChange={(event) => {
-                            let str = event.target.value.replace(/[^0-9.]/g, "")
-                            handleChangeMaterialListState(index, "quantity", str)
-                          }}
-                        />
-                      </li>
-                    ) : (
-                      <li className="w-full flex gap-x-2 mb-2 flex-col" key={index}>
-                        <div className="flex gap-x-4">
-                          <div className="w-[11.25rem]">
-                            <SelectDictionaryClass
-                              treeData={treeData}
-                              value={item.dictionary_class_id}
-                              onChange={(id: number, label) => {
-                                handleChangeMaterialDictionaryClassState(index, id, label)
-                              }}></SelectDictionaryClass>
-                          </div>
-                          <div className="flex-1">
-                            <span>多个规格型号：</span>
-                            <Switch
-                              checked={item.isSwitch}
-                              onChange={(event, checked) => {
-                                handleChangeSwitch(checked, index)
-                              }}></Switch>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          {item.isSwitch ? (
-                            <>
-                              <div className="mb-2">
-                                <TextField
-                                  variant="outlined"
-                                  size="small"
-                                  placeholder="请输入比值"
-                                  autoComplete="off"
-                                  value={item.proportion}
-                                  onChange={(event) => {
-                                    handleChangeSubProportion(event.target.value, index)
-                                  }}
-                                  onBlur={() => {
-                                    handleBlurSubProportion(index)
-                                  }}
-                                />
-                              </div>
-                              {item.ingredients.map((subRow, subIndex) => (
-                                <div className="flex gap-x-2 mb-2" key={subIndex}>
-                                  <Select
-                                    MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
-                                    sx={{ color: "#303133", zIndex: 1602, width: "12.5rem" }}
-                                    id="role_list"
-                                    size="small"
-                                    value={subRow.dictionary_id}
-                                    onChange={(event) => {
-                                      handleChangeSubDictionary(
-                                        Number(event.target.value),
-                                        index,
-                                        subIndex,
-                                      )
-                                    }}>
-                                    <MenuItem value={0} disabled>
-                                      <i className="text-[#ababab]">请选择一个规格型号</i>
-                                    </MenuItem>
-                                    {item.dictionaryList.map((item: any) => (
-                                      <MenuItem value={item.id} key={item.id}>
-                                        {item.name}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                  <TextField
-                                    disabled
-                                    variant="outlined"
-                                    size="small"
-                                    className="w-[4.75rem]"
-                                    placeholder="数量"
-                                    autoComplete="off"
-                                    value={subRow.quantity}
-                                  />
-                                </div>
-                              ))}
-                            </>
-                          ) : (
-                            <div className="flex gap-x-2">
-                              <Select
-                                MenuProps={{ sx: { zIndex: 1702, height: "400px" } }}
-                                sx={{ color: "#303133", zIndex: 1602, width: "12.5rem" }}
-                                id="role_list"
-                                size="small"
-                                value={item.dictionary_id}
-                                onChange={(event) => {
-                                  handleChangeMaterialListState(
-                                    index,
-                                    "dictionary_id",
-                                    +event.target.value,
-                                  )
-                                }}>
-                                <MenuItem value={0} disabled>
-                                  <i className="text-[#ababab]">请选择一个规格型号</i>
-                                </MenuItem>
-                                {item.dictionaryList.map((item: any) => (
-                                  <MenuItem value={item.id} key={item.id}>
-                                    {item.name}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                              <TextField
-                                disabled
-                                variant="outlined"
-                                size="small"
-                                className="w-[4.75rem]"
-                                placeholder="数量"
-                                autoComplete="off"
-                                value={item.quantity}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </li>
-                    ),
-                  )}
+                        ))}
+                      </Select>
+                      <TextField
+                        variant="outlined"
+                        size="small"
+                        className="w-[4.75rem]"
+                        placeholder="数量"
+                        autoComplete="off"
+                        value={item.quantity}
+                        onChange={(event) => {
+                          let str = event.target.value.replace(/[^0-9.]/g, "")
+                          handleChangeMaterialListState(index, "quantity", str)
+                        }}
+                        onBlur={() => {
+                          handleQuantity(index)
+                        }}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          handleClickMaterialDel(index)
+                        }}>
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>

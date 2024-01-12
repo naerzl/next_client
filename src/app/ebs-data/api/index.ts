@@ -110,8 +110,6 @@ export const reqGetBridgeBoredBasicData = (
     ebs_id: number
     project_id: number
     engineering_listing_id: number
-    project_sp_id?: number
-    project_si_id?: number
   }>,
 ): Promise<BridgeBoredBasicData[]> => fetcher({ url, arg })
 

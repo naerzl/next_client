@@ -4,23 +4,21 @@ import { SubmitHandler, useForm } from "react-hook-form"
 import useDebounce from "@/hooks/useDebounce"
 import { ErrorMessage } from "@hookform/error-message"
 import useSWRMutation from "swr/mutation"
-import { message, TreeSelectProps } from "antd"
+import { message } from "antd"
 import {
   EngineeringListing,
   PostEngineeringListingParams,
   PutEngineeringListingParams,
 } from "@/app/basic-engineering-management/types/index.d"
 import { TypeEBSDataList } from "@/app/gantt/types"
-import { TypeApiGetEBSParams } from "@/app/ebs-data/types"
 import {
   reqGetEngineeringListing,
   reqPostEngineeringListing,
   reqPutEngineeringListing,
 } from "@/app/basic-engineering-management/api"
-import { reqGetEBS, reqGetEBSSystem } from "@/app/ebs-data/api"
+import { reqGetEBSSystem } from "@/app/ebs-data/api"
 import { LayoutContext } from "@/components/LayoutContext"
 import { useConfirmationDialog } from "@/components/ConfirmationDialogProvider"
-import dayjs from "dayjs"
 
 type AllSelectType = {
   ebs_id: number | null
@@ -58,7 +56,7 @@ export default function AddOrEditEngineering(props: Props) {
     reset()
   }
 
-  const { trigger: getEngineeringListingApi, isMutating } = useSWRMutation(
+  const { trigger: getEngineeringListingApi } = useSWRMutation(
     "/engineering-listing",
     reqGetEngineeringListing,
   )

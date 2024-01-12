@@ -11,26 +11,37 @@ export const Pile_Type_Enum = [
   },
 ]
 
-export const Drill_Mode_Enum = [
+export const CONSTRUCTION_TECHNOLOGY = [
   {
-    value: "MANUAL_HOLE_DIGGING",
-    label: "人工挖孔",
-  },
-  {
-    value: "DRY_CONSTRUCTION_DRILL",
+    value: "dry_construction_drill",
     label: "干作业钻孔",
   },
   {
-    value: "MUD_PROTECTION_DRILL",
+    value: "mud_protection_drill",
     label: "泥浆护壁钻孔",
   },
   {
-    value: "CASING_PIPE_WALL_DRILL",
+    value: "casing_pipe_wall_drill",
     label: "套管护壁钻孔",
   },
+]
+
+export const DRILL_MODE = [
   {
-    value: "IMMERSED_TUBE_DRILL",
-    label: "沉管",
+    value: "percussion_drill",
+    label: "冲击钻",
+  },
+  {
+    value: "rotary_drilling_rig",
+    label: "旋挖钻",
+  },
+  {
+    value: "positive_circulation",
+    label: "正循环",
+  },
+  {
+    value: "reverse_circulation",
+    label: "反循环",
   },
 ]
 
