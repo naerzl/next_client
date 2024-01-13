@@ -1224,6 +1224,11 @@ export default function DialogMaterialDemand(props: Props) {
     })
   }
 
+  const handleCancelPlan = async () => {
+    await putMaterialDemandApi({ project_id: PROJECT_ID, id: requirementId, status: "waiting" })
+    setRequirementStates("waiting")
+  }
+
   const handleAddProportion = () => {
     showConfirmationDialog("即将跳转到配合比配置页面，当前页面数据将不被保存，确认跳转？", () => {
       router.push("/proportion")
@@ -2554,10 +2559,19 @@ export default function DialogMaterialDemand(props: Props) {
               </div>
 
               <div className="absolute bottom-0 w-full">
-                <div className="overflow-hidden">
+                <div className="overflow-hidden flex justify-end gap-x-2">
+                  {"confirmed" == requirementStatus && (
+                    <Button
+                      color="error"
+                      variant="contained"
+                      onClick={() => {
+                        handleCancelPlan()
+                      }}>
+                      撤回
+                    </Button>
+                  )}
                   <Button
                     disabled={"confirmed" == requirementStatus}
-                    className="float-right"
                     variant="contained"
                     onClick={() => {
                       handleConfirmPlan()
