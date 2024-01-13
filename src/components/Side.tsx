@@ -61,6 +61,11 @@ const menuList: { [key: string]: any } = {
         title: "物资需求计划",
         permissionTag: "material_approach_member_read",
       },
+      "material-procurement-plan": {
+        path: "/material-procurement-plan",
+        title: "物资采购计划",
+        permissionTag: "material_approach_member_read",
+      },
       "material-approach": {
         path: "/material-approach",
         title: "物资进场",
@@ -166,7 +171,7 @@ function side() {
 
   const [openList, setOpen] = React.useState<string[]>([])
 
-  React.useEffect(() => {}, [])
+  React.useEffect(() => { }, [])
 
   function displayWithPermission(tag: string) {
     return ctxLayout.permissionTagList.includes(tag) ? {} : { display: "none" }
