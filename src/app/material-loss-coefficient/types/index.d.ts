@@ -57,6 +57,7 @@ export interface ProjectLossCoefficient {
   engineering_listing_id: number
   ebs_id: number
   loss_coefficient: number
+  service_conditions: string
 }
 
 export interface EBSes {
@@ -72,5 +73,5 @@ export interface PostMaterialLossCoefficientParams {
   engineering_listing_id: number
   ebs_id: number
   loss_coefficient: number
-  service_conditions: string
+  service_conditions?: string
 }

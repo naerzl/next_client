@@ -43,6 +43,7 @@ function SelectDictionaryClass(props: Props) {
   }
   const findFlatData = () => {
     const findItem = flatDate.current.find((item) => item.id == valueProps)
+    console.log(findItem, valueProps)
     setNameView(findItem ? findItem.title : "")
   }
 

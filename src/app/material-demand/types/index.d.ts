@@ -140,7 +140,7 @@ export interface MaterialDemandItemListData {
   loss_coefficient: string
   design_usage: number
   actual_usage: number
-  class: string
+  class: "user" | "system" | "incremental"
   created_at: string
   updated_at: string
   planned_usage_at: string
@@ -166,6 +166,13 @@ export interface MaterialDemandItemListData {
   proportions?: MaterialListType[]
   isExpand?: boolean
   editState: DemandEditState
+  incremental?: {
+    quantity: number
+    dictionary_id: number
+    dictionary_class_id: number
+    name: string
+    dictionaryList: DictionaryData[]
+  }[]
 }
 
 export interface MaterialLossCoefficient {

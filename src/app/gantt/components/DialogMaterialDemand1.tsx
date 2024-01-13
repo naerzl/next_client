@@ -11,6 +11,7 @@ import {
   MenuItem,
   Pagination,
   Select,
+  SelectChangeEvent,
   Snackbar,
 } from "@mui/material"
 import Table from "@mui/material/Table"
@@ -83,6 +84,14 @@ enum EditFieldsEnum {
   LossCoefficient = "loss_coefficient",
   ActualUsage = "actual_usage",
   PlannedUsageAt = "planned_usage_at",
+}
+
+type ServiceConditions = {
+  name: string
+  quantity: number
+  dictionary_id: number
+  dictionary_class_id: number
+  dictionaryList: DictionaryData[]
 }
 
 function findDictionaryClassName(val: number) {
@@ -187,7 +196,7 @@ function filterDictionaryWithWZAttribute(str: string) {
 }
 
 export default function DialogMaterialDemand(props: Props) {
-  const { open, handleCloseDialogAddForm, item } = props
+  const { open, handleCloseDialogAddForm, item: propsItem } = props
 
   const router = useRouter()
 
@@ -227,9 +236,9 @@ export default function DialogMaterialDemand(props: Props) {
   const getMaterialDemandList = async () => {
     const res = await getMaterialDemandApi({
       project_id: PROJECT_ID,
-      engineering_listing_id: item.engineering_listings[0].id,
-      project_si_id: Number(item.id.substring(1)),
-      project_sp_id: item.parent_id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
+      project_si_id: Number(propsItem.id.substring(1)),
+      project_sp_id: propsItem.parent_id,
     })
     if (res.items.length > 0) {
       setRequirementId(res.items[0].id)
@@ -272,8 +281,8 @@ export default function DialogMaterialDemand(props: Props) {
           item.editState.proportion = item.material_proportion.id
         }
 
-        //   有没有保存过的
         let subR: MaterialDemandItemListData[] = []
+
         if (
           item.dictionary &&
           item.dictionary.dictionary_class_id == DICTIONARY_CLASS_ID.concrete
@@ -319,20 +328,7 @@ export default function DialogMaterialDemand(props: Props) {
             subTableList.push(obj)
           }
 
-          // 获取到子列表 判断有没有自定义配合比 对照顺序
-          if (item.material_proportion) {
-            let proportionMaterialArr = JSON.parse(item.material_proportion.materials)
-            let mapArr = proportionMaterialArr.map(
-              (ppMItem: any) =>
-                subTableList.find(
-                  (subItem) => subItem.dictionary_id == ppMItem.ingredients[0].dictionary_id,
-                )!,
-            )
-            const customLists = subTableList.filter((item) => item.class == "user")
-            item.proportions = [...mapArr.filter((mapArrItem: any) => mapArrItem), ...customLists]
-          } else {
-            item.proportions = subTableList
-          }
+          item.proportions = subTableList
 
           arrs.push(item)
           // 自定义的
@@ -344,30 +340,50 @@ export default function DialogMaterialDemand(props: Props) {
 
           for (const materialsKey in materials) {
             let itemWithMaterial = materials[materialsKey]
-
-            let subActualUsage = Decimal.mul(
-              item.actual_usage,
-              intoDoubleFixed3(itemWithMaterial.quantity / 1000),
-            ).toNumber()
-
             let findClassItem = findDictionaryClassEnum(itemWithMaterial.name)
-            // 需要计算数据
-            let postParams = {
-              class: "system",
-              parent_id: item.id,
-              requirement_id: requirementId,
-              dictionary_id: itemWithMaterial.dictionary_id,
-              actual_usage: subActualUsage,
-              loss_coefficient: +item.loss_coefficient,
-              ebs_id: item.ebs_id,
-              ebs_desc: item.ebs_desc,
-              planned_usage_at: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
-              material_class: findClassItem ? findClassItem.value : "none",
-            } as PostMaterialDemandItemParams
 
-            subArr.push(postParams)
+            if (itemWithMaterial.is_single != 1) {
+              for (const ingKey in itemWithMaterial.ingredients) {
+                let ingItem = itemWithMaterial.ingredients[ingKey]
+
+                await postMaterialDemandItemApi({
+                  class: "system",
+                  requirement_id: requirementId,
+                  parent_id: item.id,
+                  ebs_id: item.ebs_id,
+                  ebs_desc: item.ebs_desc,
+                  dictionary_id: ingItem.dictionary_id,
+                  actual_usage: Math.round(
+                    Decimal.mul(
+                      intoDoubleFixed3(ingItem.quantity / 1000),
+                      item.actual_usage,
+                    ).toNumber(),
+                  ),
+                  planned_usage_at: dayJsToStr(item.planned_usage_at, "YYYY-MM-DD"),
+                  loss_coefficient: 0,
+                  material_class: findClassItem ? findClassItem.value : "none",
+                })
+              }
+            } else {
+              await postMaterialDemandItemApi({
+                class: "system",
+                requirement_id: requirementId,
+                parent_id: item.id,
+                ebs_id: item.ebs_id,
+                ebs_desc: item.ebs_desc,
+                dictionary_id: itemWithMaterial.ingredients[0].dictionary_id,
+                actual_usage: Math.round(
+                  Decimal.mul(
+                    intoDoubleFixed3(itemWithMaterial.ingredients[0].quantity / 1000),
+                    item.actual_usage,
+                  ).toNumber(),
+                ),
+                planned_usage_at: dayJsToStr(item.planned_usage_at, "YYYY-MM-DD"),
+                loss_coefficient: 0,
+                material_class: findClassItem ? findClassItem.value : "none",
+              })
+            }
           }
-          await Promise.all(subArr.map((params) => postMaterialDemandItemApi(params)))
           getMaterialDemandItemList()
           return
           // 字典的
@@ -435,9 +451,9 @@ export default function DialogMaterialDemand(props: Props) {
   const handleCreateMaterialDemand = async () => {
     await postMaterialDemandApi({
       project_id: PROJECT_ID,
-      engineering_listing_id: item.engineering_listings[0].id,
-      project_si_id: Number(item.id.substring(1)),
-      project_sp_id: item.parent_id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
+      project_si_id: Number(propsItem.id.substring(1)),
+      project_sp_id: propsItem.parent_id,
       action: 1,
     })
     getMaterialDemandList()
@@ -446,9 +462,9 @@ export default function DialogMaterialDemand(props: Props) {
   const handleUploadMaterialDemand = async () => {
     await postMaterialDemandApi({
       project_id: PROJECT_ID,
-      engineering_listing_id: item.engineering_listings[0].id,
-      project_si_id: Number(item.id.substring(1)),
-      project_sp_id: item.parent_id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
+      project_si_id: Number(propsItem.id.substring(1)),
+      project_sp_id: propsItem.parent_id,
       action: 2,
     })
     getMaterialDemandList()
@@ -474,48 +490,15 @@ export default function DialogMaterialDemand(props: Props) {
 
       let materials: ProportionMaterial[] = JSON.parse(obj.materials ?? "[]")
 
-      const filterWithUserAddArr = requirementItem.proportions?.filter((el) => el.class != "user")
+      const filterWithUserAddArr = requirementItem.proportions?.filter((el) => el.class != "user")!
 
-      // 判断子项和配比的对象数量是不是一样
-      if (filterWithUserAddArr!.length > materials.length) {
-        let remainingList: MaterialListType[] = []
-        for (const materialsKey in materials) {
-          let materialItem = materials[materialsKey]
+      for (const materialsKey in materials) {
+        let materialItem = materials[materialsKey]
+        const findClassItem = CLASS_OPTION.find((classItem) => classItem.label == materialItem.name)
 
-          let findSubItem = filterWithUserAddArr!.find((el) => {
-            if (materialItem.is_single != 1) {
-              return materialItem.ingredients.find(
-                (ing) =>
-                  ing.dictionary_class_id == el.dictionary_class_id &&
-                  el.dictionary_id == ing.dictionary_id,
-              )
-            }
-
-            return el.dictionary_class_id == materialItem.ingredients[0].dictionary_class_id
-          })
-
-          findSubItem && remainingList.push(findSubItem)
-          //
-          if (findSubItem) {
-            let sumActualUsage = Decimal.add(1, Number(findSubItem.loss_coefficient) / 100)
-              .mul(materialItem.ingredients[0].quantity)
-              .toNumber()
-
-            await putMaterialDemandItemApi({
-              id: findSubItem.id!,
-              dictionary_id: materialItem.ingredients[0].dictionary_id,
-              requirement_id: requirementId,
-              actual_usage: Math.round(
-                Decimal.mul(
-                  intoDoubleFixed3(sumActualUsage / 1000),
-                  requirementItem.actual_usage,
-                ).toNumber(),
-              ),
-              loss_coefficient: findSubItem.loss_coefficient ?? 0,
-              planned_usage_at: findSubItem.editState.plannedUsageAt,
-            })
-          } else {
-            const findClassItem = CLASS_OPTION.find((classItem) => classItem.label == item.name)
+        if (materialItem.is_single != 1) {
+          for (const ingKey in materialItem.ingredients) {
+            let ingItem = materialItem.ingredients[ingKey]
 
             await postMaterialDemandItemApi({
               class: "system",
@@ -523,10 +506,10 @@ export default function DialogMaterialDemand(props: Props) {
               parent_id: requirementItem.id,
               ebs_id: requirementItem.ebs_id,
               ebs_desc: requirementItem.ebs_desc,
-              dictionary_id: materialItem.ingredients[0].dictionary_id,
+              dictionary_id: ingItem.dictionary_id,
               actual_usage: Math.round(
                 Decimal.mul(
-                  intoDoubleFixed3(materialItem.ingredients[0].quantity / 1000),
+                  intoDoubleFixed3(ingItem.quantity / 1000),
                   requirementItem.actual_usage,
                 ).toNumber(),
               ),
@@ -535,74 +518,31 @@ export default function DialogMaterialDemand(props: Props) {
               material_class: findClassItem ? findClassItem.value : "none",
             })
           }
-        }
-        const needDelItems = filterWithUserAddArr!.filter(
-          (ele) => !remainingList.find((subEle) => subEle.id == ele.id),
-        )
-        let axiosList = needDelItems.map((ele) =>
-          delMaterialDemandItemApi({ requirement_id: requirementId, id: ele.id! }),
-        )
-        await Promise.all(axiosList)
-      } else {
-        for (const materialsKey in materials) {
-          // 配合比对象
-          let item = materials[materialsKey]
-          // 子列表对象
-          let findSubItem = requirementItem!.proportions!.find((el) => {
-            if (item.is_single != 1) {
-              return item.ingredients.find(
-                (ing) =>
-                  ing.dictionary_class_id == el.dictionary_class_id &&
-                  el.dictionary_id == ing.dictionary_id,
-              )
-            }
-
-            return el.dictionary_class_id == item.ingredients[0].dictionary_class_id
+        } else {
+          await postMaterialDemandItemApi({
+            class: "system",
+            requirement_id: requirementId,
+            parent_id: requirementItem.id,
+            ebs_id: requirementItem.ebs_id,
+            ebs_desc: requirementItem.ebs_desc,
+            dictionary_id: materialItem.ingredients[0].dictionary_id,
+            actual_usage: Math.round(
+              Decimal.mul(
+                intoDoubleFixed3(materialItem.ingredients[0].quantity / 1000),
+                requirementItem.actual_usage,
+              ).toNumber(),
+            ),
+            planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
+            loss_coefficient: 0,
+            material_class: findClassItem ? findClassItem.value : "none",
           })
-
-          if (findSubItem) {
-            findSubItem.dictionary_id = item.ingredients[0].dictionary_id
-            let sumActualUsage = Decimal.add(1, Number(findSubItem.loss_coefficient) / 100)
-              .mul(item.ingredients[0].quantity)
-              .toNumber()
-            // (1 + Number(findSubItem.loss_coefficient) / 100) * item.quantity
-
-            await putMaterialDemandItemApi({
-              id: findSubItem.id!,
-              dictionary_id: item.ingredients[0].dictionary_id,
-              requirement_id: requirementId,
-              actual_usage: Math.round(
-                Decimal.mul(
-                  intoDoubleFixed3(sumActualUsage / 1000),
-                  requirementItem.actual_usage,
-                ).toNumber(),
-              ),
-              loss_coefficient: findSubItem.loss_coefficient ?? 0,
-              planned_usage_at: findSubItem.editState.plannedUsageAt,
-            })
-          } else {
-            const findClassItem = CLASS_OPTION.find((classItem) => classItem.label == item.name)
-
-            await postMaterialDemandItemApi({
-              class: "system",
-              requirement_id: requirementId,
-              parent_id: requirementItem.id,
-              ebs_id: requirementItem.ebs_id,
-              ebs_desc: requirementItem.ebs_desc,
-              dictionary_id: item.ingredients[0].dictionary_id,
-              actual_usage: Math.round(
-                Decimal.mul(
-                  intoDoubleFixed3(item.ingredients[0].quantity / 1000),
-                  requirementItem.actual_usage,
-                ).toNumber(),
-              ),
-              planned_usage_at: dayJsToStr(requirementItem.planned_usage_at, "YYYY-MM-DD"),
-              loss_coefficient: 0,
-              material_class: findClassItem ? findClassItem.value : "none",
-            })
-          }
         }
       }
+
+      let axiosList = filterWithUserAddArr.map((ele) =>
+        delMaterialDemandItemApi({ requirement_id: requirementId, id: ele.id! }),
+      )
+      await Promise.all(axiosList)
 
       getMaterialDemandItemList()
     }
@@ -721,21 +661,30 @@ export default function DialogMaterialDemand(props: Props) {
   const _ComputeProportion = (
     proportions: MaterialListType[],
     rowItem: MaterialDemandItemListData,
-    materials: any[],
+    materials: ProportionMaterial[],
   ) => {
     return proportions!.map((subRow) => {
       // 找到配合比的字典和分类
       let findMaterialItem = materials.find(
         (material) =>
-          material.dictionary_id == subRow.dictionary_id &&
-          material.dictionary_class_id == subRow.dictionary_class_id,
+          !!material.ingredients.find(
+            (ingItem) =>
+              ingItem.dictionary_class_id == subRow.dictionary_class_id &&
+              ingItem.dictionary_id == subRow.dictionary_id,
+          ),
       )
+
       if (findMaterialItem) {
         // 找到配比计算（父级需求 * 子集配比的量*（1+损耗系数））
+        const _findIngItem = findMaterialItem.ingredients.find(
+          (ingItem) =>
+            ingItem.dictionary_class_id == subRow.dictionary_class_id &&
+            ingItem.dictionary_id == subRow.dictionary_id,
+        )!
+
         let sum = Decimal.add(1, Number(subRow.loss_coefficient) / 100)
-          .mul(findMaterialItem.quantity)
+          .mul(_findIngItem.quantity)
           .toNumber()
-        // findMaterialItem.quantity * (1 + Number(subRow.loss_coefficient) / 100)
 
         subRow.editState.actualUsage = intoDoubleFixed3(
           Decimal.mul(rowItem.editState.actualUsage, sum).div(1000).toNumber(),
@@ -747,11 +696,10 @@ export default function DialogMaterialDemand(props: Props) {
         let sum = Decimal.add(1, Number(subRow.loss_coefficient) / 100)
           .mul(rowItem.editState.actualUsage)
           .toNumber()
-        // rowItem.editState.actualUsage * (1 + Number(subRow.loss_coefficient) / 100)
         subRow.editState.actualUsage = intoDoubleFixed3(sum)
         subRow.actual_usage = Decimal.mul(subRow.editState.actualUsage, 1000).toNumber()
-        // subRow.editState.actualUsage * 1000
       }
+
       return subRow
     })
   }
@@ -887,7 +835,7 @@ export default function DialogMaterialDemand(props: Props) {
     setAnchorEl(event.currentTarget)
     let row = requirementList[index]
     const res = await getMaterialLossCoefficientApi({
-      engineering_listing_id: item.engineering_listings[0].id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
       ebs_id: row.ebs_id,
       code: row.material_loss_coefficient!.code,
       project_id: PROJECT_ID,
@@ -930,7 +878,7 @@ export default function DialogMaterialDemand(props: Props) {
   ) => {
     setAnchorEl(event.currentTarget)
     const res = await getMaterialLossCoefficientApi({
-      engineering_listing_id: item.engineering_listings[0].id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
       ebs_id: row.ebs_id,
       code: subRow.material_loss_coefficient!.code,
       project_id: PROJECT_ID,
@@ -1358,7 +1306,6 @@ export default function DialogMaterialDemand(props: Props) {
         return Decimal.add(1, Number(lossCoefficient) / 100)
           .mul(previousValue)
           .toNumber()
-        // previousValue * (1 + Number(lossCoefficient) / 100)
       },
       row.design_usage,
     )
@@ -1368,20 +1315,51 @@ export default function DialogMaterialDemand(props: Props) {
     )
   }
 
-  const handleBlurMenuLossCoefficient = async (index: number) => {
+  const [serviceConditions, setServiceConditions] = React.useState<ServiceConditions>({
+    dictionaryList: [] as DictionaryData[],
+    dictionary_id: 0,
+  } as ServiceConditions)
+
+  const handleChangeServiceConditionsWithQuantity = (val: number) => {
+    const cloneState = structuredClone(serviceConditions)
+    cloneState.quantity = val
+    setServiceConditions(cloneState)
+  }
+
+  const handleChangeServiceConditionsWithDictionaryClass = async (id: number, name: string) => {
+    const cloneState = structuredClone(serviceConditions)
+    cloneState.dictionary_class_id = id
+    cloneState.name = name
+    cloneState.dictionary_id = 0
+    const res = await getDictionaryListApi({ class_id: id })
+    cloneState.dictionaryList = res
+    setServiceConditions(cloneState)
+  }
+
+  const handleChangeServiceConditionsWithDictionary = (val: number) => {
+    const cloneState = structuredClone(serviceConditions)
+    cloneState.dictionary_id = val
+    setServiceConditions(cloneState)
+  }
+
+  const handleBlurMenuLossCoefficient = async () => {
     if (editPos.subIndex) {
     } else {
-      let row = menuLossCoefficientLists[index]
+      const row = requirementList[editPos.index]
+      let obj: any = {
+        name: serviceConditions.name,
+        quantity: serviceConditions.quantity,
+        dictionary_id: serviceConditions.dictionary_id,
+        dictionary_class_id: serviceConditions.dictionary_class_id,
+      }
 
       await postMaterialLossCoefficientApi({
         project_id: PROJECT_ID,
-        loss_coefficient_id: row.id,
-        loss_coefficient: row.project_loss_coefficient
-          ? row.project_loss_coefficient.loss_coefficient
-          : row.loss_coefficient,
-        engineering_listing_id: item.engineering_listings[0].id,
+        loss_coefficient_id: row.material_loss_coefficient!.id,
+        loss_coefficient: row.material_loss_coefficient!.loss_coefficient,
+        engineering_listing_id: propsItem.engineering_listings[0].id,
         ebs_id: requirementList[editPos.index].ebs_id,
-        service_conditions: "",
+        service_conditions: JSON.stringify({ incremental: obj }),
       })
       _ComputedWithMenuChangeLossCoefficient()
       setEditMenuPos({})
@@ -1420,7 +1398,7 @@ export default function DialogMaterialDemand(props: Props) {
           </Button>
         </DialogTitle>
         <div className="px-6 flex justify-between items-center">
-          <div>工点数据名称：{item.name}</div>
+          <div>工点数据名称：{propsItem.name}</div>
           <div>
             {/*{requirementStatus == "confirmed" && (*/}
             {/*  <Button*/}
@@ -1741,7 +1719,7 @@ export default function DialogMaterialDemand(props: Props) {
                                             {findProportionSelf(
                                               materialProportionList,
                                               row,
-                                              item.engineering_listings[0].id,
+                                              propsItem.engineering_listings[0].id,
                                             ).map((item) => (
                                               <MenuItem value={item.id} key={item.id}>
                                                 {item.name}-{item.proportion}
@@ -2123,8 +2101,8 @@ export default function DialogMaterialDemand(props: Props) {
                       <TableRow className="grid-cols-9 grid">
                         <TableCell align="center">
                           <TreeSelectWithEbs
-                            engineeringListingId={item.engineering_listings[0].id}
-                            ebs_code={item.engineering_listings[0].ebs_code}
+                            engineeringListingId={propsItem.engineering_listings[0].id}
+                            ebs_code={propsItem.engineering_listings[0].ebs_code}
                             onChecked={(id: number) => {
                               handleChangeMainEditStateWithEBS(id)
                             }}
@@ -2346,9 +2324,6 @@ export default function DialogMaterialDemand(props: Props) {
                                 let str = event.target.value.replace(/[^0-9.]/g, "")
                                 handleChangeMenuLossCoefficient(index, str)
                               }}
-                              onBlur={() => {
-                                handleBlurMenuLossCoefficient(index)
-                              }}
                             />
                           </div>
                         ) : (
@@ -2366,6 +2341,60 @@ export default function DialogMaterialDemand(props: Props) {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+            <div className="px-2 my-3">
+              <div className="font-bold">备注</div>
+              <div>损耗量不含试验螺栓；额外增量(m)=工艺筋+措施筋的长度；</div>
+            </div>
+            <div className="px-2">
+              <div className="font-bold">其他</div>
+              <div className="flex gap-x-2 items-center">
+                <span>额外增量：</span>
+                <InputBase
+                  autoFocus
+                  className="border-b border-[#e0e0e0] text-railway_blue w-13"
+                  value={serviceConditions.quantity}
+                  onChange={(event) => {
+                    handleChangeServiceConditionsWithQuantity(+event.target.value)
+                  }}
+                />
+                <div className="flex-1">
+                  <SelectDictionaryClass
+                    disabled={requirementStatus == "confirmed"}
+                    placeholder="请选择一个物资名称"
+                    onChange={(id, label) => {
+                      handleChangeServiceConditionsWithDictionaryClass(id, label)
+                    }}></SelectDictionaryClass>
+                </div>
+                <div className="flex-1">
+                  <Select
+                    className="bg-white"
+                    disabled={requirementStatus == "confirmed"}
+                    fullWidth
+                    size="small"
+                    MenuProps={{ sx: { zIndex: 1703 } }}
+                    onChange={(event: SelectChangeEvent<number>) => {
+                      handleChangeServiceConditionsWithDictionary(Number(event.target.value))
+                    }}>
+                    <MenuItem value={0} disabled>
+                      <i className="text-railway_gray">规格型号</i>
+                    </MenuItem>
+                    {serviceConditions.dictionaryList.map((item) => (
+                      <MenuItem value={item.id} key={item.id}>
+                        {item.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div className="mt-2">
+              <Button
+                onClick={() => {
+                  handleBlurMenuLossCoefficient()
+                }}>
+                确定
+              </Button>
             </div>
           </Menu>
         </DialogContent>

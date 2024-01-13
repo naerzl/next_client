@@ -6,10 +6,20 @@ import React, { useState } from "react"
 
 type Props = {
   treeDataProps?: TreeOption[]
+  dictionaryClassIds?: number[]
 }
 
+const BaseDictionaryClassId = [
+  DICTIONARY_CLASS_ID.cement,
+  DICTIONARY_CLASS_ID.water,
+  DICTIONARY_CLASS_ID.fine_aggregate,
+  DICTIONARY_CLASS_ID.coarse_aggregate,
+  DICTIONARY_CLASS_ID.mineral_admixture,
+  DICTIONARY_CLASS_ID.additive,
+]
+
 const useGetDictionaryClassHooks = (props: Props) => {
-  let { treeDataProps } = props
+  let { treeDataProps, dictionaryClassIds } = props
 
   const { trigger: getDictionaryClassApi } = useSWRMutation(
     "/dictionary-class",
@@ -20,17 +30,7 @@ const useGetDictionaryClassHooks = (props: Props) => {
 
   const getDictionaryClassList = async () => {
     const res = await getDictionaryClassApi({ is_all: 1 })
-    let data = FilterByParentId(
-      [
-        DICTIONARY_CLASS_ID.cement,
-        DICTIONARY_CLASS_ID.water,
-        DICTIONARY_CLASS_ID.fine_aggregate,
-        DICTIONARY_CLASS_ID.coarse_aggregate,
-        DICTIONARY_CLASS_ID.mineral_admixture,
-        DICTIONARY_CLASS_ID.additive,
-      ],
-      res,
-    )
+    let data = FilterByParentId(dictionaryClassIds ?? BaseDictionaryClassId, res)
     flatDate.current = data
     setTreeData(arrToTree(data))
   }

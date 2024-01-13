@@ -57,6 +57,7 @@ import SaveIcon from "@mui/icons-material/Save"
 import CancelIcon from "@mui/icons-material/Cancel"
 import { MaterialLossCoefficientListData } from "@/app/material-loss-coefficient/types"
 import Decimal from "decimal.js"
+import useGetDictionaryClassHooks from "@/hooks/useGetDictionaryClassHooks"
 
 type Props = {
   open: boolean
@@ -92,11 +93,6 @@ type ServiceConditions = {
   dictionary_id: number
   dictionary_class_id: number
   dictionaryList: DictionaryData[]
-}
-
-function findDictionaryClassName(val: number) {
-  const obj = DictionaryClassOption.find((item) => item.id == val)
-  return obj ? obj.label : ""
 }
 
 const columns = [
@@ -154,7 +150,8 @@ type Ingredients = {
   dictionary_class_id: number
 }
 
-function findConstUnitWithDictionary(str: string) {
+function findConstUnitWithDictionary(str?: string) {
+  if (!str) return ""
   const arr: { key: string; value: string }[] | any = JSON.parse(str || "[]")
 
   const obj = arr.find((item: any) => item.key == "常用单位")
@@ -195,8 +192,12 @@ function filterDictionaryWithWZAttribute(str: string) {
   return []
 }
 
+function findDictionaryItem(arr: DictionaryData[], id: number) {
+  return arr.find((dic) => dic.id == id)
+}
+
 export default function DialogMaterialDemand(props: Props) {
-  const { open, handleCloseDialogAddForm, item } = props
+  const { open, handleCloseDialogAddForm, item: propsItem } = props
 
   const router = useRouter()
 
@@ -236,9 +237,9 @@ export default function DialogMaterialDemand(props: Props) {
   const getMaterialDemandList = async () => {
     const res = await getMaterialDemandApi({
       project_id: PROJECT_ID,
-      engineering_listing_id: item.engineering_listings[0].id,
-      project_si_id: Number(item.id.substring(1)),
-      project_sp_id: item.parent_id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
+      project_si_id: Number(propsItem.id.substring(1)),
+      project_sp_id: propsItem.parent_id,
     })
     if (res.items.length > 0) {
       setRequirementId(res.items[0].id)
@@ -250,7 +251,7 @@ export default function DialogMaterialDemand(props: Props) {
   }
 
   //  获取需求计划的项
-  const getMaterialDemandItemList = async (flag?: boolean) => {
+  const getMaterialDemandItemList = async () => {
     try {
       setIsLoading(true)
       const res = await getMaterialDemandItemApi({
@@ -274,7 +275,7 @@ export default function DialogMaterialDemand(props: Props) {
           plannedUsageAt: dateToUTCCustom(item.planned_usage_at, "YYYY-MM-DD"),
         } as DemandEditState
 
-        item.isExpand = true
+        item.isExpand = false
 
         // 如果有自定义配合比存起来
         if (item.material_proportion) {
@@ -336,7 +337,6 @@ export default function DialogMaterialDemand(props: Props) {
           item.editState.proportion = item.material_proportion.id
 
           let materials = JSON.parse(item.material_proportion.materials)
-          let subArr: Array<PostMaterialDemandItemParams> = []
 
           for (const materialsKey in materials) {
             let itemWithMaterial = materials[materialsKey]
@@ -451,9 +451,9 @@ export default function DialogMaterialDemand(props: Props) {
   const handleCreateMaterialDemand = async () => {
     await postMaterialDemandApi({
       project_id: PROJECT_ID,
-      engineering_listing_id: item.engineering_listings[0].id,
-      project_si_id: Number(item.id.substring(1)),
-      project_sp_id: item.parent_id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
+      project_si_id: Number(propsItem.id.substring(1)),
+      project_sp_id: propsItem.parent_id,
       action: 1,
     })
     getMaterialDemandList()
@@ -462,9 +462,9 @@ export default function DialogMaterialDemand(props: Props) {
   const handleUploadMaterialDemand = async () => {
     await postMaterialDemandApi({
       project_id: PROJECT_ID,
-      engineering_listing_id: item.engineering_listings[0].id,
-      project_si_id: Number(item.id.substring(1)),
-      project_sp_id: item.parent_id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
+      project_si_id: Number(propsItem.id.substring(1)),
+      project_sp_id: propsItem.parent_id,
       action: 2,
     })
     getMaterialDemandList()
@@ -571,9 +571,38 @@ export default function DialogMaterialDemand(props: Props) {
     setRequirementList(cloneList)
   }
 
-  const handleMainExpand = (index: number, isExpand: boolean) => {
+  const handleMainExpand = async (index: number, isExpand: boolean) => {
     const cloneList = structuredClone(requirementList)
     let rowItem = cloneList[index]
+    if (isExpand && rowItem.class == "incremental") {
+      const res = await getMaterialLossCoefficientApi({
+        engineering_listing_id: propsItem.engineering_listings[0].id,
+        ebs_id: rowItem.ebs_id,
+        code: rowItem.material_loss_coefficient!.code,
+        project_id: PROJECT_ID,
+      })
+
+      if (res.items.length > 0) {
+        let arr = res.items
+
+        let object = JSON.parse(arr[0].project_loss_coefficient!.service_conditions)
+        if (object.incremental) {
+          const res = await getDictionaryListApi({
+            class_id: object.incremental.dictionary_class_id,
+          })
+          let inc = {
+            quantity: object.incremental.quantity,
+            dictionary_id: object.incremental.dictionary_id,
+            dictionary_class_id: object.incremental.dictionary_class_id,
+            name: object.incremental.name,
+            dictionaryList: res,
+          }
+
+          rowItem.incremental = [inc]
+        }
+      }
+    }
+
     rowItem.isExpand = isExpand
     setRequirementList(cloneList)
   }
@@ -781,7 +810,6 @@ export default function DialogMaterialDemand(props: Props) {
         .div(1000)
         .toNumber(),
     )
-    // return intoDoubleFixed3((rowItem.design_usage * (1 + Number(val) / 100)) / 1000)
   }
 
   const handleChangeMainTableEditInputWithLossCoefficient = (index: number, val: any) => {
@@ -835,7 +863,7 @@ export default function DialogMaterialDemand(props: Props) {
     setAnchorEl(event.currentTarget)
     let row = requirementList[index]
     const res = await getMaterialLossCoefficientApi({
-      engineering_listing_id: item.engineering_listings[0].id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
       ebs_id: row.ebs_id,
       code: row.material_loss_coefficient!.code,
       project_id: PROJECT_ID,
@@ -843,6 +871,26 @@ export default function DialogMaterialDemand(props: Props) {
 
     let newArr = res.items.sort((a, b) => a.id - b.id)
 
+    if (res.items.length > 0) {
+      let arr = res.items
+
+      let object = JSON.parse(arr[0].project_loss_coefficient!.service_conditions)
+      if (object.incremental) {
+        const res = await getDictionaryListApi({
+          class_id: object.incremental.dictionary_class_id,
+        })
+        let inc = {
+          quantity: object.incremental.quantity,
+          dictionary_id: object.incremental.dictionary_id,
+          dictionary_class_id: object.incremental.dictionary_class_id,
+          name: object.incremental.name,
+          dictionaryList: res,
+        }
+        setServiceConditions(inc)
+      }
+    }
+
+    // setServiceConditions()
     setMenuLossCoefficientLists(newArr)
   }
 
@@ -878,7 +926,7 @@ export default function DialogMaterialDemand(props: Props) {
   ) => {
     setAnchorEl(event.currentTarget)
     const res = await getMaterialLossCoefficientApi({
-      engineering_listing_id: item.engineering_listings[0].id,
+      engineering_listing_id: propsItem.engineering_listings[0].id,
       ebs_id: row.ebs_id,
       code: subRow.material_loss_coefficient!.code,
       project_id: PROJECT_ID,
@@ -1297,22 +1345,17 @@ export default function DialogMaterialDemand(props: Props) {
   const _ComputedWithMenuChangeLossCoefficient = () => {
     const row = requirementList[editPos.index]
 
-    const rowActualUsage = menuLossCoefficientLists.reduce(
-      (previousValue, currentValue, currentIndex) => {
-        let lossCoefficient = currentValue.project_loss_coefficient
-          ? currentValue.project_loss_coefficient.loss_coefficient
-          : currentValue.loss_coefficient
+    const rowActualUsage = menuLossCoefficientLists.reduce((previousValue, currentValue) => {
+      let lossCoefficient = currentValue.project_loss_coefficient
+        ? currentValue.project_loss_coefficient.loss_coefficient
+        : currentValue.loss_coefficient
 
-        return Decimal.add(1, Number(lossCoefficient) / 100)
-          .mul(previousValue)
-          .toNumber()
-      },
-      row.design_usage,
-    )
-    handleChangeMainTableEditInputWithActualUsage(
-      editPos.index,
-      intoDoubleFixed3(rowActualUsage / 1000).toString(),
-    )
+      return Decimal.add(1, Number(lossCoefficient) / 100)
+        .mul(previousValue)
+        .toNumber()
+    }, row.design_usage)
+
+    return rowActualUsage
   }
 
   const [serviceConditions, setServiceConditions] = React.useState<ServiceConditions>({
@@ -1342,29 +1385,132 @@ export default function DialogMaterialDemand(props: Props) {
     setServiceConditions(cloneState)
   }
 
-  const handleBlurMenuLossCoefficient = async () => {
+  const handleClickMenuConfirm = async () => {
     if (editPos.subIndex) {
     } else {
-      const row = requirementList[editPos.index]
+      const cloneRequirementList = structuredClone(requirementList)
+      const row = cloneRequirementList[editPos.index]
+      const cloneList = structuredClone(menuLossCoefficientLists)
+      let menuRow = cloneList[0]
       let obj: any = {
         name: serviceConditions.name,
         quantity: serviceConditions.quantity,
         dictionary_id: serviceConditions.dictionary_id,
         dictionary_class_id: serviceConditions.dictionary_class_id,
       }
+      if (serviceConditions.dictionary_class_id) {
+        const res = await getDictionaryListApi({ class_id: serviceConditions.dictionary_class_id })
+        row.incremental = [Object.assign({ dictionaryList: res }, obj)]
+      }
 
       await postMaterialLossCoefficientApi({
         project_id: PROJECT_ID,
         loss_coefficient_id: row.material_loss_coefficient!.id,
-        loss_coefficient: row.material_loss_coefficient!.loss_coefficient,
-        engineering_listing_id: item.engineering_listings[0].id,
+        loss_coefficient: menuRow.project_loss_coefficient
+          ? menuRow.project_loss_coefficient.loss_coefficient
+          : menuRow.loss_coefficient,
+        engineering_listing_id: propsItem.engineering_listings[0].id,
         ebs_id: requirementList[editPos.index].ebs_id,
-        service_conditions: JSON.stringify({ incremental: obj }),
+        service_conditions:
+          row.class == "incremental" ? JSON.stringify({ incremental: obj }) : undefined,
       })
-      _ComputedWithMenuChangeLossCoefficient()
+
+      const _actualUsage = _ComputedWithMenuChangeLossCoefficient()
+
+      const _actualUsageValue = intoDoubleFixed3(_actualUsage / 1000)
+
+      row.editState.actualUsage = Number(_actualUsageValue)
+      row.actual_usage = Math.round(Decimal.mul(Number(_actualUsageValue), 1000).toNumber())
+      row.loss_coefficient = (
+        menuRow.project_loss_coefficient
+          ? menuRow.project_loss_coefficient.loss_coefficient
+          : menuRow.loss_coefficient
+      ).toString()
+
+      row.editState.lossCoefficient = row.loss_coefficient
+      // 配合比子物料列表
+      let materials: any[] = []
+
+      if (row.material_proportion) {
+        materials = JSON.parse(row.material_proportion.materials)
+      }
+
+      // 判断是否有子集数据
+      if (row.proportions && row.proportions!.length > 0) {
+        if (materials.length > 0) {
+          row.proportions = _ComputeProportion(row.proportions, row, materials)
+        } else if (
+          row.dictionary &&
+          row.dictionary.dictionary_class_id == DICTIONARY_CLASS_ID.concrete
+        ) {
+          let _WZArr = filterDictionaryWithWZAttribute(row.dictionary.properties)
+          if (_WZArr && _WZArr.length > 0) {
+            const wzWithSplit = _WZArr.map((wzItem) => wzItem.value.split("!"))
+            row.proportions = _ComputeWithDictionary(row.proportions, row, wzWithSplit)
+          }
+        }
+      }
+      setRequirementList(cloneRequirementList)
       setEditMenuPos({})
+      setAnchorEl(null)
+
+      let params = {
+        id: row.id,
+        requirement_id: requirementId,
+        actual_usage: row.editState.actualUsage * 1000,
+        loss_coefficient: row.editState.lossCoefficient,
+        dictionary_id: row.dictionary_id,
+        planned_usage_at: row.editState.plannedUsageAt,
+      } as PutMaterialDemandItemParams
+      if (row.editState.proportion) {
+        params.proportion_id = row.editState.proportion
+      }
+      await putMaterialDemandItemApi(params)
+
+      if (!row.proportions) {
+        // getMaterialDemandItemList()
+        return
+      }
+
+      let needEditItems: MaterialListType[] = []
+      row.proportions!.forEach((sub) => {
+        needEditItems.push(sub)
+      })
+
+      const axiosList = needEditItems.map((item) => {
+        if (item.id) {
+          let params = {
+            id: item.id,
+            requirement_id: requirementId,
+            actual_usage: Math.round(
+              Decimal.mul(intoDoubleFixed3(item.editState.actualUsage), 1000).toNumber(),
+            ),
+            loss_coefficient: item.editState.lossCoefficient,
+            dictionary_id: item.dictionary_id,
+            planned_usage_at: item.editState.plannedUsageAt,
+          } as PutMaterialDemandItemParams
+          return putMaterialDemandItemApi(params)
+        }
+      })
+
+      await Promise.all(axiosList)
     }
   }
+
+  const { treeData: treeDataWithMenu } = useGetDictionaryClassHooks({
+    dictionaryClassIds: [
+      DICTIONARY_CLASS_ID.cement,
+      DICTIONARY_CLASS_ID.water,
+      DICTIONARY_CLASS_ID.fine_aggregate,
+      DICTIONARY_CLASS_ID.coarse_aggregate,
+      DICTIONARY_CLASS_ID.mineral_admixture,
+      DICTIONARY_CLASS_ID.additive,
+      DICTIONARY_CLASS_ID.rebar,
+      DICTIONARY_CLASS_ID.concrete,
+    ],
+  })
+
+  const DOMLossCoefficient = React.useRef<null | HTMLDivElement>(null)
 
   const CreateMaterialDemandBtn = () => (
     <div className="h-full overflow-hidden pb-[4.375rem] flex items-center justify-center">
@@ -1398,7 +1544,7 @@ export default function DialogMaterialDemand(props: Props) {
           </Button>
         </DialogTitle>
         <div className="px-6 flex justify-between items-center">
-          <div>工点数据名称：{item.name}</div>
+          <div>工点数据名称：{propsItem.name}</div>
           <div>
             {/*{requirementStatus == "confirmed" && (*/}
             {/*  <Button*/}
@@ -1436,106 +1582,215 @@ export default function DialogMaterialDemand(props: Props) {
                       requirementList.map((row, index) => {
                         return row.dictionary?.dictionary_class_id !=
                           CONCRETE_DICTIONARY_CLASS_ID ? (
-                          <TableRow key={index} className="grid-cols-9 grid">
-                            <TableCell align="center" scope="row">
-                              {row.ebs_desc}
-                            </TableCell>
-                            <TableCell align="center">
-                              {row.dictionary?.dictionary_class?.name}
-                            </TableCell>
-                            <TableCell align="center">{row.dictionary?.name}</TableCell>
-                            <TableCell align="center">
-                              {intoDoubleFixed3(row.design_usage / 1000)}
-                            </TableCell>
-                            <TableCell align="center">
-                              {findConstUnitWithDictionary(row.dictionary?.properties)}
-                            </TableCell>
-                            <TableCell align="center">
-                              {checkEditPos("main", index, EditFieldsEnum.LossCoefficient) &&
-                              !row.material_loss_coefficient ? (
-                                <div>
-                                  <InputBase
-                                    autoFocus
-                                    className="border-b border-[#e0e0e0] text-railway_blue"
-                                    value={row.editState.lossCoefficient}
-                                    onChange={(event) => {
-                                      let str = event.target.value.replace(/[^0-9]/g, "")
-                                      handleChangeMainTableEditInputWithLossCoefficient(index, +str)
-                                    }}
-                                    onBlur={(event) => {
-                                      event.target.value != "" &&
-                                        handleBlurMainLossCoefficient(index)
-                                    }}
-                                  />
-                                </div>
-                              ) : (
-                                <div
-                                  className="cursor-pointer"
-                                  onClick={(event) => {
-                                    handleClickLossCoefficient(event, index)
-                                  }}>
-                                  {row.loss_coefficient}
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell align="center">
-                              {checkEditPos("main", index, EditFieldsEnum.ActualUsage) ? (
-                                <div>
-                                  <InputBase
-                                    autoFocus
-                                    className="border-b border-[#e0e0e0] text-railway_blue"
-                                    value={row.editState.actualUsage}
-                                    onChange={(event) => {
-                                      let str = event.target.value.replace(/[^0-9.]/g, "")
-                                      handleChangeMainTableEditInputWithActualUsage(index, str)
-                                    }}
-                                    onBlur={() => {
-                                      handleBlurMainActualUsage(index)
-                                    }}
-                                  />
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => {
-                                    if ("confirmed" == requirementStatus) {
-                                      return
-                                    }
-                                    setEditPos({ index, fields: EditFieldsEnum.ActualUsage })
-                                  }}>
-                                  {intoDoubleFixed3(row.actual_usage / 1000)}
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell align="center">
-                              {checkEditPos("main", index, EditFieldsEnum.PlannedUsageAt) ? (
-                                <div>
-                                  <DatePicker
-                                    autoFocus
-                                    value={dayjs(row.editState.plannedUsageAt)}
-                                    onChange={(newVal) => {
-                                      handleChangeMainTableEditInputWithPlannedUsageAt(
+                          <TableRow key={index}>
+                            <TableCell colSpan={8} style={{ padding: 0 }}>
+                              <Table sx={{ minWidth: 650 }}>
+                                <TableBody>
+                                  <TableRow className="grid-cols-9 grid">
+                                    <TableCell align="center" scope="row">
+                                      {row.ebs_desc}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {
+                                        <div>
+                                          <span>{row.dictionary?.dictionary_class?.name}</span>
+                                          {row.class == "incremental" && (
+                                            <React.Fragment>
+                                              {row.isExpand ? (
+                                                <ArrowDropDownIcon
+                                                  className="cursor-pointer"
+                                                  onClick={() => {
+                                                    handleMainExpand(index, false)
+                                                  }}
+                                                />
+                                              ) : (
+                                                <ArrowRightIcon
+                                                  className="cursor-pointer"
+                                                  onClick={() => {
+                                                    handleMainExpand(index, true)
+                                                  }}
+                                                />
+                                              )}
+                                            </React.Fragment>
+                                          )}
+                                        </div>
+                                      }
+                                    </TableCell>
+                                    <TableCell align="center">{row.dictionary?.name}</TableCell>
+                                    <TableCell align="center">
+                                      {intoDoubleFixed3(row.design_usage / 1000)}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {findConstUnitWithDictionary(row.dictionary?.properties)}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {checkEditPos(
+                                        "main",
                                         index,
-                                        newVal ?? dayjs(new Date()),
-                                      )
-                                    }}
-                                    onBlur={() => {
-                                      handleBlurMainPlannedUsageAt(index)
-                                    }}
-                                  />
-                                </div>
-                              ) : (
-                                <div
-                                  onClick={() => {
-                                    if ("confirmed" == requirementStatus) {
-                                      return
-                                    }
-                                    setEditPos({ index, fields: EditFieldsEnum.PlannedUsageAt })
-                                  }}>
-                                  {dayJsToStr(row.planned_usage_at, "YYYY-MM-DD")}
-                                </div>
-                              )}
+                                        EditFieldsEnum.LossCoefficient,
+                                      ) && !row.material_loss_coefficient ? (
+                                        <div>
+                                          <InputBase
+                                            autoFocus
+                                            className="border-b border-[#e0e0e0] text-railway_blue"
+                                            value={row.editState.lossCoefficient}
+                                            onChange={(event) => {
+                                              let str = event.target.value.replace(/[^0-9]/g, "")
+                                              handleChangeMainTableEditInputWithLossCoefficient(
+                                                index,
+                                                +str,
+                                              )
+                                            }}
+                                            onBlur={(event) => {
+                                              event.target.value != "" &&
+                                                handleBlurMainLossCoefficient(index)
+                                            }}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          ref={DOMLossCoefficient}
+                                          className="cursor-pointer"
+                                          onClick={(event) => {
+                                            handleClickLossCoefficient(event, index)
+                                          }}>
+                                          {row.loss_coefficient}
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {checkEditPos("main", index, EditFieldsEnum.ActualUsage) ? (
+                                        <div>
+                                          <InputBase
+                                            autoFocus
+                                            className="border-b border-[#e0e0e0] text-railway_blue"
+                                            value={row.editState.actualUsage}
+                                            onChange={(event) => {
+                                              let str = event.target.value.replace(/[^0-9.]/g, "")
+                                              handleChangeMainTableEditInputWithActualUsage(
+                                                index,
+                                                str,
+                                              )
+                                            }}
+                                            onBlur={() => {
+                                              handleBlurMainActualUsage(index)
+                                            }}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          onClick={() => {
+                                            if ("confirmed" == requirementStatus) {
+                                              return
+                                            }
+                                            setEditPos({
+                                              index,
+                                              fields: EditFieldsEnum.ActualUsage,
+                                            })
+                                          }}>
+                                          {intoDoubleFixed3(row.actual_usage / 1000)}
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      {checkEditPos(
+                                        "main",
+                                        index,
+                                        EditFieldsEnum.PlannedUsageAt,
+                                      ) ? (
+                                        <div>
+                                          <DatePicker
+                                            autoFocus
+                                            value={dayjs(row.editState.plannedUsageAt)}
+                                            onChange={(newVal) => {
+                                              handleChangeMainTableEditInputWithPlannedUsageAt(
+                                                index,
+                                                newVal ?? dayjs(new Date()),
+                                              )
+                                            }}
+                                            onBlur={() => {
+                                              handleBlurMainPlannedUsageAt(index)
+                                            }}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          onClick={() => {
+                                            if ("confirmed" == requirementStatus) {
+                                              return
+                                            }
+                                            setEditPos({
+                                              index,
+                                              fields: EditFieldsEnum.PlannedUsageAt,
+                                            })
+                                          }}>
+                                          {dayJsToStr(row.planned_usage_at, "YYYY-MM-DD")}
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                    <TableCell align="center"></TableCell>
+                                  </TableRow>
+                                  {row.class == "incremental" &&
+                                    row.isExpand &&
+                                    row.incremental &&
+                                    row.incremental.map((inc, incIndex) => (
+                                      <TableRow
+                                        className="grid-cols-9 grid bg-[#f2f2f2]"
+                                        key={incIndex}>
+                                        <TableCell align="center"></TableCell>
+                                        <TableCell
+                                          align="center"
+                                          onClick={(event) => {
+                                            handleClickLossCoefficient(event, index)
+                                          }}>
+                                          <div>额外增量：{inc.quantity}</div>
+                                          {inc.name}
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          onClick={(event) => {
+                                            handleClickLossCoefficient(event, index)
+                                          }}>
+                                          {findConstUnitWithDictionary(
+                                            findDictionaryItem(
+                                              inc.dictionaryList,
+                                              inc.dictionary_id,
+                                            )?.properties,
+                                          )}
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          onClick={(event) => {
+                                            handleClickLossCoefficient(event, index)
+                                          }}>
+                                          -
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          onClick={(event) => {
+                                            handleClickLossCoefficient(event, index)
+                                          }}>
+                                          {
+                                            findDictionaryItem(
+                                              inc.dictionaryList,
+                                              inc.dictionary_id,
+                                            )?.name
+                                          }
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          onClick={(event) => {
+                                            handleClickLossCoefficient(event, index)
+                                          }}>
+                                          {row.loss_coefficient}
+                                        </TableCell>
+                                        <TableCell align="center">{inc.quantity}</TableCell>
+                                        <TableCell align="center"></TableCell>
+                                      </TableRow>
+                                    ))}
+                                </TableBody>
+                              </Table>
                             </TableCell>
-                            <TableCell align="center"></TableCell>
                           </TableRow>
                         ) : (
                           <TableRow key={index}>
@@ -1601,6 +1856,7 @@ export default function DialogMaterialDemand(props: Props) {
                                         </div>
                                       ) : (
                                         <div
+                                          ref={DOMLossCoefficient}
                                           className="h-8 leading-8 cursor-pointer"
                                           onClick={(event) => {
                                             handleClickLossCoefficient(event, index)
@@ -1684,6 +1940,69 @@ export default function DialogMaterialDemand(props: Props) {
                                   </TableRow>
                                   {row.isExpand && (
                                     <React.Fragment>
+                                      {row.class == "incremental" &&
+                                        row.incremental &&
+                                        row.incremental.map((inc, incIndex) => (
+                                          <TableRow
+                                            className="grid-cols-9 grid bg-[#f2f2f2]"
+                                            key={incIndex}>
+                                            <TableCell align="center"></TableCell>
+                                            <TableCell
+                                              align="center"
+                                              onClick={(event) => {
+                                                handleClickLossCoefficient(event, index)
+                                              }}>
+                                              <div>额外增量：{inc.quantity}</div>
+                                              {inc.name}
+                                            </TableCell>
+                                            <TableCell
+                                              align="center"
+                                              onClick={(event) => {
+                                                handleClickLossCoefficient(event, index)
+                                              }}>
+                                              {
+                                                findDictionaryItem(
+                                                  inc.dictionaryList,
+                                                  inc.dictionary_id,
+                                                )?.name
+                                              }
+                                            </TableCell>
+                                            <TableCell
+                                              align="center"
+                                              onClick={(event) => {
+                                                handleClickLossCoefficient(event, index)
+                                              }}>
+                                              -
+                                            </TableCell>
+                                            <TableCell
+                                              align="center"
+                                              onClick={(event) => {
+                                                handleClickLossCoefficient(event, index)
+                                              }}>
+                                              {findConstUnitWithDictionary(
+                                                findDictionaryItem(
+                                                  inc.dictionaryList,
+                                                  inc.dictionary_id,
+                                                )?.properties,
+                                              )}
+                                            </TableCell>
+                                            <TableCell
+                                              align="center"
+                                              onClick={(event) => {
+                                                handleClickLossCoefficient(event, index)
+                                              }}>
+                                              {row.loss_coefficient}
+                                            </TableCell>
+                                            <TableCell
+                                              align="center"
+                                              onClick={(event) => {
+                                                handleClickLossCoefficient(event, index)
+                                              }}>
+                                              {inc.quantity}
+                                            </TableCell>
+                                            <TableCell align="center"></TableCell>
+                                          </TableRow>
+                                        ))}
                                       <TableRow
                                         className="grid-cols-9 grid"
                                         sx={{
@@ -1719,7 +2038,7 @@ export default function DialogMaterialDemand(props: Props) {
                                             {findProportionSelf(
                                               materialProportionList,
                                               row,
-                                              item.engineering_listings[0].id,
+                                              propsItem.engineering_listings[0].id,
                                             ).map((item) => (
                                               <MenuItem value={item.id} key={item.id}>
                                                 {item.name}-{item.proportion}
@@ -2101,8 +2420,8 @@ export default function DialogMaterialDemand(props: Props) {
                       <TableRow className="grid-cols-9 grid">
                         <TableCell align="center">
                           <TreeSelectWithEbs
-                            engineeringListingId={item.engineering_listings[0].id}
-                            ebs_code={item.engineering_listings[0].ebs_code}
+                            engineeringListingId={propsItem.engineering_listings[0].id}
+                            ebs_code={propsItem.engineering_listings[0].ebs_code}
                             onChecked={(id: number) => {
                               handleChangeMainEditStateWithEBS(id)
                             }}
@@ -2284,119 +2603,126 @@ export default function DialogMaterialDemand(props: Props) {
             )}
           </Snackbar>
 
-          <Menu
-            sx={{ zIndex: 1700 }}
-            anchorEl={anchorEl}
-            open={openMenu}
-            onClose={handleCloseMenu}
-            MenuListProps={{
-              "aria-labelledby": "basic-button",
-              sx: { zIndex: 1700, width: "500px" },
-            }}>
-            <div className="max-h-[500px] overflow-y-auto w-full">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell align="center" className="font-bold">
-                      损耗系数名称
-                    </TableCell>
-                    <TableCell align="center" className="font-bold">
-                      损耗系数
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {menuLossCoefficientLists.map((row, index) => (
-                    <TableRow key={row.id}>
-                      <TableCell align="center">{row.name}</TableCell>
-                      <TableCell align="center">
-                        {checkMenuEditPos(index) ? (
-                          <div>
-                            <InputBase
-                              autoFocus
-                              className="border-b border-[#e0e0e0] text-railway_blue"
-                              value={
-                                row.project_loss_coefficient
-                                  ? row.project_loss_coefficient.loss_coefficient
-                                  : row.loss_coefficient
-                              }
-                              onChange={(event) => {
-                                let str = event.target.value.replace(/[^0-9.]/g, "")
-                                handleChangeMenuLossCoefficient(index, str)
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div
-                            onClick={() => {
-                              handleClickMenuLossCoefficient(index)
-                            }}>
-                            {row.project_loss_coefficient
-                              ? row.project_loss_coefficient.loss_coefficient
-                              : row.loss_coefficient}
-                          </div>
-                        )}
+          {openMenu && (
+            <Menu
+              sx={{ zIndex: 1700 }}
+              anchorEl={anchorEl}
+              open={openMenu}
+              onClose={handleCloseMenu}
+              MenuListProps={{
+                "aria-labelledby": "basic-button",
+                sx: { zIndex: 1700, width: "500px" },
+              }}>
+              <div className="max-h-[500px] overflow-y-auto w-full">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align="center" className="font-bold">
+                        损耗系数名称
+                      </TableCell>
+                      <TableCell align="center" className="font-bold">
+                        损耗系数
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="px-2 my-3">
-              <div className="font-bold">备注</div>
-              <div>损耗量不含试验螺栓；额外增量(m)=工艺筋+措施筋的长度；</div>
-            </div>
-            <div className="px-2">
-              <div className="font-bold">其他</div>
-              <div className="flex gap-x-2 items-center">
-                <span>额外增量：</span>
-                <InputBase
-                  autoFocus
-                  className="border-b border-[#e0e0e0] text-railway_blue w-13"
-                  value={serviceConditions.quantity}
-                  onChange={(event) => {
-                    handleChangeServiceConditionsWithQuantity(+event.target.value)
-                  }}
-                />
-                <div className="flex-1">
-                  <SelectDictionaryClass
-                    disabled={requirementStatus == "confirmed"}
-                    placeholder="请选择一个物资名称"
-                    onChange={(id, label) => {
-                      handleChangeServiceConditionsWithDictionaryClass(id, label)
-                    }}></SelectDictionaryClass>
-                </div>
-                <div className="flex-1">
-                  <Select
-                    className="bg-white"
-                    disabled={requirementStatus == "confirmed"}
-                    fullWidth
-                    size="small"
-                    MenuProps={{ sx: { zIndex: 1703 } }}
-                    onChange={(event: SelectChangeEvent<number>) => {
-                      handleChangeServiceConditionsWithDictionary(Number(event.target.value))
-                    }}>
-                    <MenuItem value={0} disabled>
-                      <i className="text-railway_gray">规格型号</i>
-                    </MenuItem>
-                    {serviceConditions.dictionaryList.map((item) => (
-                      <MenuItem value={item.id} key={item.id}>
-                        {item.name}
-                      </MenuItem>
+                  </TableHead>
+                  <TableBody>
+                    {menuLossCoefficientLists.map((row, index) => (
+                      <TableRow key={row.id}>
+                        <TableCell align="center">{row.name}</TableCell>
+                        <TableCell align="center">
+                          {checkMenuEditPos(index) ? (
+                            <div>
+                              <InputBase
+                                autoFocus
+                                className="border-b border-[#e0e0e0] text-railway_blue"
+                                value={
+                                  row.project_loss_coefficient
+                                    ? row.project_loss_coefficient.loss_coefficient
+                                    : row.loss_coefficient
+                                }
+                                onChange={(event) => {
+                                  let str = event.target.value.replace(/[^0-9.]/g, "")
+                                  handleChangeMenuLossCoefficient(index, str)
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => {
+                                handleClickMenuLossCoefficient(index)
+                              }}>
+                              {row.project_loss_coefficient
+                                ? row.project_loss_coefficient.loss_coefficient
+                                : row.loss_coefficient}
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </Select>
-                </div>
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-            <div className="mt-2">
-              <Button
-                onClick={() => {
-                  handleBlurMenuLossCoefficient()
-                }}>
-                确定
-              </Button>
-            </div>
-          </Menu>
+              <div className="px-2 my-3">
+                <div className="font-bold">备注</div>
+                <div>损耗量不含试验螺栓；额外增量(m)=工艺筋+措施筋的长度；</div>
+              </div>
+              {requirementList[editPos.index].class == "incremental" && (
+                <div className="px-2">
+                  <div className="font-bold">其他</div>
+                  <div className="flex gap-x-2 items-center">
+                    <span>额外增量：</span>
+                    <InputBase
+                      autoFocus
+                      className="border-b border-[#e0e0e0] text-railway_blue w-13"
+                      value={serviceConditions.quantity}
+                      onChange={(event) => {
+                        handleChangeServiceConditionsWithQuantity(+event.target.value)
+                      }}
+                    />
+                    <div className="flex-1">
+                      <SelectDictionaryClass
+                        disabled={requirementStatus == "confirmed"}
+                        placeholder="请选择一个物资名称"
+                        treeData={treeDataWithMenu}
+                        value={serviceConditions.dictionary_class_id}
+                        onChange={(id, label) => {
+                          handleChangeServiceConditionsWithDictionaryClass(id, label)
+                        }}></SelectDictionaryClass>
+                    </div>
+                    <div className="flex-1">
+                      <Select
+                        className="bg-white"
+                        disabled={requirementStatus == "confirmed"}
+                        fullWidth
+                        size="small"
+                        MenuProps={{ sx: { zIndex: 1703 } }}
+                        value={serviceConditions.dictionary_id}
+                        onChange={(event: SelectChangeEvent<number>) => {
+                          handleChangeServiceConditionsWithDictionary(Number(event.target.value))
+                        }}>
+                        <MenuItem value={0} disabled>
+                          <i className="text-railway_gray">规格型号</i>
+                        </MenuItem>
+                        {serviceConditions.dictionaryList.map((item) => (
+                          <MenuItem value={item.id} key={item.id}>
+                            {item.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="mt-2">
+                <Button
+                  onClick={() => {
+                    handleClickMenuConfirm()
+                  }}>
+                  确定
+                </Button>
+              </div>
+            </Menu>
+          )}
         </DialogContent>
       </Dialog>
     </>
