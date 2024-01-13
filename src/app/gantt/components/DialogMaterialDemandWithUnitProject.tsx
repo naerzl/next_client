@@ -31,6 +31,8 @@ export default function DialogMaterialDemandWithUnitProject(props: Props) {
     getQueueApi,
     getProjectSubSectionApi,
     getMaterialDemandApi,
+    getMaterialLossCoefficientApi,
+    getDictionaryListApi,
   } = useSWRMutationHooks()
 
   const { projectId: PROJECT_ID } = React.useContext(LayoutContext)
@@ -206,6 +208,43 @@ export default function DialogMaterialDemandWithUnitProject(props: Props) {
     runQueue(res.id)
   }
 
+  const handleTableExpand = async (index: number, isExpand: boolean, unitIndex: number) => {
+    const cloneList = structuredClone(requirementItemList)
+    let rowItem = cloneList[unitIndex][index]
+    let requirement = requirementList[unitIndex]
+    if (isExpand && rowItem.class == "incremental") {
+      const res = await getMaterialLossCoefficientApi({
+        engineering_listing_id: requirement.engineering_listing_id,
+        ebs_id: rowItem.ebs_id,
+        code: rowItem.material_loss_coefficient!.code,
+        project_id: PROJECT_ID,
+      })
+
+      if (res.items.length > 0) {
+        let arr = res.items
+
+        let object = JSON.parse(arr[0].project_loss_coefficient!.service_conditions)
+        if (object.incremental) {
+          const res = await getDictionaryListApi({
+            class_id: object.incremental.dictionary_class_id,
+          })
+          let inc = {
+            quantity: object.incremental.quantity,
+            dictionary_id: object.incremental.dictionary_id,
+            dictionary_class_id: object.incremental.dictionary_class_id,
+            name: object.incremental.name,
+            dictionaryList: res,
+          }
+
+          rowItem.incremental = [inc]
+        }
+      }
+    }
+
+    rowItem.isExpand = isExpand
+    setRequirementItemList(cloneList)
+  }
+
   return (
     <>
       <Dialog
@@ -236,7 +275,11 @@ export default function DialogMaterialDemandWithUnitProject(props: Props) {
             <div className="overflow-hidden pb-[4.375rem] relative" key={index}>
               <RequirementWithWorkingPointTable
                 requirementItemList={item}
+                unitIndex={index}
                 requirementList={requirementList[index]}
+                handleTableExpand={(index, isExpand, unitIndex) => {
+                  handleTableExpand(index, isExpand, unitIndex)
+                }}
               />
             </div>
           ))}

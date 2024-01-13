@@ -277,3 +277,9 @@ export interface ProjectMaterialRequirementStaticDetailListData {
     }
   }
 }
+
+export interface PostProjectMaterialPurchaseParams {
+  project_id: number
+  project_si_id?: number
+  project_sp_id?: number
+}

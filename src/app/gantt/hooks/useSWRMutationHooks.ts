@@ -8,6 +8,7 @@ import {
   reqGetProjectMaterialRequirementStaticDetail,
   reqPostMaterialDemand,
   reqPostMaterialDemandItem,
+  reqPostProjectMaterialPurchase,
   reqPutMaterialDemand,
   reqPutMaterialDemandItem,
 } from "@/app/material-demand/api"
@@ -94,6 +95,11 @@ const useSWRMutationHooks = () => {
     reqGetProjectMaterialRequirementStaticDetail,
   )
 
+  const { trigger: postProjectMaterialPurchaseApi } = useSWRMutation(
+    "/project-material-purchase",
+    reqPostProjectMaterialPurchase,
+  )
+
   return {
     getMaterialDemandItemApi,
     getMaterialProportionApi,
@@ -111,6 +117,7 @@ const useSWRMutationHooks = () => {
     postMaterialLossCoefficientApi,
     getProjectMaterialRequirementStaticApi,
     getProjectMaterialRequirementStaticDetailApi,
+    postProjectMaterialPurchaseApi,
   }
 }
 

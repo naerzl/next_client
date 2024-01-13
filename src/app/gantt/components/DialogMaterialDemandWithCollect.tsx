@@ -29,6 +29,7 @@ import dayjs from "dayjs"
 import { QueueList } from "@/app/queue/types"
 import useSWRMutation from "swr/mutation"
 import { reqGetQueueExportFile } from "@/app/queue/api"
+import { message } from "antd"
 
 type Props = {
   open: boolean
@@ -84,6 +85,7 @@ export default function DialogMaterialDemandWithCollect(props: Props) {
     getQueueApi,
     getProjectMaterialRequirementStaticApi,
     getProjectMaterialRequirementStaticDetailApi,
+    postProjectMaterialPurchaseApi,
   } = useSWRMutationHooks()
 
   const { trigger: getQueueExportFileApi } = useSWRMutation(
@@ -200,6 +202,12 @@ export default function DialogMaterialDemandWithCollect(props: Props) {
     a.remove()
   }
 
+  const handleCreatePurchase = async () => {
+    const res = await postProjectMaterialPurchaseApi({ project_id: PROJECT_ID })
+    console.log(res)
+    message.success("采购计划已生成，请到【物资采购计划】中查看")
+  }
+
   return (
     <>
       <Dialog
@@ -264,7 +272,13 @@ export default function DialogMaterialDemandWithCollect(props: Props) {
           </div>
 
           <div className="flex justify-end gap-x-2 h-10">
-            <Button variant="contained">生成采购计划</Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                handleCreatePurchase()
+              }}>
+              生成采购计划
+            </Button>
           </div>
           <Snackbar
             sx={{ zIndex: 1720 }}

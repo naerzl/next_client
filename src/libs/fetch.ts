@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from "./cookies"
+import { setCookie } from "./cookies"
 import { formDataInstance, lrsOAuth2Instance } from "./init_oauth"
 import { OAUTH2_ACCESS_TOKEN, OAUTH2_PATH_FROM, OAUTH2_TOKEN_EXPIRY, STATUS_SUCCESS } from "./const"
 import { StatusCodes } from "http-status-codes"

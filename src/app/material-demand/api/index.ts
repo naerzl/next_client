@@ -11,6 +11,7 @@ import {
   GetProjectMaterialRequirementStaticParams,
   PostMaterialDemandItemParams,
   PostMaterialDemandParams,
+  PostProjectMaterialPurchaseParams,
   ProjectMaterialRequirementStaticListData,
   PutMaterialDemandItemParams,
   PutMaterialDemandParams,
@@ -68,3 +69,8 @@ export const reqGetProjectMaterialRequirementStaticDetail = (
   url: string,
   { arg }: FetchParams<GetProjectMaterialRequirementStaticDetailParams>,
 ): Promise<GetProjectMaterialRequirementStaticDetailResponse> => fetcher({ url, arg })
+
+export const reqPostProjectMaterialPurchase = (
+  url: string,
+  { arg }: FetchParams<PostProjectMaterialPurchaseParams>,
+) => fetcher({ url, arg, method: "post" })
