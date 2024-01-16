@@ -8,7 +8,6 @@ import {
   reqGetProjectMaterialRequirementStaticDetail,
   reqPostMaterialDemand,
   reqPostMaterialDemandItem,
-  reqPostProjectMaterialPurchase,
   reqPutMaterialDemand,
   reqPutMaterialDemandItem,
 } from "@/app/material-demand/api"
@@ -20,6 +19,12 @@ import {
   reqPostMaterialLossCoefficient,
 } from "@/app/material-loss-coefficient/api"
 import { reqGetProjectSubSection } from "@/app/working-point/api"
+import {
+  reqGetProcurementPlanListItems,
+  reqPostMaterialProcurementPlan,
+  reqPutMaterialProcurementPlan,
+  reqPutProcurementPlanListItems,
+} from "@/app/material-procurement-plan/api"
 
 const useSWRMutationHooks = () => {
   const { trigger: postMaterialDemandApi } = useSWRMutation(
@@ -97,7 +102,22 @@ const useSWRMutationHooks = () => {
 
   const { trigger: postProjectMaterialPurchaseApi } = useSWRMutation(
     "/project-material-purchase",
-    reqPostProjectMaterialPurchase,
+    reqPostMaterialProcurementPlan,
+  )
+
+  const { trigger: putProjectMaterialPurchaseApi } = useSWRMutation(
+    "/project-material-purchase",
+    reqPutMaterialProcurementPlan,
+  )
+
+  const { trigger: getProjectMaterialPurchaseItemApi } = useSWRMutation(
+    "/project-material-purchase-item",
+    reqGetProcurementPlanListItems,
+  )
+
+  const { trigger: putProjectMaterialPurchaseItemApi } = useSWRMutation(
+    "/project-material-purchase-item",
+    reqPutProcurementPlanListItems,
   )
 
   return {
@@ -118,6 +138,9 @@ const useSWRMutationHooks = () => {
     getProjectMaterialRequirementStaticApi,
     getProjectMaterialRequirementStaticDetailApi,
     postProjectMaterialPurchaseApi,
+    getProjectMaterialPurchaseItemApi,
+    putProjectMaterialPurchaseItemApi,
+    putProjectMaterialPurchaseApi,
   }
 }
 

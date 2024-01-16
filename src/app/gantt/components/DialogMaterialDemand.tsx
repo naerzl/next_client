@@ -35,7 +35,6 @@ import { CONCRETE_DICTIONARY_CLASS_ID } from "@/app/ebs-data/const"
 import AddIcon from "@mui/icons-material/Add"
 import { MaterialProportionListData } from "@/app/proportion/types"
 import { DictionaryData } from "@/app/material-approach/types"
-import { DictionaryClassOption } from "@/app/material-demand/const"
 import { DatePicker, message } from "antd"
 import locale from "antd/es/date-picker/locale/zh_CN"
 import "dayjs/locale/zh-cn"
@@ -634,7 +633,7 @@ export default function DialogMaterialDemand(props: Props) {
       needEditItems.push(sub)
     })
 
-    const axiosList = needEditItems.map((item, subIndex) => {
+    const axiosList = needEditItems.map((item) => {
       if (item.id) {
         let params = {
           id: item.id,

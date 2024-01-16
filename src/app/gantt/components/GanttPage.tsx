@@ -10,10 +10,9 @@ import dayjs from "dayjs"
 import useSWRMutation from "swr/mutation"
 import { reqPutEBS, reqGetEBS } from "../api/index"
 import { Breadcrumbs, Button, MenuItem, Select } from "@mui/material"
-import { reqGetCodeCount } from "@/app/ebs-data/api"
 import FullscreenIcon from "@mui/icons-material/Fullscreen"
 import { reqGetProjectSubSection } from "@/app/working-point/api"
-import { getHexColor, parseQueryString } from "@/libs/methods"
+import { getHexColor } from "@/libs/methods"
 import { TypeProjectSubSectionData } from "@/app/working-point/types"
 import DrawerAndTabs from "./DrawerAndTabs"
 import useDrawerProcess from "@/app/gantt/hooks/useDrawerProcess"
@@ -21,7 +20,6 @@ import GanttContext from "@/app/gantt/context/ganttContext"
 import Link from "@mui/material/Link"
 import Typography from "@mui/material/Typography"
 import { LayoutContext } from "@/components/LayoutContext"
-import { gantt } from "dhtmlx-gantt"
 import permissionJson from "@/config/permission.json"
 import NoPermission from "@/components/NoPermission"
 import * as fastq from "fastq"
@@ -33,16 +31,6 @@ import useDialogMaterialDemandWithUnitProject from "@/app/gantt/hooks/useDialogM
 import DialogMaterialDemandWithUnitProject from "@/app/gantt/components/DialogMaterialDemandWithUnitProject"
 import DialogMaterialDemandWithCollect from "@/app/gantt/components/DialogMaterialDemandWithCollect"
 import useDialogMaterialDemandWithCollect from "@/app/gantt/hooks/useDialogMaterialDemandWithCollect"
-
-// type GanttItemType = {
-//   id: number | string
-//   text: string //名称
-//   start_date: string //日期
-//   duration: number //天数
-//   progress: number //控制完成百分比 范围0-1
-//   parent: number
-//   color?: string //控制颜色
-// }
 
 type WorkingAndProjectSelectOption = {
   label: string
@@ -559,7 +547,6 @@ const GanttPage = () => {
         <div className="gantt-container h-full overflow-y-auto">
           <Gantt
             ref={DOM_GANTT}
-            // tasks={ganttData}
             zoom={zoom}
             onDataUpdated={logDataUpdate}
             editGanttItem={handleEditGanttItem}
