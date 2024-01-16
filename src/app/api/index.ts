@@ -1,6 +1,7 @@
 import { fetcher } from "@/libs/fetch"
 import { DictionaryClassData, FetchParams, PermissionData } from "@/types/api"
 
+// 1
 export const reqGetPermission = (
   url: string,
   { arg }: FetchParams<{ project_id: number }>,
